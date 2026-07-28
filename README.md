@@ -80,7 +80,7 @@ The OLED screen isn't just aesthetic—it fundamentally transforms how you use t
 | :--- | :--- | :--- | :--- |
 | **OLED SDA** | SDA | **2** | Hardware I2C |
 | **OLED SCL** | SCL | **3** | Hardware I2C |
-| **Hall Sensor HES0** | Signal | **10** | South Pair (A) |
+| **Hall Sensor HES0** | Signal | **A0** | South Pair (A) |
 | **Hall Sensor HES1** | Signal | **A1** | South Pair (B) |
 | **Hall Sensor HES2** | Signal | **A2** | East Pair (A) |
 | **Hall Sensor HES3** | Signal | **A3** | East Pair (B) |
