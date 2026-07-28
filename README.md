@@ -11,7 +11,8 @@ An ultra-optimized, high-performance firmware for DIY 6-DOF (Six Degrees of Free
 
 Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B. 7** combines an integer-only **Q7/Q8 fixed-point math engine**, a **zero-RAM-buffer OLED UI**, and **decoupled real-time drift compensation** to deliver a smooth, high-precision CAD navigation experience.
 
----
+--- 
+
 
 ## 📖 The Story Behind O.R.B. 7
 
@@ -23,6 +24,13 @@ The OLED screen isn't just aesthetic—it fundamentally transforms how you use t
 
 > **Project Status (Alpha v0.0.1):** 
 > Development moved so fast that formal documentation is still catching up. Future updates will focus on modularizing the codebase for easier community hacking, but the core firmware is fully feature-complete, rock-solid, and ready for daily CAD work.
+
+---
+
+### 💡 Why "O.R.B. 7"?
+
+* **O.R.B. (Orbital Rotation Base):** Represents the core mechanical behavior of the 3D controller. Just like orbiting a 3D model in CAD software, the knob pivots and rotates freely around a central 3D space.
+* **7 (OLED):** Signifies the 7th major iteration of the hardware/firmware, marking the breakthrough integration of the OLED interface, real-time telemetry, and complete on-screen calibration.
 
 ---
 
