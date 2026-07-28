@@ -15,7 +15,7 @@ Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B. 7** c
 
 ## 📖 The Story Behind O.R.B. 7
 
-What started as a simple hobby project to enhance the fantastic [ardunnh](https://github.com/ardunnh)'s DIY SpaceMouse quickly turned into a two-month engineering rabbit hole. 
+What started as a simple hobby project to enhance the fantastic [ardunnh](https://github.com/AndunHH)'s DIY SpaceMouse quickly turned into a two-month engineering rabbit hole. 
 
 My initial goal was modest: add a small OLED display for a sleek, futuristic look and easier debugging. However, as I spent more time tweaking the system to meet my exact workflow needs, one optimization led to another. Hundreds of modifications later, the project evolved into a fully overhauled, production-ready firmware.
 
