@@ -5,6 +5,8 @@
 [![Version](https://img.shields.io/badge/Firmware-Alpha_v0.0.1-blue.svg)]()
 [![Hardware](https://img.shields.io/badge/MCU-ATmega32U4-red.svg)]()
 
+> ⚠️ **Note from the Author:** I am a CAD & maker enthusiast, not a professional software engineer! I'm currently learning programming and built this project using AI tools to help bring my vision to life. If you find bugs, rough code, or non-standard practices—or if you don't even know how to use `git` (just like me!)—you're in good company. Feedback, cleanups, and Pull Requests are always welcome!
+
 An ultra-optimized, high-performance firmware for DIY 6-DOF (Six Degrees of Freedom) 3D navigation controllers based on the **ATmega32U4** (Arduino Pro Micro). 
 
 Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B. 7** combines an integer-only **Q7/Q8 fixed-point math engine**, a **zero-RAM-buffer OLED UI**, and **decoupled real-time drift compensation** to deliver a smooth, high-precision CAD navigation experience.
