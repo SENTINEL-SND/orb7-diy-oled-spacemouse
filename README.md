@@ -1,4 +1,4 @@
-# 🛸 O.R.B. 7 (Orbital Rotation Base + OLED)
+# 🛸 O.R.B.7 (Orbital Rotation Base + OLED)
 ### DIY 6DOF SpaceMouse Pro Firmware | Hall-Effect & OLED Interface
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,12 +9,12 @@
 
 An ultra-optimized, high-performance firmware for DIY 6-DOF (Six Degrees of Freedom) 3D navigation controllers based on the **ATmega32U4** (Arduino Pro Micro). 
 
-Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B. 7** combines an integer-only **Q7/Q8 fixed-point math engine**, a **zero-RAM-buffer OLED UI**, and **decoupled real-time drift compensation** to deliver a smooth, high-precision CAD navigation experience.
+Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B.7** combines an integer-only **Q7/Q8 fixed-point math engine**, a **zero-RAM-buffer OLED UI**, and **decoupled real-time drift compensation** to deliver a smooth, high-precision CAD navigation experience.
 
 --- 
 
 
-## 📖 The Story Behind O.R.B. 7
+## 📖 The Story Behind O.R.B.7
 
 What started as a simple hobby project to enhance the fantastic [ardunnh](https://github.com/AndunHH)'s DIY SpaceMouse quickly turned into a two-month engineering rabbit hole. 
 
@@ -27,7 +27,7 @@ The OLED screen isn't just aesthetic—it fundamentally transforms how you use t
 
 ---
 
-### 💡 Why "O.R.B. 7"?
+### 💡 Why "O.R.B.7"?
 
 * **O.R.B. (Orbital Rotation Base):** Represents the core mechanical behavior of the 3D controller. Just like orbiting a 3D model in CAD software, the knob pivots and rotates freely around a central 3D space.
 * **7 (OLED):** Signifies the 7th major iteration of the hardware/firmware, marking the breakthrough integration of the OLED interface, real-time telemetry, and complete on-screen calibration.
