@@ -95,26 +95,6 @@ The OLED screen isn't just aesthetic—it fundamentally transforms how you use t
 
 ---
 
-## 🚀 Building & Flashing
-
-### Arduino IDE
-1. Install the **Arduino AVR Boards** core.
-2. Install the required dependencies via Library Manager:
-   * [NicoHood HID Library](https://github.com/NicoHood/HID)
-   * [SSD1306Ascii Library](https://github.com/greiman/SSD1306Ascii)
-3. Select Board: **Arduino Leonardo** or **Arduino Micro**.
-4. *(Optional)* Set `#define ENABLE_SERIAL_DEBUG 0` in `config.h` for maximum memory savings and peak performance.
-5. Compile and Upload.
-
----
-
-## 📊 Resource Usage (ATmega32U4)
-
-* **Flash Memory:** ~21 KB / 28.672 bytes (~73% utilization).
-* **Dynamic SRAM:** ~900 B / 2.560 bytes (~35% utilization, **>1.6 KB free RAM**).
-
----
-
 ## 📜 License & Acknowledgments
 
 * Special thanks to **ardunnh**, **TeachingTech**, and the broader open-source 3D SpaceMouse community for the foundational hardware and concept designs that inspired this firmware.
