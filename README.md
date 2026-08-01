@@ -22,7 +22,7 @@ My initial goal was modest: add a small OLED display for a sleek look and easier
 
 In **v0.0.4**, I expanded the ecosystem with a driverless **WebHID Browser Studio** (featuring a Three.js 3D motion viewport, Chart.js curve visualizer, and a 20-second limits calibration wizard). Together, the OLED handles on-the-fly workbench assembly, while the Web Studio handles deep visual CAD tuning.
 
-> [!TIP]
+> [!IMPORTANT]
 > ### 🎯 THE CROWN JEWEL: PC-FREE HARDWARE ASSEMBLY & SENSOR ALIGNMENT
 > 
 > Building a 3D Hall-effect SpaceMouse usually involves painful trial-and-error—guessing magnet polarities, plugging into a PC, opening Serial Monitors, and reflashing code just to check if structural bolts are unevenly tightened.
