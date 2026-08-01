@@ -8,6 +8,27 @@
 
 > ⚠️ **Note from the Author:** I am a CAD & maker enthusiast, not a professional software engineer! I'm currently learning programming and built this project using AI tools to help bring my vision to life. If you find bugs, rough code, or non-standard practices—or if you don't even know how to use `git` (just like me!)—you're in good company. Feedback, cleanups, and Pull Requests are always welcome!
 
+---
+
+> [!TIP]
+> ### ⚡ 100% COMPATIBLE WITH ORIGINAL DIY SPACEMOUSE BUILDS (NO OLED REQUIRED!)
+> 
+> **Don't have an OLED screen on your DIY SpaceMouse? No problem!** 
+> 
+> **O.R.B.7** is fully backward-compatible with standard 8-channel Hall-effect builds (e.g., *TeachingTech* or *ArdunHH* designs). Simply open `config.h` and set:
+> ```cpp
+> #define ENABLE_OLED 0
+> ```
+> The OLED driver, UI code, and graphics are automatically stripped at compile-time, freeing up Flash memory while giving your original hardware a **massive performance upgrade**:
+> 
+> * 🌐 **Full WebHID 3D Studio Support:** Configure, calibrate, tune Q7/Q8 response curves, and visualize 3D motion live in Chrome/Edge **without installing any drivers or PC software!**
+> * 🚀 **Fixed-Point Motion Engine (Q7/Q8):** Integer-only calculations for ultra-low latency 125Hz CAD navigation.
+> * 🔥 **Thermal Anti-Drift Engine:** Decoupled sensor tracking stops the cursor from drifting as sensors warm up.
+> * ⚡ **Accelerated 500 kHz ADC Sampling:** Doubled analog read throughput for snappy, jitter-free input.
+> * 🎮 **Scalable Button Architecture:** Native support for mapping anywhere from 0 up to 32 hardware push-buttons.
+
+---
+
 An ultra-optimized, high-performance firmware for DIY 6-DOF (Six Degrees of Freedom) 3D navigation controllers based on the **ATmega32U4** (Arduino Pro Micro). 
 
 Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B.7** combines a **standalone OLED hardware assembly debugger**, an integer-only **Q7/Q8 fixed-point math engine**, decoupled real-time drift compensation, and a **driverless WebHID 3D Studio** to deliver a smooth, high-precision CAD navigation experience.
@@ -92,25 +113,6 @@ Manage all 32 internal EEPROM parameters directly from Google Chrome, Edge, or B
 * **Sensors:** 8x Ratiometric Linear Hall-Effect Sensors (AH49E or equivalent).
 * **Display:** 0.96" OLED SSD1306 (128x64 pixels, I2C address `0x3C`).
 * **Buttons:** Up to 32 Tactile Push Buttons (wired with internal `INPUT_PULLUP`).
-
----
-
-> [!TIP]
-> ### ⚡ 100% COMPATIBLE WITH ORIGINAL DIY SPACEMOUSE BUILDS (NO OLED REQUIRED!)
-> 
-> **Don't have an OLED screen on your DIY SpaceMouse? No problem!** 
-> 
-> **O.R.B.7** is fully backward-compatible with standard 8-channel Hall-effect builds (e.g., *TeachingTech* or *ArdunHH* designs). Simply open `config.h` and set:
-> ```cpp
-> #define ENABLE_OLED 0
-> ```
-> The OLED driver, UI code, and graphics are automatically stripped at compile-time, freeing up Flash memory while giving your original hardware a **massive performance upgrade**:
-> 
-> * 🌐 **Full WebHID 3D Studio Support:** Configure, calibrate, tune Q7/Q8 response curves, and visualize 3D motion live in Chrome/Edge **without installing any drivers or PC software!**
-> * 🚀 **Fixed-Point Motion Engine (Q7/Q8):** Integer-only calculations for ultra-low latency 125Hz CAD navigation.
-> * 🔥 **Thermal Anti-Drift Engine:** Decoupled sensor tracking stops the cursor from drifting as sensors warm up.
-> * ⚡ **Accelerated 500 kHz ADC Sampling:** Doubled analog read throughput for snappy, jitter-free input.
-> * 🎮 **Scalable Button Architecture:** Native support for mapping anywhere from 0 up to 32 hardware push-buttons.
 
 ---
 
