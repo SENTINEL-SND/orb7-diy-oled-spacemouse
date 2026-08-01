@@ -5,7 +5,8 @@
 #include "parameterMenu.h"
 
 #if ENABLE_SERIAL_DEBUG
-// FIXED: Signature updated to use strict int16_t and uint8_t types for 32-bit portability and consistency [1, 2]
+// Debugging outputs are completely compiled out when ENABLE_SERIAL_DEBUG is 0.
+// Type signatures strictly mapped to 16-bit to ensure cross-platform ABI alignment and SRAM safety.
 void debugOutput1(int16_t* rawReads, uint8_t* keyVals);
 void debugOutput2(int16_t* centered);
 void debugOutput4(int16_t* velocity, uint8_t* keyOut);
@@ -20,6 +21,7 @@ bool isDebugOutputDue();
 
 void updateFrequencyReport();
 #else
+// Stub definitions guaranteeing zero flash footprint when disabled
 #define debugOutput1(rawReads, keyVals) ((void)0)
 #define debugOutput2(centered) ((void)0)
 #define debugOutput4(velocity, keyOut) ((void)0)
@@ -32,9 +34,18 @@ void updateFrequencyReport();
 #define updateFrequencyReport() ((void)0)
 #endif
 
-// FIXED: Parameters updated to standard C++ bool type and explicit int16_t sizing [2]
+/// @brief Establishes baseline sensor rest states (Zeroing) with safety validation boundaries.
+/// @param centerPoints Output array receiving the averaged zero-state coordinates.
+/// @param numIterations Number of sampling loops to execute.
+/// @param debugFlag Triggers serial evaluation prints if enabled.
+/// @return True if successful without triggering mechanical displacement warnings.
 bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag);
 
+/// @brief Decoupled, independent-axis algorithm compensating for thermal drift or mechanical hysteresis.
+/// @param raw Array of live raw sensor ADC readings.
+/// @param center Array of established baseline rest coordinates.
+/// @param offset Output array of the calculated live correctional drift offsets.
+/// @param par Structural reference to runtime threshold parameters.
 void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData& par);
 
 #endif // CALIBRATION_H

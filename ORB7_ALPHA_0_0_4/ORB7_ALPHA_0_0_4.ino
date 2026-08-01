@@ -1,30 +1,42 @@
-#include <Arduino.h>
-#include <Wire.h> // Included to support global Wire timeout configurations
+/*
+ * SPACE MOUSE PRO EMULATOR (6DOF DIY) - MAIN INO ENTRY FILE
+ * Firmware Version: ALPHA 0.0.4
+ * Architecture: ATmega32U4 (Arduino Pro Micro, 5V, 16 MHz)
+ */
 
-// The user specific settings, like pin mappings or special configuration variables and
-// sensitivities are stored in config.h. Please open config_sample.h, adjust your settings and save
-// it as config.h
+#include <Arduino.h>
+#include <Wire.h> // Included to support global Wire I2C timeout configurations
+
+// The user-specific settings, pin mappings, and hardware configuration definitions
 #include "config.h"
 #include "parameterMenu.h"
 
 // Include inbuilt Arduino HID library by NicoHood: https://github.com/NicoHood/HID
 #include "HID.h"
 
-// header file for calibration output and helper routines
+// Header file for calibration output, filters, and helper routines
 #include "calibration.h"
 #include "calibrationChecks.h"
 
-// header to calculate the kinematics of the mouse
+// Header executing the core kinematic math across all 6 degrees of freedom
 #include "kinematics.h"
 
-// header file for reading the keys
+// Header for processing physical hardware tactile switches
 #include "spaceKeys.h"
 
-// header for HID emulation of the spacemouse
+// Header for HID USB composite emulation
 #include "SpaceMouseHID.h"
 
-// Header for the OLED display
+// Header managing the high-speed RAM-less SSD1306 OLED interface
 #include "oledDisplay.h"
+
+// Header for WebHID bi-directional communication protocol
+#include "webHID.h"
+
+// Fallback safety to ensure the ADC runs fast enough to maintain ultra-low loop latency
+#ifndef ADC_PRESCALER_PRESET
+  #define ADC_PRESCALER_PRESET 0x05
+#endif
 
 void setup();
 void loop();
@@ -32,21 +44,21 @@ void loop();
 void setAnalogReferenceVoltage(int dbg);
 #endif
 
-// FIXED: Variables globally promoted to strict int16_t for 32-bit portability and consistency [2]
+// Global motion tracking arrays explicitly promoted to 16-bit to ensure cross-platform ABI safety
 int16_t rawReads[8];
 int16_t centered[8];
 int16_t centerPoints[8];
 int16_t offsets[8];
 
-// Resulting calculated velocities / movements
-// int16_t to match what the HID protocol expects.
+// Resulting calculated velocities mapping directly to the HID protocol expected bounds (-350 to +350)
 int16_t velocity[6];
 
-// global parameters (also stored in EEPROM)
+// Global parameter definitions persisted directly to EEPROM
 ParamStorage parStorage;
 
-// CONDITIONAL STRUCT INITIALIZATION
-// Cuts sizeof(ParamData) from 542 bytes to 2 bytes when serial debugging is disabled (Saves massive Flash)
+// Conditional Struct Initialization:
+// Trims sizeof(ParamData) from 542 bytes down to 2 bytes when serial debugging is disabled,
+// reclaiming massive amounts of Flash memory for the OLED graphics routines.
 #if ENABLE_SERIAL_DEBUG
 ParamData par = {.values = &parStorage,
                  .description = {
@@ -65,8 +77,8 @@ ParamData par = {.values = &parStorage,
                      {PARAM_TYPE_INT, "SENS_RZ", &parStorage.rotZ_sensitivity_q7},        //      12
                      {PARAM_TYPE_INT, "MODFUNC", &parStorage.modFunc},                   //      13
                      {PARAM_TYPE_INT, "MOD_A", &parStorage.slope_at_zero_q8},            //      14
-                     {PARAM_TYPE_INT, "MOD_B", &parStorage.slope_at_end_q8},             //      15  <-- FIXED: MOD_B restored dynamically [5]
-                     {PARAM_TYPE_BOOL, "INVX", &parStorage.invX},                        //      16  <-- Shifted indices
+                     {PARAM_TYPE_INT, "MOD_B", &parStorage.slope_at_end_q8},             //      15
+                     {PARAM_TYPE_BOOL, "INVX", &parStorage.invX},                        //      16
                      {PARAM_TYPE_BOOL, "INVY", &parStorage.invY},                        //      17
                      {PARAM_TYPE_BOOL, "INVZ", &parStorage.invZ},                        //      18
                      {PARAM_TYPE_BOOL, "INVRX", &parStorage.invRX},                      //      19
@@ -88,56 +100,51 @@ ParamData par = {.values = &parStorage,
 ParamData par = {.values = &parStorage};
 #endif
 
-// FIXED: Replaced standard int type array with uint8_t to prevent SRAM waste [6]
+// Physical button states minimized to 8-bit tracking preventing SRAM waste
 uint8_t keyVals[NUMKEYS];
-
-// key event, after debouncing. It is 1 only for a single sample
 uint8_t keyOut[NUMKEYS];
-
-// state of the key, which stays 1 as long as the key is pressed
 uint8_t keyState[NUMKEYS];
 
 /**
- * @brief Setup the SpaceMouse, called by system-start
+ * @brief Setup the SpaceMouse firmware, triggered by system reset or power-on.
  */
 void setup() {
-  // FIXED: Set ADC prescaler to 32 (ADPS2=1, ADPS1=0, ADPS0=1) to double clock speed to 500 kHz
-  // This reduces physical analog conversion time per read from 52 us to only 26 us safely!
-  ADCSRA = (ADCSRA & 0xF8) | 0x05;
+  // Directly configure the hardware multiplexer ADC prescaler via the ADCSRA register.
+  // E.g., 0x05 scales the clock to 500 kHz, safely reducing per-read sampling time from 52us down to 26us.
+  ADCSRA = (ADCSRA & 0xF8) | (ADC_PRESCALER_PRESET & 0x07);
 
-// Get parameters from EEPROM
+// Initialize configuration definitions from EEPROM block with XOR checks
 #if PARAM_IN_EEPROM > 0
   getParametersFromEEPROM(par);
 #endif
 
-// setup the keys e.g. to internal pull-ups
+// Initialize hardware GPIO states for buttons, utilizing internal MCU resistors
 #if NUMKEYS > 0
   setupKeys();
 #endif
 
 #ifdef HALLEFFECT
-  // Set the ADC reference voltage to 2,56V if HALLEFFECT is defined, 5V otherwise.
-  // It is important the reference Voltage is set before the Zeroing of the sensors is executed.
+  // Establish the ADC reference voltage baseline (typically 2.56V INTERNAL for Hall effect ranges)
   setAnalogReferenceVoltage(0);
 #endif
 
 #if ENABLE_SERIAL_DEBUG
-  // Setup Serial only if serial interface parser is compiled (timeout purged to prevent blockages)
   Serial.begin(115200);
 #endif
 
-  // 1. Play boot-screen splash loading animation (Initializes Wire I2C internally)
+  // 1. Awaken the display via I2C and render the splash boot sequence
   initOledDisplay();
 
-  // 2. Clear display and show visual instruction to keep hands off during calibration
+  // 2. Render visual instructions requesting the user to maintain the 3D knob at rest
   showCalibrationScreen();
 
-  // 3. Calibrate centers in background
-  // Enforce loop-protection only if serial debug is disabled. This bypasses
-  // the catch-22 lock when calibrating a completely uncalibrated magnet plate.
+  // 3. Calibrate base rest coordinates non-blockingly (Zeroing Sequence)
 #if ENABLE_SERIAL_DEBUG
+  // When debugging, enforce the legacy sequence directly
   busyZeroing(centerPoints, 1000, true);
 #else
+  // Active boot logic loop attempts to zero the knob up to 3 times before giving up.
+  // Replaces the infinite hardware lockout loop when uncalibrated magnetic plates are first installed.
   uint8_t attempts = 0;
   bool calSuccess = false;
   while (attempts < 3) {
@@ -148,25 +155,26 @@ void setup() {
     attempts++;
     if (attempts < 3) {
       showCalibrationWarningScreen();
-      delay(1500); // Wait for the user to completely release the knob
+      delay(1500); // Give the user time to release mechanical pressure
       showCalibrationScreen();
     }
   }
 
-  // FIXED: Replaced blocking physical bypass loop with automatic warning & fallback boot [4]
+  // Gracefully transition boot execution even if calibration attempts are entirely exhausted
   if (!calSuccess) {
     showCalibrationFailedScreen();
-    delay(2500); // Show bypass notification on OLED briefly before continuing boot
+    delay(2500); 
   }
 #endif
 
+  // Ensure thermal drift baseline is clean before allowing operational tracking
   for (uint8_t i = 0; i < 8; i++) {
     offsets[i] = 0;
   }
 }
 
 /**
- * @brief Main-loop of the SpaceMouse, called cyclic by system
+ * @brief Primary Operational Loop processing raw analog reads to USB HID reports efficiently.
  */
 void loop() {
   static int debug = STARTDEBUG;
@@ -174,7 +182,7 @@ void loop() {
 #if ENABLE_SERIAL_DEBUG
   static bool showMenu = false;
 
-  //--- check if the user entered a debug mode via serial interface
+  // Evaluate the serial buffer strictly if debug monitoring is requested
   if ((debug != 20) && (debug != 30)) { 
     double num;
 
@@ -227,7 +235,7 @@ void loop() {
     }
   }
 
-  //--- run parameter-menu
+  // Engage the Serial CLI parameter menu sequence
   if (debug == 30) {
 #if PARAM_IN_EEPROM > 0
     if (parameterMenu(par) == 0) {
@@ -241,16 +249,15 @@ void loop() {
   }
 #endif // ENABLE_SERIAL_DEBUG
 
-  //--- Read joystick values. 0-1023
+  // --- 1. CORE PIPELINE: Sample hardware ADCs employing oversampling and EMA smoothing
   readAllFromJoystick(rawReads);
 
-//--- Reading of key presses
+  // --- 2. Evaluate physical hardware button debounce logic
 #if NUMKEYS > 0
   readAllFromKeys(keyVals);
 #endif
 
 #if ENABLE_SERIAL_DEBUG
-// Report back 0-1023 raw ADC 10-bit values if enabled
 #ifdef HALLEFFECT
   if ((debug == 1) || (debug == 10)) {
     debugOutput1(rawReads, keyVals);
@@ -261,14 +268,13 @@ void loop() {
   }
 #endif
 
-  //--- calibrate the joystick
   if (debug == 11) {
     busyZeroing(centerPoints, 2000, true);
     debug = -1;
   }
 #endif // ENABLE_SERIAL_DEBUG
 
-  //--- Calculate drift compensation offsets
+  // --- 3. Evaluate environmental drift compensation logic independently per axis
   if (par.values->compEnabled == 1) {
 #if ENABLE_SERIAL_DEBUG
     if (debug != 20) { 
@@ -288,54 +294,49 @@ void loop() {
   }
 
 #if ENABLE_SERIAL_DEBUG
-  // Report compensation-offset values
   if (debug == 31) {
     debugOutput2(offsets);
   }
 #endif
 
-  //--- Subtract centre position and drift-offsets from measured position to determine movement.
+  // --- 4. Offset Subtraction: Normalize data removing mechanical center bounds and drift calculations
   for (uint8_t i = 0; i < 8; i++) {
     centered[i] = rawReads[i] - centerPoints[i] + offsets[i];
   }
 
 #if ENABLE_SERIAL_DEBUG
-  //--- calibrate MinMax values
   if (debug == 20) {
     if (calcMinMax(centered) == 0) { 
       debug = -1;                    
     }
   }
 
-  // Report centered joystick values if enabled.
   if (debug == 2) {
     debugOutput2(centered);
   }
 #endif
 
-  //--- Set movement values to zero if movement is below deadzone threshold, scale to +/-350
+  // --- 5. Apply physical noise filtering (Deadzones) and scale data dynamically to symmetrical arrays
   FilterAnalogReadOuts(centered, par);
 
 #if ENABLE_SERIAL_DEBUG
-  // Report centered joystick values. Filtered for deadzone.
   if (debug == 3) {
     debugOutput2(centered);
   }
 #endif
 
-  //--- Calculate the kinematic (centered->velocity)
+  // --- 6. Formulate 6DOF vector space translations handling logic gates and mapping curve multipliers
   calculateKinematic(centered, velocity, par);
 
-//--- evaluate keys
+  // --- 7. Resolve discrete key combinations triggering OLED interactions
 #if NUMKEYS > 0
   evalKeys(keyVals, keyOut, keyState);
   
-  // Handle menu navigation inputs and actions
+  // Forward button presses directly into the OLED UI logic hierarchy
   processMenuInput(keyState, par);
 #endif
 
 #if ENABLE_SERIAL_DEBUG
-  // report translation and rotation values if enabled
   if (debug == 4) {
     debugOutput4(velocity, keyOut);
   }
@@ -345,7 +346,7 @@ void loop() {
   }
 #endif
 
-// if the kill-key feature is enabled, rotations or translations are killed
+  // Execute Kill-Key override mutations if designated by the configuration
 #if (NUMKILLKEYS == 2)
   if (keyVals[KILLROT] == LOW) {
     velocity[ROTX] = 0;
@@ -360,13 +361,12 @@ void loop() {
 #endif
 
 #if ENABLE_SERIAL_DEBUG
-  // report velocity and keys after possible kill-key feature
   if (debug == 6) {
     debugOutput4(velocity, keyOut);
   }
 #endif
 
-  //--- exchange axis if desired
+  // Mutate axis arrangements to comply with specific CAD engine orientations if activated
   if (par.values->switchYZ == 1) {
     switchYZ(velocity);
   }
@@ -374,10 +374,13 @@ void loop() {
     switchXY(velocity);
   }
 
-  // exclusive mode: rotation OR translation
+  // --- 8. Resolve translation OR rotation dominance muting mechanisms
   if (par.values->exclusiveMode == 1) {
     exclusiveMode(velocity, par.values->exclusiveHysteresis);
   }
+  
+  // --- WEBHID TELEMETRY: Stream synchronized values to the browser at loop end
+  streamWebHIDRawData(rawReads);
 
 #if ENABLE_SERIAL_DEBUG
   if (debug == 61) {
@@ -385,7 +388,9 @@ void loop() {
   }
 #endif
 
-  // --- KINEMATIC SUPPRESSION AND KEY BLOCK DURING OLED NAVIGATION ---
+  // --- 9. KINEMATIC SUPPRESSION AND KEY BLOCK DURING OLED NAVIGATION ---
+  // Overrides the HID payload buffers with zeroes if the user is actively scrolling through OLED parameters.
+  // Ensures settings manipulation doesn't violently whip the 3D viewport canvas on the host PC.
   if (isOledMenuOpen()) {
     for (uint8_t i = 0; i < 6; i++) {
       velocity[i] = 0;
@@ -397,6 +402,7 @@ void loop() {
     SpaceMouseHID.send_command(0, 0, 0, 0, 0, 0, NULL, debug);
 #endif
   } else {
+    // Standard execution pushes finalized 6DOF kinematic matrix to the PluggableUSB core dispatcher
     SpaceMouseHID.send_command(velocity[ROTX], velocity[ROTY], velocity[ROTZ], velocity[TRANSX],
                                velocity[TRANSY], velocity[TRANSZ], keyState, debug);
   }
@@ -407,30 +413,31 @@ void loop() {
   }
 #endif
 
-  // Check for the LED state by calling updateLEDState.
-  SpaceMouseHID.updateLEDState();
+  // Empty the USB RX buffers continuously avoiding queue blockages and processing WebHID payloads
+  SpaceMouseHID.receiveHostData(par);
 
-  // Update the OLED display layout
+  // --- 10. Update pixels incrementally on the OLED UI preserving high loop refresh rates
   updateOledDisplay(velocity, keyState, par);
 
 } // end loop()
 
 #ifdef HALLEFFECT
 /**
- * @brief Set the analog reference to 5V for debug 1 and to 2.56V otherwise
+ * @brief Modifies the underlying analog comparator baseline voltage scale
  */
 void setAnalogReferenceVoltage(int dbg) {
 #if ENABLE_SERIAL_DEBUG
   if (dbg == 1) { 
-    analogReference(DEFAULT);
+    analogReference(DEFAULT); // Fallback to 5V standard operation for mechanical diagnostics
   } else { 
-    analogReference(INTERNAL);
+    analogReference(INTERNAL); // 2.56V
   }
 #else
-  // Directly configure Internal 2.56V to bypass debugging code and save Flash bytes
+  // Bypass serial comparisons completely pushing the 2.56V ref configuration directly
   analogReference(INTERNAL);
 #endif
 
+  // Permit comparator hardware to settle physically before resuming standard pipeline actions
   delay(100);
   int tempReads[8];
   for (uint8_t i = 0; i < 8; i++) { 

@@ -3,28 +3,27 @@
 #include "kinematics.h"
 #include "config.h"
 
-// A dead zone above the following value will trigger a warning
+// A dead zone above the following value will trigger a mechanical warning during zeroing
 #define DEADZONEWARNING 10
 
+// Sanity boundaries defining the expected hardware midpoint response.
+// Values outside this range generally indicate severe magnetic misalignment or reversed polarity.
 #ifndef HALLEFFECT
-  // A centerpoint outside those values will trigger a warning (384..640)
   #define CENTERPOINTWARNINGMIN (512 - 128)
   #define CENTERPOINTWARNINGMAX (512 + 128)
 #else
-  // Centerpoint configuration parameters adjusted for Hall Effect sensors
   #define CENTERPOINTWARNINGMIN (400)
   #define CENTERPOINTWARNINGMAX (800)
 #endif
 
 #if ENABLE_SERIAL_DEBUG
 #ifndef HALLEFFECT
-char const *axisNames[] = {"AX:", "AY:", "BX:", "BY:", "CX:", "CY:", "DX:", "DY:"}; // 8
+char const *axisNames[] = {"AX:", "AY:", "BX:", "BY:", "CX:", "CY:", "DX:", "DY:"}; 
 #else
-char const *axisNames[] = {"H0:", "H1:", "H2:", "H3:", "H6:", "H7:", "H8:", "H9:"}; // 8
+char const *axisNames[] = {"H0:", "H1:", "H2:", "H3:", "H6:", "H7:", "H8:", "H9:"}; 
 #endif
-char const *velNames[] = {"TX:", "TY:", "TZ:", "RX:", "RY:", "RZ:"}; // 6
+char const *velNames[] = {"TX:", "TY:", "TZ:", "RX:", "RY:", "RZ:"}; 
 
-// FIXED: Parameters updated to explicit int16_t sizing for 32-bit portability
 void printArray(int16_t* arr, int16_t size) {
   Serial.print("{");
   for (int16_t i = 0; i < size; i++) {
@@ -36,7 +35,6 @@ void printArray(int16_t* arr, int16_t size) {
   Serial.println("}");
 }
 
-// FIXED: Signature updated to use rawReads as int16_t* and keyVals as uint8_t* to prevent compile errors
 void debugOutput1(int16_t* rawReads, uint8_t* keyVals) {
   if (isDebugOutputDue()) {
     for (uint8_t i = 0; i < 8; i++) {
@@ -53,7 +51,6 @@ void debugOutput1(int16_t* rawReads, uint8_t* keyVals) {
   }
 }
 
-// FIXED: Parameter updated to explicit int16_t sizing for 32-bit portability
 void debugOutput2(int16_t* centered) {
   if (isDebugOutputDue()) {
     for (uint8_t i = 0; i < 8; i++) {
@@ -78,7 +75,6 @@ void debugOutput4(int16_t* velocity, uint8_t* keyOut) {
   }
 }
 
-// FIXED: Parameters updated to explicit int16_t sizing for 32-bit portability
 void debugOutput5(int16_t* centered, int16_t* velocity) {
   if (isDebugOutputDue()) {
     for (uint8_t i = 0; i < 8; i++) {
@@ -93,7 +89,6 @@ void debugOutput5(int16_t* centered, int16_t* velocity) {
   }
 }
 
-// FIXED: Parameter updated to explicit int16_t sizing for 32-bit portability
 void debugOutputOffsets(int16_t* offset) {
   if (isDebugOutputDue()) {
     for (uint8_t i = 0; i < 8; i++) {
@@ -106,7 +101,6 @@ void debugOutputOffsets(int16_t* offset) {
   }
 }
 
-// FIXED: Parameters updated to explicit int16_t sizing for 32-bit portability
 void debugDriftPlotter(int16_t* raw, int16_t* centered, int16_t* offset, int16_t axis) {
   if (isDebugOutputDue()) {
     Serial.print(raw[axis]);
@@ -126,7 +120,7 @@ void debugDriftPlotter(int16_t* raw, int16_t* centered, int16_t* offset, int16_t
 #define MINMAX_MAXWARNING (+100)
 #endif
 
-// FIXED: Declarations and parameters updated to explicit int16_t sizing
+// Semi-automatic minimum and maximum extreme bounding calibration tracker.
 int16_t calcMinMax(int16_t* centered) {    
   static int16_t minMaxCalcState = 0;  
   static int16_t minValue[8];          
@@ -203,9 +197,13 @@ void updateFrequencyReport() {
 }
 #endif
 
-// FIXED: Sizing and type declarations updated to explicit int16_t and standard C++ bool
+// Performs blocking sampling loop to determine average rest position of all sensors.
 bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag){
   bool noWarningsOccured = true;
+
+  // Runtime safety guard against zero iterations division exception
+  if (numIterations == 0) numIterations = 1;
+
 #if ENABLE_SERIAL_DEBUG
   if (debugFlag == true){
     #ifndef HALLEFFECT
@@ -215,13 +213,16 @@ bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag){
     #endif
   }
 #endif
+
   int16_t act[8];
   uint32_t mean[8] = {0};
   int16_t minValue[8];
   int16_t maxValue[8];
+
   for (uint8_t i = 0; i < 8; i++){
     minValue[i] = 1023; maxValue[i] = 0;
   }
+
   for (uint16_t count = 0; count < numIterations; count++){
     readAllFromJoystick(act);
     for (uint8_t i = 0; i < 8; i++){
@@ -230,17 +231,20 @@ bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag){
       if (act[i] > maxValue[i]){maxValue[i] = act[i];}
     }
   }
+
   int16_t deadZone[8];
   int16_t maxDeadZone = 0;
+
   for (uint8_t i = 0; i < 8; i++){
     centerPoints[i] = mean[i] / numIterations;
     deadZone[i] = maxValue[i] - minValue[i];
     if (deadZone[i] > maxDeadZone){maxDeadZone = deadZone[i];}
 
-    // Always validate movement limits even when serial debug is off to support boot loop logic
+    // Identify mechanical instability or interference during calibration procedure
     if (deadZone[i] > DEADZONEWARNING){ noWarningsOccured = false; }
     if (centerPoints[i] < CENTERPOINTWARNINGMIN || centerPoints[i] > CENTERPOINTWARNINGMAX){ noWarningsOccured = false; }
   }
+
 #if ENABLE_SERIAL_DEBUG
   if (debugFlag){
     Serial.println(F("##  Min - Mean- Max -> Dead Zone"));
@@ -258,7 +262,8 @@ bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag){
   return noWarningsOccured;
 }
 
-// IMPLEMENTED: Decoupled per-axis drift compensation and adaptive muting logic
+// Highly decoupled drift compensation algorithm. Evaluates and compensates sensors entirely independently.
+// Prevents global drift suppression lockups if only one sensor is actively moving.
 void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData& par) {
   static int16_t consolidatedOffset[8] = {0};
   static int32_t cmpMean[8] = {0};
@@ -271,7 +276,7 @@ void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData&
 
   unsigned long now = millis();
 
-  // Detect external recalibration (e.g., Re-Zero action or startup center update)
+  // Detect external recalibration (e.g., Re-Zero OLED action or startup center update)
   bool centerChanged = false;
   for (uint8_t i = 0; i < 8; i++) {
     if (center[i] != lastCenter[i]) {
@@ -280,6 +285,7 @@ void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData&
     }
   }
 
+  // Reset internal tracking mechanisms if the baseline reference is physically displaced
   if (isFirstRun || centerChanged) {
     for (uint8_t i = 0; i < 8; i++) {
       cmpStart[i] = now;
@@ -295,10 +301,11 @@ void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData&
     if (centerChanged) return;
   }
 
-  // FIXED: Fetch and sanitize denominator explicitly against Division-by-Zero hardware crash
-  int16_t validPts = par.values->compNoOfPoints;
-  if (validPts <= 0) validPts = 1; 
+  // Strictly clamp validPts to range [1, 500] to prevent int16_t counter overflow & infinite accumulation loops.
+  // Directly resolves bug where arbitrary EEPROM parameters could permanently brick the offset logic.
+  int16_t validPts = constrain(par.values->compNoOfPoints, 1, 500);
 
+  // Independent axis resolution iteration
   for (uint8_t i = 0; i < 8; i++) {
     int16_t r = raw[i];
 
@@ -324,8 +331,7 @@ void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData&
       continue;
     }
 
-    // Adaptive Muting: Axis is stable (drifting). Zero out output reading dynamically.
-    // Formula: centered[i] = raw[i] - center[i] + offset[i] -> centered[i] = 0
+    // Adaptive Muting: Axis is stable (drifting). Zero out output reading dynamically during sampling.
     offset[i] = center[i] - r;
 
     // Accumulate points if the minimum monitoring window duration is met
@@ -333,12 +339,12 @@ void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData&
       cmpMean[i] += r;
       cmpNo[i]++;
 
+      // Latch and consolidate a new valid drift offset once the sample buffer is full
       if (cmpNo[i] >= validPts) {
-        // Safe commit of new baseline drift offset for this axis
         consolidatedOffset[i] = center[i] - (int16_t)(cmpMean[i] / validPts);
         offset[i] = consolidatedOffset[i];
 
-        // Reset buffer variables to start next window cycle
+        // Reset buffer variables to start next window tracking cycle
         cmpMin[i] = 1023;
         cmpMax[i] = 0;
         cmpMean[i] = 0;

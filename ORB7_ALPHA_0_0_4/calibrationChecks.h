@@ -4,29 +4,43 @@
 /* Compile-time parameter validation checks
  * This file contains all static assertions and preprocessor checks
  * to validate configuration parameters in config.h during compilation.
+ * Prevents flashing unstable configurations to the MCU.
  */
+
+#include "config.h"
 
 // Check that NUMKILLKEYS does not exceed total number of keys
 #if (NUMKILLKEYS > NUMKEYS)
 #error "Number of Kill Keys can not be larger than total number of keys"
 #endif
 
-// FIXED: Symmetrical boundary check updated to >= to prevent out-of-bounds heap/stack memory access during runtime
+// Check that kill key indices are within valid range to prevent out-of-bounds array access
 #if (NUMKILLKEYS > 0 && ((KILLROT >= NUMKEYS) || (KILLTRANS >= NUMKEYS)))
 #error "Index of killkeys must be smaller than the total number of keys"
 #endif
 
-// Check KEYLIST size matches NUMKEYS
+// Check KEYLIST size matches NUMKEYS declaration
 #if NUMKEYS > 0
 constexpr int _keyListCompile[] = KEYLIST;
 static_assert(sizeof(_keyListCompile) / sizeof(_keyListCompile[0]) == NUMKEYS,
               "KEYLIST element count does not match NUMKEYS definition in config.h");
 
+// Recursive constexpr function to evaluate array membership at compile time
 constexpr bool _isValueInArray(const int *arr, int size, int idx, int value) {
   return (idx >= size)         ? false
          : (arr[idx] == value) ? true
                                : _isValueInArray(arr, size, idx + 1, value);
 }
 #endif
+
+// Static assertions for user config sanity & zero-division prevention in ADC filtering
+static_assert(ADC_OVERSAMPLES >= 1, "ADC_OVERSAMPLES in config.h must be at least 1");
+static_assert(ADC_EMA_SHIFT <= 8, "ADC_EMA_SHIFT in config.h must be between 0 and 8");
+static_assert(EXCL_RELAX_THRESHOLD > 0, "EXCL_RELAX_THRESHOLD in config.h must be greater than 0");
+
+// Static assertions for drift compensation parameter boundaries.
+// Prevents int16_t wrap-around and infinite sampling accumulation loops.
+static_assert(COMP_NR > 0 && COMP_NR <= 500, "COMP_NR in config.h must be between 1 and 500");
+static_assert(COMP_WAIT >= 10, "COMP_WAIT in config.h must be at least 10ms");
 
 #endif // CALIBRATION_CHECKS_h

@@ -1,1 +1,0 @@
-#define FW_RELEASE "ALPHA 0.0.1"

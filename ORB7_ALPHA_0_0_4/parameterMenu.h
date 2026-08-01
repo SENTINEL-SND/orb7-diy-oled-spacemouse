@@ -1,16 +1,20 @@
 // Header for parameter-menu specific functions and variables
+// Manages the persistent EEPROM storage struct and the Serial CLI definitions.
+
 #ifndef PARAMETERMENU_H
   #define PARAMETERMENU_H
 
   #include <Arduino.h> // Required for int16_t, int8_t and standard types
   #include "config.h"
 
-  // Updated to 32 parameters (slope_at_end restored as parameter 15)
+  // Defines the absolute number of persistent parameters managed by the EEPROM
   #define NUM_PARAMS         32   
 
-  #define MAX_PARAM_NAME_LEN 10   // maximum length of any parameter name
+  #define MAX_PARAM_NAME_LEN 10   // maximum length of any parameter name for the Serial CLI
 
-  // Magic Number updated to force parameter realignment with CRC verification enabled
+  // Magic Number enforces data structural alignment.
+  // Changing this value intentionally forces a factory reset on the next boot,
+  // which is highly recommended when adding or removing parameters in the struct below.
   #define MAGIC_NUMBER       1234567843L
   #define BASE_ADDRESS_MAGIC 0
   #define BASE_ADDRESS_PAR   4
@@ -19,7 +23,9 @@
   #define PARAM_TYPE_INT     2
   #define PARAM_TYPE_FLOAT   3
 
-  // Fixed-point scaling macros calculated at compile-time to prevent runtime float math
+  // Fixed-point scaling macros calculated at compile-time to prevent runtime floating-point overhead.
+  // Q7 implies 7 bits of fractional precision (Multiplier: 128.0).
+  // Q8 implies 8 bits of fractional precision (Multiplier: 256.0).
   #define SENS_TX_Q7 ((int16_t)(SENS_TX * 128.0f))
   #define SENS_TY_Q7 ((int16_t)(SENS_TY * 128.0f))
   #define SENS_PTZ_Q7 ((int16_t)(SENS_PTZ * 128.0f))
@@ -28,29 +34,31 @@
   #define SENS_RY_Q7 ((int16_t)(SENS_RY * 128.0f))
   #define SENS_RZ_Q7 ((int16_t)(SENS_RZ * 128.0f))
   #define SLOPE_A_Q8 ((int16_t)(MOD_A * 256.0f))
-  #define SLOPE_B_Q8 ((int16_t)(MOD_B * 256.0f)) // Fixed-point scaling for Parameter B
+  #define SLOPE_B_Q8 ((int16_t)(MOD_B * 256.0f))
 
+  // Core configuration structure written directly to the ATmega32U4 EEPROM.
+  // Relies exclusively on fixed-width integer types (int8_t, int16_t) to guarantee memory alignment
+  // and prevent cross-platform padding issues.
   typedef struct _ParamStorage {
     int16_t deadzone               = DEADZONE;
 
-    // Float sensitivity variables replaced by Q7/Q0 fixed-point 16-bit integers
+    // Float sensitivity variables replaced by Q7 fixed-point 16-bit integers
     int16_t transX_sensitivity_q7     = SENS_TX_Q7;
     int16_t transY_sensitivity_q7     = SENS_TY_Q7;
     int16_t pos_transZ_sensitivity_q7 = SENS_PTZ_Q7;
     int16_t neg_transZ_sensitivity_q7 = SENS_NTZ_Q7;
-    int16_t gate_neg_transZ           = GATE_NTZ; // Gate NTZ is stored directly as raw integer
+    int16_t gate_neg_transZ           = GATE_NTZ; 
     int16_t gate_rotX                 = GATE_RX;
     int16_t gate_rotY                 = GATE_RY;
     int16_t gate_rotZ                 = GATE_RZ;
 
-    // Float sensitivity variables replaced by Q7 fixed-point 16-bit integers
     int16_t rotX_sensitivity_q7       = SENS_RX_Q7;
     int16_t rotY_sensitivity_q7       = SENS_RY_Q7;
     int16_t rotZ_sensitivity_q7       = SENS_RZ_Q7;
 
     int16_t modFunc                   = MODFUNC;         
-    int16_t slope_at_zero_q8          = SLOPE_A_Q8; // slope_at_zero replaced by Q8 fixed-point integer
-    int16_t slope_at_end_q8           = SLOPE_B_Q8; // FIXED: slope_at_end restored as Q8 fixed-point integer
+    int16_t slope_at_zero_q8          = SLOPE_A_Q8; // Replaces 'slope_at_zero' as Q8 fixed-point integer
+    int16_t slope_at_end_q8           = SLOPE_B_Q8; // Replaces 'slope_at_end' as Q8 fixed-point integer
 
     int8_t  invX                   = INVX;
     int8_t  invY                   = INVY;
@@ -77,16 +85,17 @@
     // OLED Inactivity Sleep Timer (0 = OFF, 1 = 1m, 2 = 3m, 3 = 5m)
     int8_t  oledSleepTimer         = 2; 
 
-    // Dynamic key shortcuts for Left (L) and Right (R) buttons
+    // Dynamic key shortcuts for the primary physical buttons (L and R)
     int8_t  keyL_shortcut          = 2; // Default: SM_T (Top)
     int8_t  keyR_shortcut          = 1; // Default: SM_FIT (Fit)
 
-    // Dynamic calibration limits stored in EEPROM
+    // Dynamic calibration limits bounding the analog hardware range to the HID logical output
     int16_t minVals[8]             = {-400, -400, -400, -400, -400, -400, -400, -400};
     int16_t maxVals[8]             = {175, 175, 175, 175, 175, 175, 175, 175};
   } ParamStorage;
 
 #if ENABLE_SERIAL_DEBUG
+  // Descriptor strings and types strictly allocated only when Serial Debugging is active
   typedef struct _ParamDescription {
     int   type;
     char  name[MAX_PARAM_NAME_LEN+1];
@@ -97,12 +106,12 @@
   typedef struct _ParamData {
     ParamStorage*     values;
 #if ENABLE_SERIAL_DEBUG
-    // Compile-out the heavy descriptive table when debugging is off
+    // Compiles out the heavy descriptive table when debugging is off, saving huge amounts of SRAM/Flash
     ParamDescription  description[NUM_PARAMS+1];
 #endif
   } ParamData;
 
-  // EEPROM utilities are always needed
+  // EEPROM utilities are always compiled as they are required by the OLED interface
   void getParametersFromEEPROM(ParamData& par);
   void putParametersToEEPROM(ParamData& par);
 
@@ -116,6 +125,7 @@
   int    editParameters(ParamData& par);
   int    parameterMenu(ParamData& par);
 #else
+  // Macros silencing function calls at compile-time when Serial Debug is disabled
   #define userInput(value) (0)
   #define readParameter(i, par) (0.0)
   #define writeParameter(i, value, par) ((void)0)

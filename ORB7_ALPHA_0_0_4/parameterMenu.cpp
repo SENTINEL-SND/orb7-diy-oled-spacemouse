@@ -1,10 +1,11 @@
-// File for parameter-menu specific functions optimized to save Flash space
+// File for parameter-menu specific functions heavily optimized to save Flash/SRAM space
 
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "parameterMenu.h"
 
-// Local helper function to calculate an 8-bit XOR checksum of the ParamStorage bytes
+/// @brief Generates a fast, low-overhead 8-bit XOR checksum over the entire parameters struct.
+/// Guarantees that the loaded EEPROM data block is structurally coherent and not partially written.
 static uint8_t calculateChecksum(const ParamStorage &storage) {
   const uint8_t *ptr = (const uint8_t *)&storage;
   uint8_t checksum = 0;
@@ -22,20 +23,54 @@ void getParametersFromEEPROM(ParamData &par) {
   if (magicNumber == MAGIC_NUMBER) {
     EEPROM.get(BASE_ADDRESS_PAR, *par.values);
     
-    // Retrieve stored 8-bit XOR checksum from sequential address
+    // Retrieve stored 8-bit XOR checksum from sequential address directly succeeding the payload
     uint8_t storedChecksum = 0;
     int checksumAddress = BASE_ADDRESS_PAR + sizeof(ParamStorage);
     EEPROM.get(checksumAddress, storedChecksum);
     
-    // Compare stored with computed checksum
+    // Compare stored with dynamically computed checksum
     if (storedChecksum == calculateChecksum(*par.values)) {
       checksumValid = true;
     }
   }
 
+  // Fallback to factory defaults if the memory block fails integrity checks
   if (!checksumValid) {
-    // If checksum is corrupt or magic number is mismatched, flash default values
     putParametersToEEPROM(par); 
+  }
+
+  // --- EEPROM BOUNDARY CLEANSING ---
+  // Enforces strict operational boundaries against corrupt or manually manipulated EEPROM data.
+  // Prevents division-by-zero, array out-of-bounds, and mathematical asymptote explosions.
+  
+  if (par.values->deadzone < 0 || par.values->deadzone > 200) par.values->deadzone = DEADZONE;
+  if (par.values->globalSens < 10 || par.values->globalSens > 300) par.values->globalSens = 100;
+  if (par.values->slope_at_zero_q8 < 26 || par.values->slope_at_zero_q8 > 768) par.values->slope_at_zero_q8 = SLOPE_A_Q8;
+  if (par.values->slope_at_end_q8 < 26 || par.values->slope_at_end_q8 > 402) par.values->slope_at_end_q8 = SLOPE_B_Q8;
+  if (par.values->exclusiveHysteresis < 0 || par.values->exclusiveHysteresis > 500) par.values->exclusiveHysteresis = EXCL_HYST;
+  if (par.values->oledSleepTimer < 0 || par.values->oledSleepTimer > 3) par.values->oledSleepTimer = 2;
+  if (par.values->keyL_shortcut < 0 || par.values->keyL_shortcut >= 32) par.values->keyL_shortcut = 2;
+  if (par.values->keyR_shortcut < 0 || par.values->keyR_shortcut >= 32) par.values->keyR_shortcut = 1;
+
+  // Sanitize Q7 Sensitivities against <= 0 values that would trigger division-by-zero or disable kinematic axes
+  if (par.values->transX_sensitivity_q7 <= 0) par.values->transX_sensitivity_q7 = SENS_TX_Q7;
+  if (par.values->transY_sensitivity_q7 <= 0) par.values->transY_sensitivity_q7 = SENS_TY_Q7;
+  if (par.values->pos_transZ_sensitivity_q7 <= 0) par.values->pos_transZ_sensitivity_q7 = SENS_PTZ_Q7;
+  if (par.values->neg_transZ_sensitivity_q7 <= 0) par.values->neg_transZ_sensitivity_q7 = SENS_NTZ_Q7;
+  if (par.values->rotX_sensitivity_q7 <= 0) par.values->rotX_sensitivity_q7 = SENS_RX_Q7;
+  if (par.values->rotY_sensitivity_q7 <= 0) par.values->rotY_sensitivity_q7 = SENS_RY_Q7;
+  if (par.values->rotZ_sensitivity_q7 <= 0) par.values->rotZ_sensitivity_q7 = SENS_RZ_Q7;
+
+  // Sanitize Drift parameters preventing infinite loops in accumulation tracking
+  if (par.values->compNoOfPoints <= 0 || par.values->compNoOfPoints > 500) par.values->compNoOfPoints = COMP_NR;
+  if (par.values->compWaitTime < 10 || par.values->compWaitTime > 5000) par.values->compWaitTime = COMP_WAIT;
+  if (par.values->compMinMaxDiff <= 0 || par.values->compMinMaxDiff > 100) par.values->compMinMaxDiff = COMP_MDIFF;
+  if (par.values->compCenterDiff <= 0 || par.values->compCenterDiff > 200) par.values->compCenterDiff = COMP_CDIFF;
+
+  // Sanitize dynamic Calibration limits against inverted or impossible polarities
+  for (uint8_t i = 0; i < 8; i++) {
+    if (par.values->minVals[i] >= 0 || par.values->minVals[i] < -1023) par.values->minVals[i] = -400;
+    if (par.values->maxVals[i] <= 0 || par.values->maxVals[i] > 1023) par.values->maxVals[i] = 175;
   }
 }
 
@@ -44,7 +79,7 @@ void putParametersToEEPROM(ParamData &par) {
   EEPROM.put(BASE_ADDRESS_PAR, *par.values);
   EEPROM.put(BASE_ADDRESS_MAGIC, magicNumber);
   
-  // Compute and store 8-bit XOR checksum
+  // Calculate and commit the XOR checksum immediately following the struct payload
   uint8_t checksum = calculateChecksum(*par.values);
   int checksumAddress = BASE_ADDRESS_PAR + sizeof(ParamStorage);
   EEPROM.put(checksumAddress, checksum);
@@ -53,7 +88,8 @@ void putParametersToEEPROM(ParamData &par) {
 #if ENABLE_SERIAL_DEBUG
 long invalidNum = 0xFFFFFFFF;
 
-// Fully non-blocking serial character accumulator to replace the legacy sychronous parser
+/// @brief Fully non-blocking serial character accumulator replacing the legacy synchronous Serial.parseFloat().
+/// Prevents the main loop and USB HID reports from freezing while waiting for user inputs.
 int userInput(double &value) { 
   static char rxBuffer[16] = {0};
   static uint8_t rxIndex = 0;
@@ -62,43 +98,38 @@ int userInput(double &value) {
     char ch = Serial.read();
     char lowerCh = toLowerCase(ch);
 
-    // 1. Carriage return or newline terminates input and processes buffer
     if (ch == '\n' || ch == '\r') {
       if (rxIndex > 0) {
         value = atof(rxBuffer);
         rxIndex = 0;
         rxBuffer[0] = '\0';
-        return 1; // Completed entry
+        return 1; 
       } else {
-        return 0; // Empty Enter key pressed (treated as no-op)
+        return 0; 
       }
     }
 
-    // 2. Escape or 'q' exits the current menu state
     if (lowerCh == 'q' || ch == 27) {
       rxIndex = 0;
       rxBuffer[0] = '\0';
-      return 2; // Exit code
+      return 2; 
     }
 
-    // 3. Accumulate valid numeric characters
     if (isDigit(ch) || ch == '.' || ch == '-') {
       if (rxIndex < 15) {
         rxBuffer[rxIndex++] = ch;
         rxBuffer[rxIndex] = '\0';
       }
-      return 0; // Typing in progress (treated as no-op to prevent state-machine reset)
+      return 0; 
     }
 
-    // 4. Handle invalid chars (spaces and tabs are ignored silently, others trigger redraw)
     if (ch != ' ' && ch != '\t') {
       rxIndex = 0;
       rxBuffer[0] = '\0';
-      return 4; // Trigger redraw/refresh
+      return 4; 
     }
   }
 
-  // No new character was processed or still waiting for input
   return 0;
 }
 
@@ -229,7 +260,7 @@ void printAllParameters(ParamData &par, bool num) {
 bool printOneParameter(int i, ParamData &par, bool line, bool numbering) {
   bool isFloat = false;
   if (i >= 1 && i <= NUM_PARAMS) {
-    // Treat Q7 and Q8 parameters as floats in serial CLI outputs to preserve usability
+    // Treat Q7 and Q8 parameters logically as floats in serial CLI outputs to preserve human readability
     isFloat = (par.description[i].type == PARAM_TYPE_FLOAT) || 
               (i == 2 || i == 3 || i == 4 || i == 5 || i == 10 || i == 11 || i == 12 || i == 14 || i == 15);
     if (numbering) {
@@ -252,14 +283,14 @@ bool printOneParameter(int i, ParamData &par, bool line, bool numbering) {
   return isFloat;
 }
 
+/// @brief Reads and translates parameters for the Serial CLI, converting fixed-point back to float.
 double readParameter(int i, ParamData &par) {
   double value = NAN;
   if (i >= 1 && i <= NUM_PARAMS) {
-    // Intercept and scale internal Q7 / Q8 integers back to standard floats on the fly for CLI
     if (i == 2 || i == 3 || i == 4 || i == 5 || i == 10 || i == 11 || i == 12) {
-      value = (double)(*(int16_t *)par.description[i].storage) / 128.0;
+      value = (double)(*(int16_t *)par.description[i].storage) / 128.0; // Decode Q7 back to standard decimal
     } else if (i == 14 || i == 15) {
-      value = (double)(*(int16_t *)par.description[i].storage) / 256.0;
+      value = (double)(*(int16_t *)par.description[i].storage) / 256.0; // Decode Q8 back to standard decimal
     } else {
       switch (par.description[i].type) {
       case PARAM_TYPE_BOOL:
@@ -277,13 +308,21 @@ double readParameter(int i, ParamData &par) {
   return value;
 }
 
+/// @brief Receives human inputs from the Serial CLI and safely converts them to fixed-point integers.
 void writeParameter(int i, double value, ParamData &par) {
   if (i >= 1 && i <= NUM_PARAMS) {
-    // Scale incoming user decimals to internal Q7 / Q8 integers dynamically on parameter writes
     if (i == 2 || i == 3 || i == 4 || i == 5 || i == 10 || i == 11 || i == 12) {
-      *(int16_t *)par.description[i].storage = (int16_t)trunc(value * 128.0);
+      // Clamped Q7 conversion against double precision overflow bounds (16-bit safe max)
+      double q7_val = value * 128.0;
+      if (q7_val < 1.0) q7_val = 1.0;
+      if (q7_val > 32767.0) q7_val = 32767.0;
+      *(int16_t *)par.description[i].storage = (int16_t)trunc(q7_val);
     } else if (i == 14 || i == 15) {
-      *(int16_t *)par.description[i].storage = (int16_t)trunc(value * 256.0);
+      // Clamped Q8 conversion against double precision overflow & strict math domain errors
+      double q8_val = value * 256.0;
+      if (q8_val < 26.0) q8_val = 26.0; // Constrain curve bottom minimum to 0.1
+      if (q8_val > 768.0) q8_val = 768.0; // Constrain curve maximum to 3.0
+      *(int16_t *)par.description[i].storage = (int16_t)trunc(q8_val);
     } else {
       switch (par.description[i].type) {
       case PARAM_TYPE_BOOL:
