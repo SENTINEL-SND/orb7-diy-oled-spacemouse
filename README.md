@@ -95,6 +95,25 @@ Manage all 32 internal EEPROM parameters directly from Google Chrome, Edge, or B
 
 ---
 
+> [!TIP]
+> ### ⚡ 100% COMPATIBLE WITH ORIGINAL DIY SPACEMOUSE BUILDS (NO OLED REQUIRED!)
+> 
+> **Don't have an OLED screen on your DIY SpaceMouse? No problem!** 
+> 
+> **O.R.B.7** is fully backward-compatible with standard 8-channel Hall-effect builds (e.g., *TeachingTech* or *ArdunHH* designs). Simply open `config.h` and set:
+> ```cpp
+> #define ENABLE_OLED 0
+> ```
+> The OLED driver, UI code, and graphics are automatically stripped at compile-time, freeing up Flash memory while giving your original hardware a **massive performance upgrade**:
+> 
+> * 🌐 **Full WebHID 3D Studio Support:** Configure, calibrate, tune Q7/Q8 response curves, and visualize 3D motion live in Chrome/Edge **without installing any drivers or PC software!**
+> * 🚀 **Fixed-Point Motion Engine (Q7/Q8):** Integer-only calculations for ultra-low latency 125Hz CAD navigation.
+> * 🔥 **Thermal Anti-Drift Engine:** Decoupled sensor tracking stops the cursor from drifting as sensors warm up.
+> * ⚡ **Accelerated 500 kHz ADC Sampling:** Doubled analog read throughput for snappy, jitter-free input.
+> * 🎮 **Scalable Button Architecture:** Native support for mapping anywhere from 0 up to 32 hardware push-buttons.
+
+---
+
 ## 🔌 Default Pinout Configuration
 
 | Component | Pin / Channel | Pro Micro Pin | Notes |
