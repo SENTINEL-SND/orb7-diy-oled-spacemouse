@@ -75,7 +75,7 @@ Default physical layout when looking from above:
  *      0   1              Y-
 */
 // Check the correct wiring with the debug output=1
-#define PINLIST {A10, A1, A2, A3, A6, A7, A8, A9}
+#define PINLIST {A0, A1, A2, A3, A6, A7, A8, A9}
 // HES0, HES1, HES2, HES3, HES6, HES7, HES8, HES9
 
 // Set to 1 to invert specific hall sensors.
