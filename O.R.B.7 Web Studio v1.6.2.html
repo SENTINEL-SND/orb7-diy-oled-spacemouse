@@ -2733,7 +2733,7 @@
                 // Proactive Step 1: Force auto Re-Zero to establish clean rest baseline prior to test
                 if (typeof sendRezeroCommand === 'function') {
                     await sendRezeroCommand();
-                    await new Promise(resolve => setTimeout(resolve, 800)); // Delay for MCU zeroing loop
+                    await new Promise(resolve => setTimeout(resolve, 1200)); // Delay for MCU zeroing loop
                 }
 
                 // Proactive Step 2: Ensure telemetry stream is active
