@@ -41,7 +41,7 @@ Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B.7** co
 
 ## 📖 The Story Behind O.R.B.7
 
-What started as a simple hobby project to enhance [AndunHH](https://github.com/AndunHH)'s fantastic DIY SpaceMouse quickly turned into an engineering rabbit hole. 
+What started as a simple hobby project to enhance @AndunHH fantastic DIY SpaceMouse quickly turned into an engineering rabbit hole. 
 
 My initial goal was modest: add a small OLED display for a sleek look and easier debugging. However, as I built and assembled the physical hardware, I realized the OLED could do something revolutionary: **turn the controller into a standalone hardware diagnostic station.** 
 
