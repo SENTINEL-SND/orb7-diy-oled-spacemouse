@@ -1,5 +1,5 @@
 # 🛸 O.R.B.7 (Orbital Rotation Base + OLED & Web Studio v1.6.2)
-### DIY 6DOF SpaceMouse Pro Firmware & Printable Chassis (coming soon!) | Standalone OLED Hardware Debugger & Driverless Web Studio
+### DIY 6DOF SpaceMouse Pro Firmware & Printable Chassis | Standalone OLED Hardware Debugger & Driverless Web Studio
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Firmware](https://img.shields.io/badge/Firmware-Alpha_v0.0.8-blue.svg)]()
@@ -15,7 +15,7 @@
 > [!TIP]
 > ### ⚡ OFFICIAL O.R.B.7 PRINTABLE CHASSIS & UNIVERSAL DIY COMPATIBILITY
 > 
-> **O.R.B.7** includes an official **custom 4-button 3D-printable housing/chassis** (STL files coming soon in this repository under `/3D_Files` and Release Assets!).
+> **O.R.B.7** includes an official **custom 4-button 3D-printable housing/chassis** (STL files available in this repository under `/3D_Files` and Release Assets!).
 > 
 > **Using a different DIY SpaceMouse model or don't have an OLED screen? No problem!** 
 > The O.R.B.7 firmware is **100% backward-compatible** with legacy 8-channel Hall-effect builds (e.g., *TeachingTech* or *ArdunHH* designs, with 0, 2, or 4 buttons). If your build omits the OLED display, simply open `config.h` and set:
@@ -41,11 +41,11 @@ Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B.7** co
 
 ## 📖 The Story Behind O.R.B.7
 
-What started as a simple hobby project to enhance @AndunHH fantastic DIY SpaceMouse quickly turned into an engineering rabbit hole. 
+What started as a simple hobby project to enhance [AndunHH](https://github.com/AndunHH)'s fantastic DIY SpaceMouse quickly turned into an engineering rabbit hole. 
 
 My initial goal was modest: add a small OLED display for a sleek look and easier debugging. However, as I built and assembled the physical hardware, I realized the OLED could do something revolutionary: **turn the controller into a standalone hardware diagnostic station.** 
 
-In **v0.0.8 / Web Studio v1.6.2**, the ecosystem expands into a complete web management suite paired with the official **O.R.B.7 3D-printable 4-button enclosure** (coming soon). Featuring dynamic hardware telemetry, an interactive 4-button studio, a Three.js 3D motion viewport, Chart.js curve visualizer, a metrologically hardened calibration wizard, and JSON profile management, O.R.B.7 offers a complete end-to-end DIY 3D navigation experience.
+In **v0.0.8 / Web Studio v1.6.2**, the ecosystem expands into a complete web management suite paired with the official **O.R.B.7 3D-printable 4-button enclosure**. Featuring dynamic hardware telemetry, an interactive 4-button studio, a Three.js 3D motion viewport, Chart.js curve visualizer, a metrologically hardened calibration wizard, and JSON profile management, O.R.B.7 offers a complete end-to-end DIY 3D navigation experience.
 
 > [!IMPORTANT]
 > ### 🎯 THE CROWN JEWEL: PC-FREE HARDWARE ASSEMBLY & SENSOR ALIGNMENT
@@ -133,7 +133,7 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 
 ## 🛠️ Hardware Requirements & 3D Printed Chassis
 
-* **3D Printed Chassis:** Official **O.R.B.7 4-Button Enclosure** (*STL files coming soon in `/3D_Files`*) OR any standard DIY SpaceMouse housing (*TeachingTech*, *ArdunHH*).
+* **3D Printed Chassis:** Official **O.R.B.7 4-Button Enclosure** (*STL files available in `/3D_Files`*) OR any standard DIY SpaceMouse housing (*TeachingTech*, *ArdunHH*).
 * **Microcontroller:** ATmega32U4 (Arduino Pro Micro 5V / 16 MHz).
 * **Sensors:** 8x Ratiometric Linear Hall-Effect Sensors (AH49E or equivalent).
 * **Display (Optional):** 0.96" OLED SSD1306 (128x64 pixels, I2C address `0x3C`). Set `#define ENABLE_OLED 0` in `config.h` if omitted.
