@@ -3,17 +3,20 @@
 #include "kinematics.h"
 #include "config.h"
 
-// A dead zone above the following value will trigger a mechanical warning during zeroing
-#define DEADZONEWARNING 10
+// A dead zone above the following value will trigger a mechanical warning during zeroing.
+// Set to 25 to absorb normal ADC peak-to-peak thermal noise over 1000 oversampled iterations.
+#define DEADZONEWARNING 25
 
 // Sanity boundaries defining the expected hardware midpoint response.
-// Values outside this range generally indicate severe magnetic misalignment or reversed polarity.
+// Values outside this range indicate severe magnetic misalignment, unpowered sensors, or disconnected hardware.
 #ifndef HALLEFFECT
   #define CENTERPOINTWARNINGMIN (512 - 128)
   #define CENTERPOINTWARNINGMAX (512 + 128)
 #else
-  #define CENTERPOINTWARNINGMIN (400)
-  #define CENTERPOINTWARNINGMAX (800)
+  // Wide sanity bounds for 8 Hall Effect sensors operating on 2.56V Internal Reference or 5V Reference.
+  // Accommodates resting voltages from magnet offset (100 LSB to 1000 LSB) while flagging disconnected (0) or shorted (1023) pins.
+  #define CENTERPOINTWARNINGMIN (100)
+  #define CENTERPOINTWARNINGMAX (1000)
 #endif
 
 #if ENABLE_SERIAL_DEBUG

@@ -6,10 +6,6 @@
 
 extern ParamData par; 
 
-#if (NUMKEYS > 0)
-static const uint8_t defaultButtonList[] = BUTTONLIST;
-#endif
-
 SpaceMouseHID_::SpaceMouseHID_() : PluggableUSBModule(2, 1, endpointTypes) {
   endpointTypes[0] = EP_TYPE_INTERRUPT_IN;
   endpointTypes[1] = EP_TYPE_INTERRUPT_OUT;
@@ -81,14 +77,18 @@ void SpaceMouseHID_::receiveHostData(ParamData& par) {
   if (numBytes > 0) {
     uint8_t buffer[65]; // Uninitialized local stack buffer to save Flash
     uint8_t readLen = (numBytes > 65) ? 65 : numBytes;
-    USB_Recv(USBControllerRX, buffer, readLen);
+    
+    // Safely store actual received bytes from USB_Recv to prevent processing uninitialized stack memory
+    int actualRead = USB_Recv(USBControllerRX, buffer, readLen);
 
-    if (buffer[0] == 4) { 
-      if (readLen >= 2) { 
-        ledState = (buffer[1] == 1);
+    if (actualRead > 0) {
+      if (buffer[0] == 4) { 
+        if (actualRead >= 2) { 
+          ledState = (buffer[1] == 1);
+        }
+      } else if (buffer[0] == 5) { 
+        processWebHIDPacket(&buffer[1], (uint8_t)(actualRead - 1), par);
       }
-    } else if (buffer[0] == 5) { 
-      processWebHIDPacket(&buffer[1], readLen - 1, par);
     }
   }
 }
@@ -174,25 +174,21 @@ bool SpaceMouseHID_::IsNewHidReportDue(unsigned long now) {
   return (now - lastHIDsentRep >= HIDUPDATERATE_MS);
 }
 
-bool SpaceMouseHID_::jiggleValues(uint8_t val[12], bool lastBit) {
-  for (uint8_t i = 0; i < 12; i = i + 2) {
-    if ((val[i] != 0 || val[i + 1] != 0) && lastBit) val[i] |= 1;
-    else val[i] &= 0xFE;
-  }
-  return true;
-}
-
 #if (NUMKEYS > 0)
 void SpaceMouseHID_::prepareKeyBytes(uint8_t *keys, uint8_t *keyData, int debug) {
   for (int i = 0; i < 4; i++) keyData[i] = 0;
   for (uint8_t i = 0; i < NUMKEYS; i++) {
+#if (NUMKILLKEYS > 0)
+    // Mask designated kill keys to prevent triggering USB HID shortcuts when toggling rotational/translational mute
+    if (i == KILLROT || i == KILLTRANS) continue;
+#endif
     if (keys[i]) {
       uint8_t bitNum = 0;
-      if (i == 0) bitNum = par.values->keyR_shortcut;
-      else if (i == 1) bitNum = par.values->keyL_shortcut;
-      else {
-        if (i < (sizeof(defaultButtonList) / sizeof(defaultButtonList[0]))) bitNum = defaultButtonList[i];
-      }
+      if (i == 0) bitNum = par.values->keyR_shortcut;       // keys[0] = Front Right (Key R)
+      else if (i == 1) bitNum = par.values->keyL_shortcut;  // keys[1] = Front Left  (Key L)
+      else if (i == 2) bitNum = par.values->key2_shortcut;  // keys[2] = Back Left   (Key 2)
+      else if (i == 3) bitNum = par.values->key1_shortcut;  // keys[3] = Back Right  (Key 1)
+
       if (bitNum < 32) keyData[bitNum / 8] |= (1 << (bitNum % 8)); 
     }
   }

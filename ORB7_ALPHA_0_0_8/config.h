@@ -1,5 +1,5 @@
 // Config File for << HALL-EFFECT SPACEMOUSE >>
-// Firmware Version: ALPHA 0.0.2
+// Firmware Version: ALPHA 0.0.6
 
 #ifndef CONFIG_h
 #define CONFIG_h
@@ -31,12 +31,12 @@ ADC_EMA_SHIFT:   Low-pass Exponential Moving Average (EMA) filter shift factor.
                  (0 = disabled, 1 = 50%, 2 = 25%, 3 = 12.5% weight for new readings).
 EXCL_RELAX_THRESHOLD: Force threshold (sum of axes) below which exclusive mode unlocks back to NEUTRAL.
 ADC_PRESCALER_PRESET: ADC Clock Prescaler setting for the ATmega32U4 hardware multiplexer.
-                      (0x07 = 128 / 125kHz [Arduino Default], 0x06 = 64 / 250kHz, 0x05 = 32 / 500kHz [Fast]).
+                      (0x07 = 128 / 125kHz [Arduino Default], 0x06 = 64 / 250kHz [Stable/Fast], 0x05 = 32 / 500kHz [Overclock]).
 */
 #define ADC_OVERSAMPLES 2
 #define ADC_EMA_SHIFT 2
 #define EXCL_RELAX_THRESHOLD 35
-#define ADC_PRESCALER_PRESET 0x05
+#define ADC_PRESCALER_PRESET 0x06
 
 /* Debugging Instructions
 =========================
@@ -106,18 +106,25 @@ Sensitivity values act as dividers.
 Smaller fraction (e.g., 0.8) = MORE sensitive (faster).
 Larger value (e.g., 2.0) = LESS sensitive (slower).
 Gates suppress cross-coupling (e.g., preventing rotation while translating).
+
+GATE_TRANS: Dedicated micro-gate for Translation X and Y (Pan) to suppress 
+            matrix cross-coupling and mechanical spring bleed near rest position.
+            Filters out residual post-matrix velocity deltas (e.g. 1 to 5) while 
+            keeping intentional panning movements 100% fluid and independent.
+            Recommended range: 3 to 10 (Default: 6).
 */
-#define SENS_TX 0.8
-#define SENS_TY 1
-#define SENS_PTZ 2 // sensitivity for positive translation z (pushing down)
-#define SENS_NTZ 1 // sensitivity for negative translation z (pulling up)
-#define GATE_NTZ 25 // gate value below which negative z movements will be ignored.
+#define SENS_TX 0.6
+#define SENS_TY 0.6
+#define SENS_PTZ 0.5 // sensitivity for positive translation z (pushing down)
+#define SENS_NTZ 0.6 // sensitivity for negative translation z (pulling up)
+#define GATE_TRANS 10 // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
+#define GATE_NTZ 15 // gate value below which negative z movements will be ignored.
 #define GATE_RX 5 // Value under which rotX values will be forced to zero
 #define GATE_RY 5 // Value under which roty values will be forced to zero
 #define GATE_RZ 5 // Value under which rotz values will be forced to zero
-#define SENS_RX 1.2
-#define SENS_RY 1.2
-#define SENS_RZ 0.90
+#define SENS_RX 0.8
+#define SENS_RY 0.8
+#define SENS_RZ 0.6
 
 /* Fifth calibration: Modifier Function
 ========================================
@@ -154,7 +161,7 @@ Dynamically tracks and eliminates center point wandering due to thermal expansio
 */
 #define COMP_EN 1  // enable the compensation
 #define COMP_NR 50 // number of points to build the mean-value (Must be 1-500)
-#define COMP_WAIT 100 // [ms] time to wait and monitor before compensating
+#define COMP_WAIT 50 // [ms] time to wait and monitor before compensating
 #define COMP_MDIFF 10 // [incr] maximum range of raw-values to be considered as only drift
 #define COMP_CDIFF 50 // [incr] maximum distance from the center-value to be only drift
 
@@ -166,21 +173,21 @@ Now features 'Neutral Unlocking' which seamlessly transitions back to both allow
 #define EXCLUSIVE 1
 #define EXCL_HYST 60 // Hysteresis barrier to switch modes mid-motion
 
-// Legacy Priority Z mode (Not recommended for Hall Effects)
-#define EXCL_PRIOZ 0
-
-/* Key Support
-===============
+/* Key Support (ORB7 Physical Redesign Layout)
+==============================================
 Define hardware buttons attached to the SpaceMouse.
-Total keys supported: 0 to 32.
+Pin 5  : Front Right (Key R)
+Pin 0  : Front Left  (Key L) -> Arduino RX0
+Pin 1  : Back Left   (Key 2) -> Arduino TX1
+Pin 7  : Back Right  (Key 1)
 */
-#define NUMKEYS 2
+#define NUMKEYS 4
 
-// Define the PINS for the classic keys on the Arduino
-#define KEYLIST {0, 1}
+// Pin assignment for physical keys: {Front Right, Front Left, Back Left, Back Right}
+#define KEYLIST {5, 0, 1, 7}
 
 // How many keys reported to HID 
-#define NUMHIDKEYS 2
+#define NUMHIDKEYS 4
 
 // 3DConnexion HID Standard Key Mappings
 #define SM_MENU 0  // Key "Menu"
@@ -199,8 +206,9 @@ Total keys supported: 0 to 32.
 #define SM_CTRL 25 // Key "CTRL"
 #define SM_ROT 26  // Key "Rotate"
 
-// Mappings for keys[2] and beyond. Keys 0 and 1 are dynamically assigned via OLED.
-#define BUTTONLIST {SM_T, SM_FIT}
+// Mappings for keys[2] (Back Left) and keys[3] (Back Right).
+// keys[0] (Front Right) and keys[1] (Front Left) are dynamically assigned via OLED/WebStudio.
+#define BUTTONLIST {SM_2, SM_1}
 
 /* Kill-Key Feature
 --------------------

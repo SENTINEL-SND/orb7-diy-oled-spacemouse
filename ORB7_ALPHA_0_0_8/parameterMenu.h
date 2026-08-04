@@ -8,14 +8,14 @@
   #include "config.h"
 
   // Defines the absolute number of persistent parameters managed by the EEPROM
-  #define NUM_PARAMS         32   
+  #define NUM_PARAMS         34   
 
   #define MAX_PARAM_NAME_LEN 10   // maximum length of any parameter name for the Serial CLI
 
   // Magic Number enforces data structural alignment.
   // Changing this value intentionally forces a factory reset on the next boot,
   // which is highly recommended when adding or removing parameters in the struct below.
-  #define MAGIC_NUMBER       1234567843L
+  #define MAGIC_NUMBER       1234567853L
   #define BASE_ADDRESS_MAGIC 0
   #define BASE_ADDRESS_PAR   4
 
@@ -51,6 +51,7 @@
     int16_t gate_rotX                 = GATE_RX;
     int16_t gate_rotY                 = GATE_RY;
     int16_t gate_rotZ                 = GATE_RZ;
+    int16_t gate_trans                = GATE_TRANS; // MicroGate for Pan X/Y!
 
     int16_t rotX_sensitivity_q7       = SENS_RX_Q7;
     int16_t rotY_sensitivity_q7       = SENS_RY_Q7;
@@ -71,7 +72,6 @@
     int8_t  switchYZ               = SWITCHYZ;
     int8_t  exclusiveMode          = EXCLUSIVE;
     int16_t exclusiveHysteresis    = EXCL_HYST;
-    int8_t  prioZexclusiveMode     = EXCL_PRIOZ;
 
     int8_t  compEnabled            = COMP_EN;
     int16_t compNoOfPoints         = COMP_NR;
@@ -85,9 +85,11 @@
     // OLED Inactivity Sleep Timer (0 = OFF, 1 = 1m, 2 = 3m, 3 = 5m)
     int8_t  oledSleepTimer         = 2; 
 
-    // Dynamic key shortcuts for the primary physical buttons (L and R)
-    int8_t  keyL_shortcut          = 2; // Default: SM_T (Top)
-    int8_t  keyR_shortcut          = 1; // Default: SM_FIT (Fit)
+    // Dynamic key shortcuts for ALL 4 physical hardware buttons (Fully customizable)
+    int8_t  keyL_shortcut          = 2;  // Front Left  (Key L / keys[1]) - Default: SM_T (Top = 2)
+    int8_t  keyR_shortcut          = 1;  // Front Right (Key R / keys[0]) - Default: SM_FIT (Fit = 1)
+    int8_t  key2_shortcut          = 13; // Back Left   (Key 2 / keys[2]) - Default: SM_2 (Button 2 = 13)
+    int8_t  key1_shortcut          = 12; // Back Right  (Key 1 / keys[3]) - Default: SM_1 (Button 1 = 12)
 
     // Dynamic calibration limits bounding the analog hardware range to the HID logical output
     int16_t minVals[8]             = {-400, -400, -400, -400, -400, -400, -400, -400};

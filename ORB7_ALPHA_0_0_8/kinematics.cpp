@@ -23,6 +23,10 @@
   #define EXCL_RELAX_THRESHOLD 35
 #endif
 
+#ifndef GATE_TRANS
+  #define GATE_TRANS 6
+#endif
+
 // Do not change this! Standard baseline bound to match the HID logical scale. Use independent sensitivity multipliers instead.
 #define TOTALSENSITIVITY 350
 
@@ -132,9 +136,10 @@ void readAllFromJoystick(int16_t *rawReads){
     uint16_t averagedRead = sum / safeOversamples; 
 
     // Apply non-stuck integer Exponential Moving Average (EMA) filtering.
-    // Extremely efficient: Replaces standard floats by using right bit-shifts for fractioning.
+    // Extremely efficient: Replaces standard floats by using division by power of 2 
+    // (Compiler optimizes to arithmetic shift with sign correction, preventing asymmetric decay).
     int16_t diff = (int16_t)averagedRead - filterState[i];
-    int16_t step = (ADC_EMA_SHIFT > 0) ? (diff >> ADC_EMA_SHIFT) : diff;
+    int16_t step = (ADC_EMA_SHIFT > 0) ? (diff / (1 << ADC_EMA_SHIFT)) : diff;
     
     // Prevent the integer math from getting "stuck" when the difference is smaller than the shift divisor
     if (step == 0 && diff != 0) {
@@ -157,30 +162,26 @@ void FilterAnalogReadOuts(int16_t* centered, ParamData& par){
 
   for(uint8_t i = 0; i < 8; i++){
     int16_t val = centered[i];
-    if (val < dz && val > -dz){
+    
+    // FIX: Using <= and >= ensures values resting exactly on the boundary are properly muted
+    if (val <= dz && val >= -dz){
       centered[i] = 0; // Filtered by deadzone, enforce absolute hardware zero
-    }else{
-      if(val < 0){ 
-        // Isolate denominator calculation to protect against corrupt/blank EEPROM limits
+    } else {
+      if (val < 0) { 
         int32_t denom = (int32_t)(-dz - par.values->minVals[i]);
-        
-        // Only apply constrain and mapping if calibration bounds are valid (denom > 0)
         if (denom > 0) {
           int16_t clamped_val = constrain(val, (int16_t)par.values->minVals[i], (int16_t)-dz);
           centered[i] = mapToSensitivity((int32_t)(clamped_val - par.values->minVals[i]), denom, -TOTALSENSITIVITY);
         } else {
-          centered[i] = 0; // Safe fail-silent state
+          centered[i] = 0;
         }
-      }else{ 
-        // Isolate denominator calculation to protect against corrupt/blank EEPROM limits
+      } else { 
         int32_t denom = (int32_t)(par.values->maxVals[i] - dz);
-        
-        // Only apply constrain and mapping if calibration bounds are valid (denom > 0)
         if (denom > 0) {
           int16_t clamped_val = constrain(val, dz, (int16_t)par.values->maxVals[i]);
           centered[i] = mapToSensitivity((int32_t)(clamped_val - dz), denom, 0);
         } else {
-          centered[i] = 0; // Safe fail-silent state
+          centered[i] = 0;
         }
       }
     }
@@ -188,42 +189,26 @@ void FilterAnalogReadOuts(int16_t* centered, ParamData& par){
 }
 
 /// @brief Fuses the 8 independent sensor streams into the 6 physical Degrees of Freedom using matrix mixing.
-void _calculateKinematicSensors(int16_t* centered, int16_t* velocity, bool prio_z_exclusive){
+void _calculateKinematicSensors(int16_t* centered, int16_t* velocity){
   #ifndef HALLEFFECT
     // Legacy resistive joystick matrix
-    uint8_t cntN = 0;
-    uint8_t cntP = 0;
-    if(centered[AX] < 0){cntN += 1;} if(centered[AX] > 0){cntP += 1;}
-    if(centered[BX] < 0){cntN += 1;} if(centered[BX] > 0){cntP += 1;}
-    if(centered[CX] < 0){cntN += 1;} if(centered[CX] > 0){cntP += 1;}
-    if(centered[DX] < 0){cntN += 1;} if(centered[DX] > 0){cntP += 1;}
-
-    bool zMove = ((cntP >= 3 && cntN == 0) || (cntN >= 3 && cntP == 0));
-
     velocity[TRANSX] = (-centered[CY] +centered[AY]);
     velocity[TRANSY] = (-centered[BY] +centered[DY]);
     velocity[TRANSZ] = (-centered[AX] -centered[BX] -centered[CX] -centered[DX]);
-
-    if (prio_z_exclusive && zMove) 
-    {
-      velocity[ROTX] = 0;
-      velocity[ROTY] = 0;
-      velocity[ROTZ] = 0;
-    }
-    else
-    {
-      velocity[ROTX] = (-centered[CX] + centered[AX]);
-      velocity[ROTY] = (-centered[BX] + centered[DX]);
-      velocity[ROTZ] = (+centered[AY] + centered[BY] + centered[CY] + centered[DY]);
-    }
+    velocity[ROTX] = (-centered[CX] + centered[AX]);
+    velocity[ROTY] = (-centered[BY] + centered[DX]);
+    velocity[ROTZ] = (+centered[AY] + centered[BY] + centered[CY] + centered[DY]);
   #else
     // Default Hall-Effect matrix mixing resolving polarities for typical physical magnet placements
-    velocity[TRANSX] = (centered[HES1] -centered[HES0] +centered[HES6] -centered[HES7]) / 2;
-    velocity[TRANSY] = (centered[HES2] -centered[HES3] +centered[HES9] -centered[HES8]) / 2;
-    velocity[TRANSZ] = (centered[HES0] +centered[HES1] +centered[HES2] +centered[HES3] +centered[HES6] +centered[HES7] +centered[HES8] +centered[HES9]) / 4;
-    velocity[ROTX]   = (centered[HES0] +centered[HES1] -centered[HES6] -centered[HES7]) / 2;
-    velocity[ROTY]   = (centered[HES8] +centered[HES9] -centered[HES2] -centered[HES3]) / 2;
-    velocity[ROTZ]   = (centered[HES0] +centered[HES2] +centered[HES6] +centered[HES8] -centered[HES1] -centered[HES3] -centered[HES7] -centered[HES9]) / 4;
+    // FIX: Adjusted matrix divisors (/4 and /8) to correctly average the vectors.
+    // This scales the summed 1400/2800 limits perfectly back to the HID bounds (-350 to +350),
+    // completely eliminating the 50% hardware travel deadband while preserving integer precision.
+    velocity[TRANSX] = (centered[HES1] -centered[HES0] +centered[HES6] -centered[HES7]) / 4;
+    velocity[TRANSY] = (centered[HES2] -centered[HES3] +centered[HES9] -centered[HES8]) / 4;
+    velocity[TRANSZ] = (centered[HES0] +centered[HES1] +centered[HES2] +centered[HES3] +centered[HES6] +centered[HES7] +centered[HES8] +centered[HES9]) / 8;
+    velocity[ROTX]   = (centered[HES0] +centered[HES1] -centered[HES6] -centered[HES7]) / 4;
+    velocity[ROTY]   = (centered[HES8] +centered[HES9] -centered[HES2] -centered[HES3]) / 4;
+    velocity[ROTZ]   = (centered[HES0] +centered[HES2] +centered[HES6] +centered[HES8] -centered[HES1] -centered[HES3] -centered[HES7] -centered[HES9]) / 8;
   #endif
 }
 
@@ -238,24 +223,26 @@ __attribute__((noinline)) static void processAxis(int16_t &vel, int16_t sens_q7,
 /// @brief Evaluates all 6DOF matrices, applies hardware polarity inversions, executes noise gates, and scales sensitivities.
 void calculateKinematic(int16_t* centered, int16_t* velocity, ParamData& par){
   // Gather base unscaled velocities
-  _calculateKinematicSensors(centered, velocity, par.values->exclusiveMode);
+  _calculateKinematicSensors(centered, velocity);
 
-  // Optimized boolean checks for direct inversion branches saving several Flash bytes over multiplicative methods
-  if(par.values->invX){velocity[TRANSX] = -velocity[TRANSX];}
-  if(par.values->invY){velocity[TRANSY] = -velocity[TRANSY];}
-  if(par.values->invZ){velocity[TRANSZ] = -velocity[TRANSZ];}
-  if(par.values->invRX){velocity[ROTX]   = -velocity[ROTX];}
-  if(par.values->invRY){velocity[ROTY]   = -velocity[ROTY];}
-  if(par.values->invRZ){velocity[ROTZ]   = -velocity[ROTZ];}
+  // FIX: Compact array pointer loop for axis inversions saving Flash memory compared to 6 individual IF statements
+  const int8_t* invFlags = &par.values->invX;
+  for (uint8_t i = 0; i < 6; i++) {
+    if (invFlags[i]) {
+      velocity[i] = -velocity[i];
+    }
+  }
 
-  // Apply scales and mechanical noise cross-coupling gates
-  processAxis(velocity[TRANSX], par.values->transX_sensitivity_q7, par.values->gate_neg_transZ, par);
-  processAxis(velocity[TRANSY], par.values->transY_sensitivity_q7, par.values->gate_neg_transZ, par);
+  // Apply scales and dedicated translation micro-gates (par.values->gate_trans filters matrix residual bleed)
+  processAxis(velocity[TRANSX], par.values->transX_sensitivity_q7, par.values->gate_trans, par);
+  processAxis(velocity[TRANSY], par.values->transY_sensitivity_q7, par.values->gate_trans, par);
 
-  // Translation Z handles asymmetrical sensitivities (push vs pull resistance)
+  // Translation Z handles asymmetrical sensitivities and applies gate_neg_transZ strictly to negative Z (pull-up / Zoom Out)
   if (velocity[TRANSZ] != 0) {
-    int16_t z_sens = (velocity[TRANSZ] < 0) ? par.values->neg_transZ_sensitivity_q7 : par.values->pos_transZ_sensitivity_q7;
-    processAxis(velocity[TRANSZ], z_sens, par.values->gate_neg_transZ, par);
+    bool isNegZ = (velocity[TRANSZ] < 0);
+    int16_t z_sens = isNegZ ? par.values->neg_transZ_sensitivity_q7 : par.values->pos_transZ_sensitivity_q7;
+    int16_t z_gate = isNegZ ? par.values->gate_neg_transZ : 0; // FIX: Gate applies strictly to negative Z (Pull Up)
+    processAxis(velocity[TRANSZ], z_sens, z_gate, par);
   }
 
   // Rotational axis processing

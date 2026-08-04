@@ -35,7 +35,6 @@ static bool forceFullViewRedraw = true;
 // 3 = Sensitivity & Deadzone Submenu
 // 4 = Re-Zero Submenu
 // 5 = OLED Setup Submenu (Sleep Timer / Power)
-// 7 = Buttons Assignment Submenu
 // 8 = Debug Submenu list
 // 9 = Real-time Sensor Alignment Screen
 // 10 = Interactive Limits Calibration Screen (Cal. Limits)
@@ -66,16 +65,31 @@ static unsigned long lastActivityTime = 0;
 extern int16_t centerPoints[8];
 extern int16_t rawReads[8];
 extern int16_t offsets[8];
+extern ParamData par;
+
+// --- REUSABLE PROGMEM STRINGS TO SAVE FLASH MEMORY ---
+const char msg_keep_rest[] PROGMEM = "Keep knob at rest";
+const char msg_calibrating[] PROGMEM = "Calibrating...";
+const char msg_rezero[] PROGMEM = "RE-ZERO";
+const char msg_success[] PROGMEM = "SUCCESS";
+const char msg_warning[] PROGMEM = "WARNING";
+const char msg_toggle_footer[] PROGMEM = "HOLD R: TOGGLE  HL: BACK";
+
+#define F_KEEP_REST (const __FlashStringHelper*)msg_keep_rest
+#define F_CALIBRATING (const __FlashStringHelper*)msg_calibrating
+#define F_REZERO (const __FlashStringHelper*)msg_rezero
+#define F_SUCCESS (const __FlashStringHelper*)msg_success
+#define F_WARNING (const __FlashStringHelper*)msg_warning
+#define F_TOGGLE_FOOTER (const __FlashStringHelper*)msg_toggle_footer
 
 // --- COMPACT MENU TABLES (PROGMEM) ---
 const char menu_str0[] PROGMEM = " 1. Sensitivity";
 const char menu_str1[] PROGMEM = " 2. Direction";
 const char menu_str2[] PROGMEM = " 3. Display";
-const char menu_str3[] PROGMEM = " 4. Buttons";
-const char menu_str4[] PROGMEM = " 5. Debug";
+const char menu_str3[] PROGMEM = " 4. Debug";
 
-const char* const menu_strings[5] PROGMEM = {
-  menu_str0, menu_str1, menu_str2, menu_str3, menu_str4
+const char* const menu_strings[4] PROGMEM = {
+  menu_str0, menu_str1, menu_str2, menu_str3
 };
 
 const char debug_str0[] PROGMEM = " 1. Align Sensors";
@@ -89,16 +103,11 @@ const char* const debug_strings[6] PROGMEM = {
   debug_str0, debug_str1, debug_str2, debug_str3, debug_str4, debug_str5
 };
 
-static const uint8_t shortcut_ids[15] = { 0, 1, 2, 4, 5, 8, 12, 13, 14, 15, 22, 23, 24, 25, 26 };
-static const char shortcut_names[15][6] PROGMEM = {
-  "MENU", "FIT", "TOP", "RIGHT", "FRONT", "ROLL", "1", "2", "3", "4", "ESC", "ALT", "SHIFT", "CTRL", "ROT"
-};
-
 static const char dir_labels[8][7] PROGMEM = {
   "INV TX", "INV TY", "INV TZ", "INV RX", "INV RY", "INV RZ", "SWP XY", "SWP YZ"
 };
 
-static const uint8_t destStates[5] PROGMEM = { 3, 14, 5, 7, 8 };
+static const uint8_t destStates[4] PROGMEM = { 3, 14, 5, 8 };
 
 // --- LOW-LEVEL GRAPHICAL HELPER FUNCTION DECLARATIONS ---
 
@@ -131,10 +140,15 @@ static void printQ8Fixed(int16_t q8_val) {
   oled.print(frac);
 }
 
+// Shared padding helper to eliminate duplicate branching assembly instructions
+static void printPad(int16_t absV) {
+  if (absV < 10) printSpaces(3);
+  else if (absV < 100) printSpaces(2);
+  else if (absV < 1000) printSpaces(1);
+}
+
 static void printPaddedVal(int16_t val) {
-  if (val < 10) printSpaces(3);
-  else if (val < 100) printSpaces(2);
-  else if (val < 1000) printSpaces(1);
+  printPad(val);
   oled.print(val);
 }
 
@@ -144,19 +158,6 @@ static void printSignedVal4(int16_t val) {
   if (absV < 10) oled.print(F("00"));
   else if (absV < 100) oled.print('0');
   oled.print(absV);
-}
-
-static uint8_t getShortcutIndex(uint8_t id) {
-  for (uint8_t i = 0; i < 15; i++) {
-    if (shortcut_ids[i] == id) return i;
-  }
-  return 0;
-}
-
-static void printShortcutName(uint8_t id) {
-  char buf[6];
-  strcpy_P(buf, shortcut_names[getShortcutIndex(id)]);
-  oled.print(buf);
 }
 
 static void drawHorizontalLine(uint8_t page, uint8_t bitPattern) {
@@ -225,7 +226,7 @@ static void printFooter() {
 }
 
 static void printOledProtString(int8_t val) {
-  if (val == 0) {
+  if (val <= 0) {
     oled.print(F("OFF"));
   } else {
     char m = '1';
@@ -234,20 +235,6 @@ static void printOledProtString(int8_t val) {
     oled.print(m);
     oled.print('m');
   }
-}
-
-static void adjustShortcut(ParamData& par, bool increment) {
-  uint8_t current_id = (submenuSelect == 0) ? par.values->keyL_shortcut : par.values->keyR_shortcut;
-  uint8_t idx = getShortcutIndex(current_id);
-  if (increment) {
-    idx++;
-    if (idx > 14) idx = 0;
-  } else {
-    if (idx == 0) idx = 14;
-    else idx--;
-  }
-  if (submenuSelect == 0) par.values->keyL_shortcut = shortcut_ids[idx];
-  else par.values->keyR_shortcut = shortcut_ids[idx];
 }
 
 static void drawMenuList(const char* const* list, uint8_t size, uint8_t selected) {
@@ -280,24 +267,6 @@ static void drawDirSubmenu(ParamData& par, uint8_t selected) {
     oled.setInvertMode(false);
     printSpaces(2);
   }
-}
-
-static void printSignedVal(int16_t val) {
-  if (val >= 0) oled.print('+');
-  oled.print(val);
-  int16_t absV = abs(val);
-  if (absV < 10) printSpaces(3);
-  else if (absV < 100) printSpaces(2);
-  else if (absV < 1000) printSpaces(1);
-}
-
-static void printOffsetLine(char label, int16_t offA, int16_t offB, uint8_t row) {
-  oled.setCursor(18, row);
-  oled.print(label);
-  oled.print(F(": "));
-  printSignedVal(offA);
-  oled.print(F("| "));
-  printSignedVal(offB);
 }
 
 void initOledDisplay() {
@@ -336,24 +305,28 @@ static void showCalMsg(const __FlashStringHelper* title, uint8_t x, const __Flas
 }
 
 void showCalibrationScreen() {
-  showCalMsg(F("CALIBRATION"), 31, F("Keep knob at rest"), F("Calibrating..."));
+  showCalMsg(F("CALIBRATION"), 31, F_KEEP_REST, F_CALIBRATING);
   delay(300);  
 }
 
 void showCalibrationWarningScreen() {
-  showCalMsg(F("WARNING"), 41, F("Knob moved!"), F("Retrying..."));
+  showCalMsg(F_WARNING, 41, F("Knob moved!"), F("Retrying..."));
 }
 
 void showCalibrationFailedScreen() {
-  showCalMsg(F("WARNING"), 41, F("Calibration failed!"), F("Bypassing lock..."));
+  showCalMsg(F_WARNING, 41, F("Calibration failed!"), F("Bypassing lock..."));
 }
 
 bool isOledMenuOpen() {
-  return (menuState != 0);
+  // Menu is only active if menuState is non-zero AND OLED screen is enabled
+  return (menuState != 0 && par.values->oledSleepTimer >= 0);
 }
 
 // High-level UI Controller evaluating input actions and dispatching state transitions.
 void processMenuInput(uint8_t* keyState, ParamData& par) {
+  // Ignore menu inputs if OLED screen is powered OFF
+  if (par.values->oledSleepTimer < 0) return;
+
   bool leftButton = (NUMKEYS > 1) ? keyState[1] : false;
   bool rightButton = (NUMKEYS > 0) ? keyState[0] : false;
   unsigned long now = millis();
@@ -381,6 +354,8 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
       if (menuState == 1) {
         putParametersToEEPROM(par);
         menuState = 0;
+        cursorIndex = 0;
+        submenuSelect = 0; // Reset cursor on returning home
         isEditing = false;
         forceFullViewRedraw = true;
       } else if (menuState >= 3) {
@@ -392,6 +367,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
           } else {
             menuState = 1; 
           }
+          submenuSelect = 0; // Reset cursor on returning to parent menu
         }
         forceFullViewRedraw = true;
       }
@@ -400,7 +376,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
     if (leftHeldActive) {
       if (!leftHoldTriggered && (now - leftPressStart > 50)) {
         if (menuState == 1) {
-          if (cursorIndex == 0) cursorIndex = 4;
+          if (cursorIndex == 0) cursorIndex = 3;
           else cursorIndex--;
           forceFullViewRedraw = true;
         } else if (menuState == 3) {
@@ -427,18 +403,13 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
           }
         } else if (menuState == 5) {
           if (isEditing) {
-            if (par.values->oledSleepTimer == 0) par.values->oledSleepTimer = 3;
-            else par.values->oledSleepTimer--;
+            if (submenuSelect == 0) {
+              if (par.values->oledSleepTimer <= 0) par.values->oledSleepTimer = 3;
+              else par.values->oledSleepTimer--;
+            }
           } else {
             if (submenuSelect == 0) submenuSelect = 1;
             else submenuSelect--;
-            forceFullViewRedraw = true;
-          }
-        } else if (menuState == 7) {
-          if (isEditing) {
-            adjustShortcut(par, false);
-          } else {
-            submenuSelect = !submenuSelect;
             forceFullViewRedraw = true;
           }
         } else if (menuState == 8) {
@@ -447,6 +418,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
           forceFullViewRedraw = true;
         } else if (menuState == 10 && calState == 0) {
           menuState = 8;
+          submenuSelect = 0; // Reset cursor when exiting Cal Limits back to Debug
           forceFullViewRedraw = true;
         } else if (menuState == 11) {
           if (isEditing) {
@@ -483,37 +455,40 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
       if (menuState == 0) {
         menuState = 1;
         cursorIndex = 0;
+        submenuSelect = 0; // Reset cursor on opening options
         isEditing = false;
         forceFullViewRedraw = true;
       } else if (menuState == 1) {
         menuState = pgm_read_byte(&destStates[cursorIndex]);
-        submenuSelect = 0;
+        submenuSelect = 0; // Reset cursor on entering submenu
         isEditing = false;
         forceFullViewRedraw = true;
       } else if (menuState == 4) {
-        drawHeader(F("RE-ZERO"), 41);
+        drawHeader(F_REZERO, 41);
         printAt(20, 3, F("DO NOT TOUCH!"));
-        printAt(17, 5, F("Calibrating..."));
+        printAt(17, 5, F_CALIBRATING);
 
         busyZeroing(centerPoints, 1000, false);
 
-        drawHeader(F("RE-ZERO"), 41);
+        drawHeader(F_REZERO, 41);
         printAt(32, 4, F("SUCCESSFUL!"));
         delay(1500);
 
         menuState = 8;
+        submenuSelect = 0; // Reset cursor on returning to Debug
         isEditing = false;
         forceFullViewRedraw = true;
-      } else if (menuState == 3 || menuState == 5 || menuState == 7 || menuState == 11) {
+      } else if (menuState == 3 || menuState == 5 || menuState == 11) {
         isEditing = !isEditing;
         forceFullViewRedraw = true;
       } else if (menuState == 8) {
         if (submenuSelect == 0) menuState = 9;
         else if (submenuSelect == 1) { menuState = 10; calState = 0; }
         else if (submenuSelect == 2) menuState = 4;
-        else if (submenuSelect == 3) { menuState = 11; submenuSelect = 0; }
+        else if (submenuSelect == 3) { menuState = 11; }
         else if (submenuSelect == 4) menuState = 12;  
         else if (submenuSelect == 5) menuState = 13;  
+        submenuSelect = 0; // Reset cursor when entering debug child view
         forceFullViewRedraw = true;
       } else if (menuState == 10 && calState == 0) {
         for (uint8_t i = 0; i < 8; i++) {
@@ -530,12 +505,13 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
         *par.values = ParamStorage(); 
         putParametersToEEPROM(par);    
 
-        drawHeader(F("SUCCESS"), 44);
+        drawHeader(F_SUCCESS, 44);
         printAt(14, 3, F("Factory Defaults"));
         printAt(34, 5, F("Restored!"));
         delay(1500);
 
         menuState = 8;
+        submenuSelect = 0; // Reset cursor on returning to Debug
         forceFullViewRedraw = true;
       } else if (menuState == 14) {
         int8_t* flags = &par.values->invX;
@@ -549,7 +525,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
       if (!rightHoldTriggered && (now - rightPressStart > 50)) {
         if (menuState == 1) {
           cursorIndex++;
-          if (cursorIndex > 4) cursorIndex = 0;
+          if (cursorIndex > 3) cursorIndex = 0;
           forceFullViewRedraw = true;
         } else if (menuState == 3) {
           if (isEditing) {
@@ -575,18 +551,13 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
           }
         } else if (menuState == 5) {
           if (isEditing) {
-            par.values->oledSleepTimer++;
-            if (par.values->oledSleepTimer > 3) par.values->oledSleepTimer = 0;
+            if (submenuSelect == 0) {
+              par.values->oledSleepTimer++;
+              if (par.values->oledSleepTimer > 3) par.values->oledSleepTimer = 0;
+            }
           } else {
             submenuSelect++;
             if (submenuSelect > 1) submenuSelect = 0;
-            forceFullViewRedraw = true;
-          }
-        } else if (menuState == 7) {
-          if (isEditing) {
-            adjustShortcut(par, true);
-          } else {
-            submenuSelect = !submenuSelect;
             forceFullViewRedraw = true;
           }
         } else if (menuState == 8) {
@@ -619,7 +590,8 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
   }
 }
 
-static void printSensorLine(char label, int16_t valA, int16_t valB, uint8_t row) {
+// Optimized return function avoiding redundant abs() in State 9
+static int16_t printSensorLine(char label, int16_t valA, int16_t valB, uint8_t row) {
   oled.setCursor(0, row);
   oled.print(label);
   oled.print(F(": "));
@@ -634,11 +606,23 @@ static void printSensorLine(char label, int16_t valA, int16_t valB, uint8_t row)
   oled.print(delta);
   oled.print(F("]"));
 
-  if (delta > 50) oled.print(F(" !")); 
+  if (delta > 100) oled.print(F(" !")); 
   else oled.print(F(" OK"));
+  
+  return delta;
 }
 
 void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
+
+  // If OLED is disabled via Web Studio (oledSleepTimer == -1), power off display and exit
+  if (par.values->oledSleepTimer < 0) {
+    if (oledPowerState) {
+      oledPowerState = false;
+      oled.ssd1306WriteCmd(SSD1306_DISPLAYOFF);
+    }
+    return;
+  }
+
   unsigned long now = millis();
   static unsigned long lastOledUpdate = 0;
 
@@ -687,13 +671,19 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
 
     if (par.values->oledSleepTimer != lastSleepTimerParam) {
       lastSleepTimerParam = par.values->oledSleepTimer;
-      cachedSleepTimeout = ((unsigned long)lastSleepTimerParam * 2 - 1) * 60000UL;
+      
+      // Replaced 32-bit math formula with a static lookup array 
+      // Eliminates underflow risks and saves Flash by bypassing multiplication instructions
+      static const unsigned long sleep_ms[4] = {0, 60000UL, 180000UL, 300000UL};
+      uint8_t safeIdx = (lastSleepTimerParam >= 0 && lastSleepTimerParam <= 3) ? lastSleepTimerParam : 2;
+      cachedSleepTimeout = sleep_ms[safeIdx];
     }
 
     if (now - lastActivityTime >= cachedSleepTimeout) {
       oledPowerState = false;
       oled.ssd1306WriteCmd(SSD1306_DISPLAYOFF);
       menuState = 0; 
+      submenuSelect = 0; // Reset cursor on auto-sleep
       forceFullViewRedraw = true;
     }
   }
@@ -709,8 +699,6 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   static int16_t lastModFunc = -1;
   static int8_t lastPowerState = -1;
   static int8_t lastOledSleepTimer = -1;
-  static int8_t lastKeyL = -1;
-  static int8_t lastKeyR = -1;
   static uint8_t lastSubmenuSelect = 0xFF;
   static bool lastIsEditing = false;
   static uint8_t lastRemaining = 0xFF;
@@ -733,8 +721,6 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
     lastModFunc = -1;
     lastPowerState = -1;
     lastOledSleepTimer = -1;
-    lastKeyL = -1;
-    lastKeyR = -1;
     lastSubmenuSelect = 0xFF;
     lastIsEditing = false;
     lastRemaining = 0xFF;
@@ -757,7 +743,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       forceFullViewRedraw = false;
     }
     if (cursorIndex != lastCursorIndex) {
-      drawMenuList(menu_strings, 5, cursorIndex);
+      drawMenuList(menu_strings, 4, cursorIndex);
       lastCursorIndex = cursorIndex;
     }
     return;
@@ -822,8 +808,8 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   // ==========================================
   if (menuState == 4) {
     if (redraw) {
-      drawHeader(F("RE-ZERO"), 41);
-      printAt(14, 2, F("Keep knob at rest"));
+      drawHeader(F_REZERO, 41);
+      printAt(14, 2, F_KEEP_REST);
       printAt(26, 3, F("DO NOT TOUCH!"));
       printAt(20, 5, F("Hold R: Start"));
       drawHorizontalLine(6, 0x01);
@@ -862,34 +848,6 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   }
 
   // ==========================================
-  // STATE 7: BUTTONS SHORTCUT MAPPING
-  // ==========================================
-  if (menuState == 7) {
-    if (redraw || par.values->keyL_shortcut != lastKeyL || par.values->keyR_shortcut != lastKeyR) {
-      if (redraw) {
-        drawHeader(F("BUTTONS"), 41);
-        printFooter();
-        forceFullViewRedraw = false;
-      }
-      printMenuLabel(2, 0, F("LEFT:  "));
-      oled.setInvertMode(submenuSelect == 0 && isEditing);
-      printShortcutName(par.values->keyL_shortcut);
-      oled.setInvertMode(false);
-      printSpaces(2);
-
-      printMenuLabel(3, 1, F("RIGHT: "));
-      oled.setInvertMode(submenuSelect == 1 && isEditing);
-      printShortcutName(par.values->keyR_shortcut);
-      oled.setInvertMode(false);
-      printSpaces(2);
-
-      lastKeyL = par.values->keyL_shortcut;
-      lastKeyR = par.values->keyR_shortcut;
-    }
-    return;
-  }
-
-  // ==========================================
   // STATE 8: DEBUG SUBMENU
   // ==========================================
   if (menuState == 8) {
@@ -914,18 +872,14 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       forceFullViewRedraw = false;
     }
 
-    printSensorLine('N', rawReads[4], rawReads[5], 2);
-    printSensorLine('S', rawReads[0], rawReads[1], 3);
-    printSensorLine('E', rawReads[2], rawReads[3], 4);
-    printSensorLine('W', rawReads[6], rawReads[7], 5);
-
-    int16_t delS = abs(rawReads[1] - rawReads[0]);
-    int16_t delE = abs(rawReads[3] - rawReads[2]);
-    int16_t delN = abs(rawReads[5] - rawReads[4]);
-    int16_t delW = abs(rawReads[7] - rawReads[6]);
+    // Optimization: Now using the returned delta values, saving 4 redundant abs() calculations
+    int16_t delN = printSensorLine('N', rawReads[4], rawReads[5], 2);
+    int16_t delS = printSensorLine('S', rawReads[0], rawReads[1], 3);
+    int16_t delE = printSensorLine('E', rawReads[2], rawReads[3], 4);
+    int16_t delW = printSensorLine('W', rawReads[6], rawReads[7], 5);
 
     oled.setCursor(0, 7);
-    if (delS <= 50 && delE <= 50 && delN <= 50 && delW <= 50) {
+    if (delS <= 100 && delE <= 100 && delN <= 100 && delW <= 100) {
       oled.print(F("SYSTEM BALANCED!   "));
     } else {
       oled.print(F("ADJUST ROT / BOLTS "));
@@ -957,7 +911,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
 
       if (elapsed < 20000UL) { 
         if (redraw) {
-          drawHeader(F("CALIBRATING"), 31);
+          drawHeader(F_CALIBRATING, 31);
           printAt(19, 2, F("Move knob fully"));
           lastRemaining = 0xFF;
           lastProgressWidth = 0xFF;
@@ -1008,13 +962,14 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       }
     } else if (calState == 2) {
       if (redraw) {
-        drawHeader(F("SUCCESS"), 44);
+        drawHeader(F_SUCCESS, 44);
         printAt(26, 3, F("Limits Saved!"));
         printAt(20, 5, F("Saved to EEPROM"));
         forceFullViewRedraw = false;
       }
       if (now - calStartTime >= 2000) {
         menuState = 8;
+        submenuSelect = 0; // Reset cursor on completion
         forceFullViewRedraw = true;
       }
     } else if (calState == 3) {
@@ -1026,6 +981,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       }
       if (now - calStartTime >= 2500) {
         menuState = 8;
+        submenuSelect = 0; // Reset cursor on failure
         forceFullViewRedraw = true;
       }
     }
@@ -1063,26 +1019,24 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   }
 
   // ==========================================
-  // STATE 12: LIVE DRIFT OFFSETS & TOGGLE SCREEN
+  // STATE 12: DRIFT COMPENSATION TOGGLE SCREEN (SIMPLIFIED)
   // ==========================================
   if (menuState == 12) {
     if (redraw || par.values->compEnabled != lastPowerState) {
       if (redraw) {
-        drawHeader(F("DRIFT OFFSETS"), 25);
-        printAt(18, 2, F("     A  |   B"));
-        printAt(4, 7, F("R: TOGGLE   HL: BACK"));
+        drawHeader(F("DRIFT COMP"), 28);
+        printAt(4, 7, F_TOGGLE_FOOTER);
         forceFullViewRedraw = false;
       }
-      oled.setCursor(34, 1);
-      oled.print(F("DRIFT: "));
-      oled.print(par.values->compEnabled ? F("ON ") : F("OFF"));
+      oled.setCursor(28, 3);
+      oled.print(F("STATE: "));
+      oled.setInvertMode(true);
+      oled.print(par.values->compEnabled ? F(" ON ") : F(" OFF "));
+      oled.setInvertMode(false);
+      printSpaces(2);
+
       lastPowerState = par.values->compEnabled;
     }
-
-    printOffsetLine('N', offsets[4], offsets[5], 3);  
-    printOffsetLine('S', offsets[0], offsets[1], 4);  
-    printOffsetLine('E', offsets[2], offsets[3], 5);  
-    printOffsetLine('W', offsets[6], offsets[7], 6);  
     return;
   }
 
@@ -1092,11 +1046,11 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   if (menuState == 13) {
     if (redraw) {
       drawHeader(F("FACTORY RESET"), 25);
-      printAt(14, 2, F("Reset EEPROM data?"));
+      printAt(14, 2, F("Reset EEPROM?"));
       printAt(8, 3, F("All custom settings"));
       printAt(22, 4, F("will be erased"));
-      printAt(10, 6, F("Hold R (1s): RESET"));
-      printAt(28, 7, F("HOLD L: BACK"));
+      printAt(10, 6, F("HR: RESET"));
+      printAt(28, 7, F("HL: BACK"));
       forceFullViewRedraw = false;
     }
     return;
@@ -1109,7 +1063,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
     if (redraw || submenuSelect != lastSubmenuSelect) {
       if (redraw) {
         drawHeader(F("DIRECTION"), 37);
-        printAt(4, 7, F("HOLD R: TOGGLE  HL: BACK"));
+        printAt(4, 7, F_TOGGLE_FOOTER);
         forceFullViewRedraw = false;
       }
       drawDirSubmenu(par, submenuSelect);

@@ -1,10 +1,11 @@
 /*
  * SPACE MOUSE PRO EMULATOR (6DOF DIY) - MAIN INO ENTRY FILE
- * Firmware Version: ALPHA 0.0.4
+ * Firmware Version: ALPHA 0.0.8
  * Architecture: ATmega32U4 (Arduino Pro Micro, 5V, 16 MHz)
  */
 
 #include <Arduino.h>
+#include <avr/wdt.h> // Watchdog timer support for hardware software reboot
 #include <Wire.h> // Included to support global Wire I2C timeout configurations
 
 // The user-specific settings, pin mappings, and hardware configuration definitions
@@ -62,39 +63,41 @@ ParamStorage parStorage;
 #if ENABLE_SERIAL_DEBUG
 ParamData par = {.values = &parStorage,
                  .description = {
-                     {PARAM_TYPE_BOOL, "", NULL},                        // param 0 is unused
-                     {PARAM_TYPE_INT, "DEADZONE", &parStorage.deadzone}, //       1
-                     {PARAM_TYPE_INT, "SENS_TX", &parStorage.transX_sensitivity_q7},      //       2
-                     {PARAM_TYPE_INT, "SENS_TY", &parStorage.transY_sensitivity_q7},      //       3
-                     {PARAM_TYPE_INT, "SENS_PTZ", &parStorage.pos_transZ_sensitivity_q7}, //       4
-                     {PARAM_TYPE_INT, "SENS_NTZ", &parStorage.neg_transZ_sensitivity_q7}, //       5
-                     {PARAM_TYPE_INT, "GATE_NTZ", &parStorage.gate_neg_transZ},          //       6
-                     {PARAM_TYPE_INT, "GATE_RX", &parStorage.gate_rotX},                 //       7
-                     {PARAM_TYPE_INT, "GATE_RY", &parStorage.gate_rotY},                 //       8
-                     {PARAM_TYPE_INT, "GATE_RZ", &parStorage.gate_rotZ},                 //       9
-                     {PARAM_TYPE_INT, "SENS_RX", &parStorage.rotX_sensitivity_q7},        //      10
-                     {PARAM_TYPE_INT, "SENS_RY", &parStorage.rotY_sensitivity_q7},        //      11
-                     {PARAM_TYPE_INT, "SENS_RZ", &parStorage.rotZ_sensitivity_q7},        //      12
-                     {PARAM_TYPE_INT, "MODFUNC", &parStorage.modFunc},                   //      13
-                     {PARAM_TYPE_INT, "MOD_A", &parStorage.slope_at_zero_q8},            //      14
-                     {PARAM_TYPE_INT, "MOD_B", &parStorage.slope_at_end_q8},             //      15
-                     {PARAM_TYPE_BOOL, "INVX", &parStorage.invX},                        //      16
-                     {PARAM_TYPE_BOOL, "INVY", &parStorage.invY},                        //      17
-                     {PARAM_TYPE_BOOL, "INVZ", &parStorage.invZ},                        //      18
-                     {PARAM_TYPE_BOOL, "INVRX", &parStorage.invRX},                      //      19
-                     {PARAM_TYPE_BOOL, "INVRY", &parStorage.invRY},                      //      20
-                     {PARAM_TYPE_BOOL, "INVRZ", &parStorage.invRZ},                      //      21
-                     {PARAM_TYPE_BOOL, "SWITCHXY", &parStorage.switchXY},                //      22
-                     {PARAM_TYPE_BOOL, "SWITCHYZ", &parStorage.switchYZ},                //      23
-                     {PARAM_TYPE_BOOL, "EXCLUSIVE", &parStorage.exclusiveMode},          //      24
-                     {PARAM_TYPE_INT, "EXCL_HYST", &parStorage.exclusiveHysteresis},     //      25
-                     {PARAM_TYPE_BOOL, "EXCL_PRIOZ", &parStorage.prioZexclusiveMode},    //      26
-                     {PARAM_TYPE_BOOL, "COMP_EN", &parStorage.compEnabled},              //      27
-                     {PARAM_TYPE_INT, "COMP_NR", &parStorage.compNoOfPoints},            //      28
-                     {PARAM_TYPE_INT, "COMP_WAIT", &parStorage.compWaitTime},            //      29
-                     {PARAM_TYPE_INT, "COMP_MDIFF", &parStorage.compMinMaxDiff},         //      30
-                     {PARAM_TYPE_INT, "COMP_CDIFF", &parStorage.compCenterDiff},         //      31
-                     {PARAM_TYPE_INT, "GLB_SENS", &parStorage.globalSens}                //      32
+                     {PARAM_TYPE_BOOL, "", NULL},                                         // param 0 (unused)
+                     {PARAM_TYPE_INT, "DEADZONE", &parStorage.deadzone},                  // 1
+                     {PARAM_TYPE_INT, "SENS_TX", &parStorage.transX_sensitivity_q7},       // 2
+                     {PARAM_TYPE_INT, "SENS_TY", &parStorage.transY_sensitivity_q7},       // 3
+                     {PARAM_TYPE_INT, "SENS_PTZ", &parStorage.pos_transZ_sensitivity_q7},  // 4
+                     {PARAM_TYPE_INT, "SENS_NTZ", &parStorage.neg_transZ_sensitivity_q7},  // 5
+                     {PARAM_TYPE_INT, "GATE_NTZ", &parStorage.gate_neg_transZ},           // 6
+                     {PARAM_TYPE_INT, "GATE_RX", &parStorage.gate_rotX},                  // 7
+                     {PARAM_TYPE_INT, "GATE_RY", &parStorage.gate_rotY},                  // 8
+                     {PARAM_TYPE_INT, "GATE_RZ", &parStorage.gate_rotZ},                  // 9
+                     {PARAM_TYPE_INT, "GATE_TR", &parStorage.gate_trans},                 // 10
+                     {PARAM_TYPE_INT, "SENS_RX", &parStorage.rotX_sensitivity_q7},         // 11
+                     {PARAM_TYPE_INT, "SENS_RY", &parStorage.rotY_sensitivity_q7},         // 12
+                     {PARAM_TYPE_INT, "SENS_RZ", &parStorage.rotZ_sensitivity_q7},         // 13
+                     {PARAM_TYPE_INT, "MODFUNC", &parStorage.modFunc},                    // 14
+                     {PARAM_TYPE_INT, "MOD_A", &parStorage.slope_at_zero_q8},             // 15
+                     {PARAM_TYPE_INT, "MOD_B", &parStorage.slope_at_end_q8},              // 16
+                     {PARAM_TYPE_BOOL, "INVX", &parStorage.invX},                         // 17
+                     {PARAM_TYPE_BOOL, "INVY", &parStorage.invY},                         // 18
+                     {PARAM_TYPE_BOOL, "INVZ", &parStorage.invZ},                         // 19
+                     {PARAM_TYPE_BOOL, "INVRX", &parStorage.invRX},                       // 20
+                     {PARAM_TYPE_BOOL, "INVRY", &parStorage.invRY},                       // 21
+                     {PARAM_TYPE_BOOL, "INVRZ", &parStorage.invRZ},                       // 22
+                     {PARAM_TYPE_BOOL, "SWITCHXY", &parStorage.switchXY},                 // 23
+                     {PARAM_TYPE_BOOL, "SWITCHYZ", &parStorage.switchYZ},                 // 24
+                     {PARAM_TYPE_BOOL, "EXCLUSIVE", &parStorage.exclusiveMode},           // 25
+                     {PARAM_TYPE_INT, "EXCL_HYST", &parStorage.exclusiveHysteresis},      // 26
+                     {PARAM_TYPE_BOOL, "COMP_EN", &parStorage.compEnabled},               // 27
+                     {PARAM_TYPE_INT, "COMP_NR", &parStorage.compNoOfPoints},             // 28
+                     {PARAM_TYPE_INT, "COMP_WAIT", &parStorage.compWaitTime},             // 29
+                     {PARAM_TYPE_INT, "COMP_MDIFF", &parStorage.compMinMaxDiff},          // 30
+                     {PARAM_TYPE_INT, "COMP_CDIFF", &parStorage.compCenterDiff},          // 31
+                     {PARAM_TYPE_INT, "GLB_SENS", &parStorage.globalSens},                 // 32
+                     {PARAM_TYPE_INT, "KEY2_SHORT", &parStorage.key2_shortcut},           // 33
+                     {PARAM_TYPE_INT, "KEY1_SHORT", &parStorage.key1_shortcut}            // 34
                  }};
 #else
 ParamData par = {.values = &parStorage};
@@ -109,6 +112,10 @@ uint8_t keyState[NUMKEYS];
  * @brief Setup the SpaceMouse firmware, triggered by system reset or power-on.
  */
 void setup() {
+  // Clear Watchdog reset flags and disable Watchdog timer immediately upon boot
+  MCUSR = 0;
+  wdt_disable();
+
   // Directly configure the hardware multiplexer ADC prescaler via the ADCSRA register.
   // E.g., 0x05 scales the clock to 500 kHz, safely reducing per-read sampling time from 52us down to 26us.
   ADCSRA = (ADCSRA & 0xF8) | (ADC_PRESCALER_PRESET & 0x07);

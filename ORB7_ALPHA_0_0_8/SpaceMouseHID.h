@@ -11,6 +11,7 @@ saturation and achieve ultra-low latency polling rates.
 
 #ifndef SpaceMouseHID_h
 #define SpaceMouseHID_h
+
 #include <Arduino.h>
 
 // Ensure the code is compiling for a supported Architecture (ATmega32U4)
@@ -94,7 +95,7 @@ static const uint8_t SpaceMouseReportDescriptor[] PROGMEM = {
     0x91, 0x03,          //     Output (Const,Var,Abs)
     0xC0,                //   End Collection
 
-    0xC0,                // === END OF TOP LEVEL COLLECTION 1 === (Fechamos o SpaceMouse aqui!)
+    0xC0,                // === END OF TOP LEVEL COLLECTION 1 ===
 
                          // Report 5: WebHID Bi-directional Interface (Vendor Defined)
     0x06, 0x00, 0xFF,    // Usage Page (Vendor Defined 0xFF00)
@@ -142,7 +143,6 @@ public:
 
 private:
     bool IsNewHidReportDue(unsigned long now);
-    bool jiggleValues(uint8_t val[12], bool lastBit);
 
     SpaceMouseHIDStates nextState;
 #if (NUMKEYS > 0)

@@ -48,9 +48,18 @@ void getParametersFromEEPROM(ParamData &par) {
   if (par.values->slope_at_zero_q8 < 26 || par.values->slope_at_zero_q8 > 768) par.values->slope_at_zero_q8 = SLOPE_A_Q8;
   if (par.values->slope_at_end_q8 < 26 || par.values->slope_at_end_q8 > 402) par.values->slope_at_end_q8 = SLOPE_B_Q8;
   if (par.values->exclusiveHysteresis < 0 || par.values->exclusiveHysteresis > 500) par.values->exclusiveHysteresis = EXCL_HYST;
-  if (par.values->oledSleepTimer < 0 || par.values->oledSleepTimer > 3) par.values->oledSleepTimer = 2;
-  if (par.values->keyL_shortcut < 0 || par.values->keyL_shortcut >= 32) par.values->keyL_shortcut = 2;
-  if (par.values->keyR_shortcut < 0 || par.values->keyR_shortcut >= 32) par.values->keyR_shortcut = 1;
+  if (par.values->oledSleepTimer < -1 || par.values->oledSleepTimer > 3) par.values->oledSleepTimer = 2;
+  
+  // Sanitize key shortcut indices (Range 0..31) for ALL 4 hardware buttons
+  if (par.values->keyL_shortcut < 0 || par.values->keyL_shortcut >= 32) par.values->keyL_shortcut = 2;  // SM_T
+  if (par.values->keyR_shortcut < 0 || par.values->keyR_shortcut >= 32) par.values->keyR_shortcut = 1;  // SM_FIT
+  if (par.values->key2_shortcut < 0 || par.values->key2_shortcut >= 32) par.values->key2_shortcut = 13; // SM_2
+  if (par.values->key1_shortcut < 0 || par.values->key1_shortcut >= 32) par.values->key1_shortcut = 12; // SM_1
+
+  if (par.values->gate_trans < 0 || par.values->gate_trans > 100) par.values->gate_trans = GATE_TRANS;
+
+  // Sanitize modifier curve function selection against corrupt values
+  if (par.values->modFunc != 0 && par.values->modFunc != 1 && par.values->modFunc != 3) par.values->modFunc = MODFUNC;
 
   // Sanitize Q7 Sensitivities against <= 0 values that would trigger division-by-zero or disable kinematic axes
   if (par.values->transX_sensitivity_q7 <= 0) par.values->transX_sensitivity_q7 = SENS_TX_Q7;

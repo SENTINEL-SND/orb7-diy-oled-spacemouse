@@ -8,11 +8,15 @@
 #include "parameterMenu.h"
 
 // Standard Command IDs for the WebHID Interface
-#define WEBHID_CMD_GET_CONFIG    0x01
-#define WEBHID_CMD_SET_CONFIG    0x02
-#define WEBHID_CMD_STREAM_RAW    0x03
-#define WEBHID_CMD_REZERO        0x04
-#define WEBHID_CMD_FACTORY_RESET 0x05
+#define WEBHID_CMD_GET_CONFIG      0x01
+#define WEBHID_CMD_SET_CONFIG      0x02
+#define WEBHID_CMD_STREAM_RAW      0x03
+#define WEBHID_CMD_REZERO          0x04
+#define WEBHID_CMD_FACTORY_RESET   0x05
+// Dedicated calibration boundary payloads to bypass the 64-byte USB limit
+#define WEBHID_CMD_SET_CALIBRATION 0x06
+#define WEBHID_CMD_GET_CALIBRATION 0x07 // Retrieves current dynamic limits from EEPROM
+#define WEBHID_CMD_RESTART         0x08 // Triggers MCU hardware reboot via Watchdog
 
 /// @brief Processes incoming WebHID payloads sent by the browser.
 /// @param payload Pointer to the raw USB packet data.
