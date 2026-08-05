@@ -4,8 +4,6 @@
 #include <Arduino.h>
 #include <math.h>
 
-#define sign(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0)) // Define Signum Function
-
 #include "parameterMenu.h"
 #include "kinematics.h"
 #include "calibration.h"
@@ -39,11 +37,14 @@ inline int16_t mapToSensitivity(int32_t numer, int32_t denom, int16_t offset) {
 }
 
 /// @brief Flash-optimized signed 32-bit division helper utilizing Q7 fixed-point parameters.
-/// Replaces heavy floating-point operations while preventing sign logic overflows.
+/// Replaces heavy floating-point operations while preventing sign logic overflows and integer wraparound.
 static int16_t divideBySensitivity(int16_t val, int16_t sens_q7) {
   if (val == 0 || sens_q7 <= 0) return 0;
   int32_t numer = (int32_t)val << 7; // Shift left 7 bits to apply Q7 scaling division
-  return (int16_t)(numer / sens_q7);
+  int32_t result = numer / sens_q7;
+  
+  // Constrain 32-bit math before casting to int16_t to prevent negative sign overflow wraparound
+  return (int16_t)constrain(result, -TOTALSENSITIVITY, TOTALSENSITIVITY);
 }
 
 /// @brief Function to modify the input value according to mathematical curves.
@@ -163,7 +164,7 @@ void FilterAnalogReadOuts(int16_t* centered, ParamData& par){
   for(uint8_t i = 0; i < 8; i++){
     int16_t val = centered[i];
     
-    // FIX: Using <= and >= ensures values resting exactly on the boundary are properly muted
+    // Enforce deadzone strictly including boundary values
     if (val <= dz && val >= -dz){
       centered[i] = 0; // Filtered by deadzone, enforce absolute hardware zero
     } else {
@@ -200,9 +201,7 @@ void _calculateKinematicSensors(int16_t* centered, int16_t* velocity){
     velocity[ROTZ] = (+centered[AY] + centered[BY] + centered[CY] + centered[DY]);
   #else
     // Default Hall-Effect matrix mixing resolving polarities for typical physical magnet placements
-    // FIX: Adjusted matrix divisors (/4 and /8) to correctly average the vectors.
-    // This scales the summed 1400/2800 limits perfectly back to the HID bounds (-350 to +350),
-    // completely eliminating the 50% hardware travel deadband while preserving integer precision.
+    // Adjusted matrix divisors (/4 and /8) to correctly average the vectors and scale back to HID bounds (-350 to +350)
     velocity[TRANSX] = (centered[HES1] -centered[HES0] +centered[HES6] -centered[HES7]) / 4;
     velocity[TRANSY] = (centered[HES2] -centered[HES3] +centered[HES9] -centered[HES8]) / 4;
     velocity[TRANSZ] = (centered[HES0] +centered[HES1] +centered[HES2] +centered[HES3] +centered[HES6] +centered[HES7] +centered[HES8] +centered[HES9]) / 8;
@@ -216,7 +215,7 @@ __attribute__((noinline)) static void processAxis(int16_t &vel, int16_t sens_q7,
   if (vel != 0) {
     vel = modifierFunction(divideBySensitivity(vel, sens_q7), par);
     
-    // Smooth Deadband: Remove o 'salto' inicial e garante uma transição amanteigada do zero
+    // Smooth Deadband: Continuous gate subtraction to prevent initial zero-jump discontinuities
     if (vel > gate) {
       vel -= gate;
     } else if (vel < -gate) {
@@ -232,14 +231,6 @@ void calculateKinematic(int16_t* centered, int16_t* velocity, ParamData& par){
   // Gather base unscaled velocities
   _calculateKinematicSensors(centered, velocity);
 
-  // FIX: Compact array pointer loop for axis inversions saving Flash memory compared to 6 individual IF statements
-  const int8_t* invFlags = &par.values->invX;
-  for (uint8_t i = 0; i < 6; i++) {
-    if (invFlags[i]) {
-      velocity[i] = -velocity[i];
-    }
-  }
-
   // Apply scales and dedicated translation micro-gates (par.values->gate_trans filters matrix residual bleed)
   processAxis(velocity[TRANSX], par.values->transX_sensitivity_q7, par.values->gate_trans, par);
   processAxis(velocity[TRANSY], par.values->transY_sensitivity_q7, par.values->gate_trans, par);
@@ -248,7 +239,7 @@ void calculateKinematic(int16_t* centered, int16_t* velocity, ParamData& par){
   if (velocity[TRANSZ] != 0) {
     bool isNegZ = (velocity[TRANSZ] < 0);
     int16_t z_sens = isNegZ ? par.values->neg_transZ_sensitivity_q7 : par.values->pos_transZ_sensitivity_q7;
-    int16_t z_gate = isNegZ ? par.values->gate_neg_transZ : 0; // FIX: Gate applies strictly to negative Z (Pull Up)
+    int16_t z_gate = isNegZ ? par.values->gate_neg_transZ : 0; // Gate applies strictly to physical negative Z (Pull Up)
     processAxis(velocity[TRANSZ], z_sens, z_gate, par);
   }
 
@@ -257,8 +248,15 @@ void calculateKinematic(int16_t* centered, int16_t* velocity, ParamData& par){
   processAxis(velocity[ROTY], par.values->rotY_sensitivity_q7, par.values->gate_rotY, par);
   processAxis(velocity[ROTZ], par.values->rotZ_sensitivity_q7, par.values->gate_rotZ, par);
 
+  // Apply software axis inversions AFTER processing physical gates and sensitivities
+  const int8_t* invFlags = &par.values->invX;
+  for (uint8_t i = 0; i < 6; i++) {
+    if (invFlags[i]) {
+      velocity[i] = -velocity[i];
+    }
+  }
+
   // Apply master global sensitivity scaling on all 6 output axes with 32-bit overflow prevention
-  // Base 100 bypasses logic entirely to save CPU overhead
   if (par.values->globalSens != 100) {
     for (uint8_t i = 0; i < 6; i++) {
       int32_t scaledVal = ((int32_t)velocity[i] * par.values->globalSens) / 100;
@@ -298,29 +296,28 @@ void exclusiveMode(int16_t *velocity, int16_t hysteresis){
   uint16_t totalRot   = abs(velocity[ROTX]  ) + abs(velocity[ROTY]  ) + abs(velocity[ROTZ]  );
   uint16_t totalTrans = abs(velocity[TRANSX]) + abs(velocity[TRANSY]) + abs(velocity[TRANSZ]);
 
-  // Relaxation threshold: If total force drops below threshold during hand release/direction change,
-  // unlock mode to NEUTRAL (0) so the next immediate gesture registers instantly without fighting hysteresis.
+  // Relaxation threshold: Unlock back to NEUTRAL if force drops below rest threshold
   if (totalRot < EXCL_RELAX_THRESHOLD && totalTrans < EXCL_RELAX_THRESHOLD) {
     mode = 0; 
   }
 
-  // Underflow protection for negative hysteresis values originating from EEPROM corruption
+  // Underflow protection for negative hysteresis values
   uint16_t hysteresis_safe = (hysteresis < 0) ? 0 : (uint16_t)hysteresis;
 
   if (mode == 0) {
-    // In NEUTRAL: Evaluate pure dominance without any hysteresis barrier
+    // In NEUTRAL: Evaluate pure dominance without hysteresis barrier
     if (totalRot > totalTrans && totalRot >= 15) {
       mode = 2; // Latch ROTATION
     } else if (totalTrans > totalRot && totalTrans >= 15) {
       mode = 1; // Latch TRANSLATION
     }
   } else if (mode == 1) { 
-    // Currently in TRANSLATION: Must mathematically overcome the hysteresis barrier to force a mid-motion switch
+    // Currently in TRANSLATION: Must overcome hysteresis barrier to switch
     if (totalRot > (totalTrans + hysteresis_safe)) {
       mode = 2;
     }
   } else if (mode == 2) { 
-    // Currently in ROTATION: Must mathematically overcome the hysteresis barrier to force a mid-motion switch
+    // Currently in ROTATION: Must overcome hysteresis barrier to switch
     if (totalTrans > (totalRot + hysteresis_safe)) {
       mode = 1;
     }

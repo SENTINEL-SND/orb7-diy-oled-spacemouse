@@ -1,5 +1,5 @@
 // Config File for << HALL-EFFECT SPACEMOUSE >>
-// Firmware Version: ALPHA 0.0.6
+// Firmware Version: v0.1.0
 
 #ifndef CONFIG_h
 #define CONFIG_h
@@ -19,6 +19,9 @@
 
 #undef DEBUG_KEYS
 #undef DEBUG_ADC
+
+// Serial debug output report interval in milliseconds (prevents serial buffer flooding)
+#define DEBUGDELAY 100
 
 /* Advanced Signal Filtering & Hardware ADC Settings
 =====================================================
@@ -57,7 +60,7 @@ Set STARTDEBUG to boot directly into a specific debug mode, or type the number i
  8: Report HID key bitmask output.
 30: Open Serial CLI parameter menu (EEPROM editing).
 */
-#define STARTDEBUG -1 // Can also be set over the serial interface, while the programm is running!
+#define STARTDEBUG -1 // Can also be set over the serial interface, while the program is running!
 
 // Hardware uses HallEffect sensors instead of resistive joystick potentiometers
 #define HALLEFFECT
@@ -117,11 +120,11 @@ GATE_TRANS: Dedicated micro-gate for Translation X and Y (Pan) to suppress
 #define SENS_TY 0.60
 #define SENS_PTZ 0.70 // sensitivity for positive translation z (pushing down)
 #define SENS_NTZ 0.50 // sensitivity for negative translation z (pulling up)
-#define GATE_TRANS 10 // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
-#define GATE_NTZ 15 // gate value below which negative z movements will be ignored.
-#define GATE_RX 5 // Value under which rotX values will be forced to zero
-#define GATE_RY 5 // Value under which roty values will be forced to zero
-#define GATE_RZ 5 // Value under which rotz values will be forced to zero
+#define GATE_TRANS 6  // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
+#define GATE_NTZ 15   // gate value below which negative z movements will be ignored.
+#define GATE_RX 5     // Value under which rotX values will be forced to zero
+#define GATE_RY 5     // Value under which roty values will be forced to zero
+#define GATE_RZ 5     // Value under which rotz values will be forced to zero
 #define SENS_RX 0.70
 #define SENS_RY 0.70
 #define SENS_RZ 0.60
@@ -134,7 +137,7 @@ Modifies the linear hardware response into ergonomic curves.
 3: Squared tangent function (y = tan(b * (abs(x)^a * sign(x))) / tan(b))
 Recommendation for CAD: MODFUNC 3
 */
-#define MODFUNC 3 // Used as default value as long as the data hasn't been saved in the EEPROM
+#define MODFUNC 3  // Used as default value as long as the data hasn't been saved in the EEPROM
 #define MOD_A 1.15 // exponent "a", recommended: 1.0 ... 3.0
 #define MOD_B 1.35 // factor "b", recommended: 1.0 ... 1.57 (Must not exceed Pi/2)
 
@@ -159,8 +162,8 @@ Invert resulting axes depending on the target CAD software preference.
 ================================
 Dynamically tracks and eliminates center point wandering due to thermal expansion or mechanical fatigue.
 */
-#define COMP_EN 1  // enable the compensation
-#define COMP_NR 50 // number of points to build the mean-value (Must be 1-500)
+#define COMP_EN 1     // enable the compensation
+#define COMP_NR 50    // number of points to build the mean-value (Must be 1-500)
 #define COMP_WAIT 100 // [ms] time to wait and monitor before compensating
 #define COMP_MDIFF 10 // [incr] maximum range of raw-values to be considered as only drift
 #define COMP_CDIFF 50 // [incr] maximum distance from the center-value to be only drift

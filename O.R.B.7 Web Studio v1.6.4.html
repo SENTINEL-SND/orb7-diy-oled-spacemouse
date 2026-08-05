@@ -1,0 +1,3498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O.R.B.7 - SpaceMouse Studio v1.6.3 (FW v0.1.0)</title>
+    
+    <!-- Google Fonts: Orbitron -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    
+    <!-- Three.js CDN for 3D Motion Visualizer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Chart.js CDN for Interactive Curve Plotting -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- EMBEDDED CSS STYLES -->
+    <style>
+        :root {
+            --bg-base: #0a0b10;
+            --bg-panel: #141722;
+            --bg-panel-alt: #1c2030;
+            --primary: #05ACFF;     /* Electric Baby Blue / Neon Ice */
+            --secondary: #ff007f;   /* Neon Magenta */
+            --warning: #ffb700;
+            --danger: #ff3333;
+            --text-main: #ffffff;
+            --text-dim: #7a869a;
+            --border: #262b3d;
+            --font-mono: 'Consolas', 'Courier New', monospace;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* TOP NAVIGATION BAR */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1280px;
+            padding: 20px;
+            box-sizing: border-box;
+            border-bottom: 1px solid var(--border);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 25px; /* Space between logo and tabs */
+        }
+        .brand-title {
+            display: flex;
+            flex-direction: column;
+            width: fit-content;
+        }
+        .brand-title h1 {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif; /* Orbitron Font Applied */
+            font-weight: 900;
+            font-size: 22px;
+            line-height: 1;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(5, 172, 255, 0.35);
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+        .brand-subtitle {
+            font-size: 8px;
+            font-weight: bold;
+            font-family: var(--font-mono);
+            color: var(--secondary);
+            text-align: justify;
+            text-align-last: justify;
+            margin-top: 3px;
+            opacity: 0.9;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* TAB NAVIGATION */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background-color: #0d0e14;
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .tab-btn {
+            background: transparent;
+            color: var(--text-dim);
+            border: none;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: var(--bg-base);
+            box-shadow: 0 0 10px rgba(5, 172, 255, 0.35);
+        }
+
+        /* BUTTONS */
+        .btn-connect {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-connect:hover {
+            background-color: var(--primary);
+            color: var(--bg-base);
+        }
+        .btn-action {
+            background-color: var(--primary);
+            color: #000;
+            border: none;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .btn-action:hover:not(:disabled) { 
+            background-color: #0496e6; 
+            box-shadow: 0 0 10px rgba(5, 172, 255, 0.4);
+        }
+        .btn-action:disabled {
+            background-color: #1c2030;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+        .btn-outline {
+            background-color: var(--bg-panel-alt);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover:not(:disabled) {
+            background-color: #262b3d;
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 8px rgba(5, 172, 255, 0.25);
+        }
+        .btn-small {
+            padding: 4px 10px; 
+            font-size: 11px;
+        }
+        .btn-danger { background-color: var(--danger); color: #fff; }
+        .btn-danger:hover { background-color: #cc0000; }
+        .btn-warning { background-color: var(--warning); color: #000; }
+
+        /* VIEW CONTAINERS */
+        .view-content {
+            width: 100%;
+            max-width: 1280px;
+            padding: 20px;
+            padding-bottom: 85px; /* Added space so persistent footer never obscures content */
+            box-sizing: border-box;
+            display: none;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .view-content.active { display: block; }
+        .connected-state .view-content.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* GRID SYSTEM */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(580px, 1fr));
+            gap: 20px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 20px;
+        }
+
+        /* PANELS */
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        .panel h2 {
+            margin-top: 0;
+            font-size: 15px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+
+        /* DEVICE HEALTH GRID & CARDS */
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .health-card {
+            background-color: #090a0f;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .health-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .health-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+        }
+        .health-badge {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+            font-family: var(--font-mono);
+        }
+        .health-badge.ok {
+            background-color: var(--primary);
+            color: #000;
+        }
+        .health-badge.warn {
+            background-color: var(--warning);
+            color: #000;
+        }
+        .health-badge.bad {
+            background-color: var(--danger);
+            color: #fff;
+        }
+
+        /* CONTROL GROUPS */
+        .control-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        .control-group label {
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+        .control-group select {
+            background-color: #090a0f;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .val-display { float: right; color: var(--primary); font-family: var(--font-mono); }
+
+        /* TOGGLE SWITCHES */
+        .switch-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1e2d;
+        }
+        .switch-row label {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-dim);
+        }
+        .toggle-btn {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background-color: var(--primary);
+            color: #000;
+        }
+
+        /* 3D CANVAS VIEWPORT */
+        #canvas3d-container {
+            width: 100%;
+            height: 280px;
+            background-color: #f0f2f5;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        /* CHART CONTAINER */
+        .chart-container {
+            position: relative; 
+            width: 100%; 
+            height: 260px; 
+            margin-top: 15px; 
+            background-color: #090a0f; 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            padding: 10px; 
+            box-sizing: border-box;
+        }
+
+        /* BI-DIRECTIONAL BARS (6DOF) */
+        .axis-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .axis-label {
+            width: 40px;
+            font-weight: bold;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+        .axis-val {
+            width: 50px;
+            text-align: right;
+            font-family: var(--font-mono);
+            color: #fff;
+            margin-left: 10px;
+            font-size: 13px;
+        }
+        .bi-bar-container {
+            flex: 1;
+            display: flex;
+            background-color: #090a0f;
+            border: 1px solid var(--border);
+            height: 18px;
+            border-radius: 3px;
+            position: relative;
+        }
+        .bi-bar-center {
+            position: absolute;
+            left: 50%;
+            top: 0; bottom: 0;
+            width: 2px;
+            background-color: #fff;
+            z-index: 2;
+        }
+        .bar-left, .bar-right {
+            width: 50%;
+            height: 100%;
+            display: flex;
+        }
+        .bar-left { justify-content: flex-end; }
+        .bar-right { justify-content: flex-start; }
+        .fill-left, .fill-right {
+            height: 100%;
+            width: 0%;
+            transition: width 0.05s linear;
+        }
+        .fill-left { background-color: var(--secondary); }
+        .fill-right { background-color: var(--primary); }
+
+        /* SENSOR ALIGNMENT CARDS */
+        .align-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .align-card {
+            background-color: #090a0f;
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .align-card h3 { margin: 0 0 8px 0; color: var(--primary); font-size: 12px; }
+        .sensor-vals { font-family: var(--font-mono); font-size: 14px; margin-bottom: 6px; }
+        .delta {
+            font-size: 13px; font-weight: bold;
+            padding: 2px 8px; border-radius: 4px; display: inline-block;
+            font-family: var(--font-mono);
+        }
+        .delta.ok { color: #000; background-color: var(--primary); }
+        .delta.bad { color: #fff; background-color: var(--danger); }
+
+        /* TABLES */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        th { color: var(--text-dim); text-align: right; }
+        th:first-child, td:first-child { text-align: left; font-weight: bold; color: var(--primary); }
+
+        /* MANUAL LIMITS INPUT STYLING */
+        .limit-input {
+            background-color: #090a0f;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 6px;
+            width: 60px;
+            font-family: var(--font-mono);
+            text-align: right;
+            font-size: 12px;
+            transition: border-color 0.2s;
+        }
+        .limit-input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* STATUS BOXES */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 10px;
+            text-align: center;
+        }
+        .stat-box {
+            background-color: #090a0f;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-value { font-size: 18px; font-weight: bold; color: var(--primary); margin-top: 4px; font-family: var(--font-mono); }
+        .btn-ind {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background-color: #222;
+            margin-top: 6px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .btn-ind.active { 
+            background-color: var(--secondary); 
+            box-shadow: 0 0 10px var(--secondary); 
+            border-color: var(--secondary); 
+        }
+
+        .tool-box {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #090a0f;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+
+        /* PROGRESS BAR */
+        .wizard-progress {
+            width: 100%;
+            background-color: #090a0f;
+            border: 1px solid var(--border);
+            height: 16px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .wizard-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--warning);
+            transition: width 0.2s linear;
+        }
+
+        /* BUTTON STUDIO GRID & INTERACTIVE CARDS */
+        .btn-studio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .btn-preset-bar {
+            display: flex;
+            align-items: center;
+        }
+        .preset-select {
+            padding: 4px 8px; 
+            font-size: 12px; 
+            border-radius: 4px; 
+            background: #090a0f; 
+            color: var(--primary); 
+            border: 1px solid var(--border);
+            margin-right: 6px;
+        }
+
+        .btn-studio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .btn-card {
+            background-color: #090a0f;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background-color: var(--border);
+            transition: background-color 0.2s;
+        }
+
+        .btn-card.active {
+            border-color: var(--secondary);
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .btn-card.active::before {
+            background-color: var(--secondary);
+        }
+
+        .btn-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #1a1e2d;
+            padding-bottom: 8px;
+        }
+
+        .btn-card-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-badge {
+            font-size: 10px;
+            font-weight: bold;
+            font-family: var(--font-mono);
+            background-color: #1c2030;
+            color: var(--text-dim);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .btn-status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #141722;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .btn-select {
+            background-color: #141722;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .btn-select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* REUSABLE GUIDE BOXES */
+        .guide-box {
+            background-color: #090a0f;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .guide-box.guide-secondary { border-left-color: var(--secondary); }
+        .guide-box.guide-warning { border-left-color: var(--warning); }
+
+        .guide-box-title {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--primary);
+        }
+        .guide-box.guide-secondary .guide-box-title { color: var(--secondary); }
+        .guide-box.guide-warning .guide-box-title { color: var(--warning); }
+
+        .guide-box-text {
+            color: var(--text-dim);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .guide-box-text .highlight {
+            color: var(--text-main);
+            font-weight: bold;
+        }
+        .guide-box-text .subtext {
+            font-size: 11px;
+            font-style: italic;
+            opacity: 0.8;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* ==================================================== */
+        /* GUIDED SETUP WIZARD MODAL                            */
+        /* ==================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-window {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background-color: #0d0e14;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-close-modal {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .btn-close-modal:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 25px;
+            min-height: 280px;
+        }
+
+        .wiz-step {
+            display: none;
+        }
+        .wiz-step.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .wiz-step h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-footer {
+            background-color: #0d0e14;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wiz-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .wiz-dot {
+            width: 10px; height: 10px;
+            background-color: var(--border);
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .wiz-dot.active {
+            background-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        /* ==================================================== */
+        /* PERSISTENT FLOATING FOOTER STYLING                   */
+        /* ==================================================== */
+        footer {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 100% !important;
+            max-width: 1280px !important;
+            margin: 0 !important;
+            z-index: 900 !important;
+            border-radius: 8px 8px 0 0 !important;
+            box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.8) !important;
+            background-color: #0d0e14 !important;
+            border: 1px solid var(--border) !important;
+            border-bottom: none !important;
+            padding: 12px 20px !important;
+            box-sizing: border-box !important;
+        }
+
+        footer a {
+            transition: all 0.2s ease-in-out;
+        }
+
+        footer a:hover {
+            color: var(--secondary) !important;
+            border-bottom-color: var(--secondary) !important;
+            text-shadow: 0 0 8px rgba(255, 0, 127, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION -->
+    <div class="navbar">
+        <div class="brand">
+            <div class="brand-title">
+                <h1>O.R.B.7</h1>
+                <span class="brand-subtitle">S Ξ N T I N Ξ L</span>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" id="tabNav-landing">Dashboard</button>
+                <button class="tab-btn" id="tabNav-motion">Sensitivities</button>
+                <button class="tab-btn" id="tabNav-advanced">Gates & Drift</button>
+                <button class="tab-btn" id="tabNav-debug">Debug Studio</button>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <!-- SETUP WIZARD TRIGGER -->
+            <button id="btnRunWizard" class="btn-action btn-warning" title="Run Guided Setup Wizard">Setup Wizard</button>
+            <!-- HIDDEN FILE INPUT FOR JSON PROFILE IMPORT -->
+            <input type="file" id="fileImportProfile" accept=".json" style="display: none;">
+            <button id="btnExportProfile" class="btn-action btn-outline" title="Export current settings as a JSON file">Export JSON</button>
+            <button id="btnImportProfile" class="btn-action btn-outline" title="Import settings from a JSON file">Import JSON</button>
+            <button id="btnSaveConfig" class="btn-action" disabled>SAVE TO MOUSE</button>
+            <button id="btnConnect" class="btn-connect">Connect Device</button>
+        </div>
+    </div>
+
+    <!-- VIEW 1: LANDING PAGE / DASHBOARD -->
+    <div class="view-content active" id="view-landing">
+        <div class="grid-2">
+            
+            <!-- LEFT COLUMN: REAL-TIME 3D VIEWPORT & DEVICE HEALTH -->
+            <div>
+                <!-- REAL-TIME 3D VIEWPORT & 6DOF MOTION -->
+                <div class="panel">
+                    <h2>Interactive 3D Motion (6DOF)</h2>
+                    <div id="canvas3d-container"></div>
+                    <div id="velocity-container"></div>
+                </div>
+
+                <!-- DEVICE HEALTH & TELEMETRY PANEL -->
+                <div class="panel">
+                    <h2>🩺 Device Health & System Telemetry</h2>
+                    <div class="health-grid">
+                        <div class="health-card">
+                            <span class="health-label">Firmware Version</span>
+                            <span class="health-value" id="healthFw">v0.1.0</span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">EEPROM Status</span>
+                            <span class="health-badge bad" id="healthEeprom">UNVERIFIED</span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">ADC Reference</span>
+                            <span class="health-value" id="healthAdc">2.56V Internal</span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">Magnetic Balance</span>
+                            <span class="health-badge bad" id="healthBalance">STANDBY</span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">Hardware Connection</span>
+                            <span class="health-badge bad" id="healthConn">OFFLINE</span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">Sampling Frequency</span>
+                            <span class="health-value" id="healthHz">0 Hz</span>
+                        </div>
+                    </div>
+
+                    <!-- DEVICE HEALTH GUIDE BOX -->
+                    <div class="guide-box">
+                        <div class="guide-box-title">💡 HARDWARE DIAGNOSTICS GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• EEPROM Checksum:</span> Validates struct data integrity using an 8-bit XOR checksum. Prevents booting with corrupted parameters.<br>
+                            <span class="highlight">• Magnetic Balance:</span> Measures differential voltage between opposing N/S/E/W Hall Effect sensor pairs. Green (<strong style="color: var(--primary);">BALANCED</strong>) confirms optimal physical magnet centering.<br>
+                            <span class="highlight">• Sampling Frequency:</span> Displays live USB WebHID streaming refresh rate (Target: 100 Hz).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: PRIMARY CONTROLS & BUTTON STUDIO -->
+            <div>
+                <!-- PRIMARY CONTROL PANEL -->
+                <div class="panel">
+                    <h2>Primary Device Controls</h2>
+                    
+                    <div class="control-group">
+                        <label>Global Sensitivity <span id="lblSens" class="val-display">100%</span></label>
+                        <input type="range" id="slSens" min="10" max="300" step="10" value="100">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Deadzone Filter <span id="lblDeadzone" class="val-display">10</span></label>
+                        <input type="range" id="slDeadzone" min="0" max="200" step="1" value="10">
+                    </div>
+
+                    <div class="switch-row">
+                        <label>Exclusive Mode (Trans OR Rot Dominance)</label>
+                        <button id="btnExclusive" class="toggle-btn">OFF</button>
+                    </div>
+
+                    <!-- OLED POWER TOGGLE FOR NON-OLED OR POWER-SAVING BUILDS -->
+                    <div class="switch-row" style="margin-top: 10px;">
+                        <label>OLED Screen Power (Enable / Disable)</label>
+                        <button id="btnOledPower" class="toggle-btn active" data-active="1">ON</button>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 15px;" id="grpOledSleep">
+                        <label>OLED Auto-Sleep Timer</label>
+                        <select id="selOledSleep">
+                            <option value="0">OFF (Always On)</option>
+                            <option value="1">1 Minute</option>
+                            <option value="2" selected>3 Minutes</option>
+                            <option value="3">5 Minutes</option>
+                        </select>
+                    </div>
+
+                    <!-- DETAILED PRIMARY CONTROLS BEHAVIOR GUIDE -->
+                    <div class="guide-box">
+                        <div class="guide-box-title">💡 PRIMARY CONTROLS ADJUSTMENT GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• Global Sensitivity:</span> Master multiplier for all 6 degrees of freedom.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (%):</strong> Moves camera faster across all 6 axes with less hand effort.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (%):</strong> Slows down all 6 axes for heavy, precise CAD manipulation.<br>
+                            <span class="highlight">• Deadzone Filter:</span> Initial rest deadband around central TPU spring position.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase:</strong> Eliminates rest jitter if springs do not relax to exact 0. Requires more initial push.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease:</strong> Provides instantaneous ultra-light response, but may drift if springs relax imperfectly.<br>
+                            <span class="highlight">• Exclusive Mode:</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">ON:</strong> Locks output to Translation OR Rotation strictly (prevents accidental tilting while panning).<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">OFF:</strong> Allows full simultaneous 6DOF fluid motion (Pan + Rotate together).
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE HARDWARE BUTTON STUDIO -->
+                <div class="panel">
+                    <div class="btn-studio-header">
+                        <h2 style="margin: 0; border: none; padding: 0;">Hardware Button Shortcuts</h2>
+                        <div class="btn-preset-bar">
+                            <label for="selBtnPreset" style="font-size: 11px; color: var(--text-dim); margin-right: 6px; font-weight: bold;">PRESETS:</label>
+                            <select id="selBtnPreset" class="preset-select">
+                                <option value="custom">Custom Configuration</option>
+                                <option value="solidworks" selected>SolidWorks / Standard CAD</option>
+                                <option value="blender">Blender 3D Modeling</option>
+                                <option value="modifiers">Modifier Keys (Ctrl/Shift/Alt/Esc)</option>
+                                <option value="views">4-View Camera Navigation</option>
+                            </select>
+                            <button id="btnApplyPreset" class="btn-action btn-outline btn-small">Apply</button>
+                        </div>
+                    </div>
+
+                    <!-- 4 PHYSICAL BUTTON CARDS GRID -->
+                    <div class="btn-studio-grid">
+                        
+                        <!-- FRONT LEFT BUTTON [L] CARD -->
+                        <div class="btn-card" id="btn-card-l">
+                            <div class="btn-card-header">
+                                <span class="btn-card-title">Front Left [L]</span>
+                                <span class="btn-badge">Pin 0 / RX</span>
+                            </div>
+                            <div class="btn-card-body">
+                                <div class="btn-status-row">
+                                    <span style="font-size: 11px; color: var(--text-dim);">Live Press State:</span>
+                                    <div class="btn-ind" id="btn-card-ind-l"></div>
+                                </div>
+                                <div class="control-group" style="margin-top: 10px; margin-bottom: 0;">
+                                    <label style="font-size: 11px;">Assigned HID Shortcut</label>
+                                    <select id="selKeyL" class="btn-select"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FRONT RIGHT BUTTON [R] CARD -->
+                        <div class="btn-card" id="btn-card-r">
+                            <div class="btn-card-header">
+                                <span class="btn-card-title">Front Right [R]</span>
+                                <span class="btn-badge">Pin 5</span>
+                            </div>
+                            <div class="btn-card-body">
+                                <div class="btn-status-row">
+                                    <span style="font-size: 11px; color: var(--text-dim);">Live Press State:</span>
+                                    <div class="btn-ind" id="btn-card-ind-r"></div>
+                                </div>
+                                <div class="control-group" style="margin-top: 10px; margin-bottom: 0;">
+                                    <label style="font-size: 11px;">Assigned HID Shortcut</label>
+                                    <select id="selKeyR" class="btn-select"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BACK LEFT BUTTON [2] CARD -->
+                        <div class="btn-card" id="btn-card-2">
+                            <div class="btn-card-header">
+                                <span class="btn-card-title">Back Left [2]</span>
+                                <span class="btn-badge">Pin 1 / TX</span>
+                            </div>
+                            <div class="btn-card-body">
+                                <div class="btn-status-row">
+                                    <span style="font-size: 11px; color: var(--text-dim);">Live Press State:</span>
+                                    <div class="btn-ind" id="btn-card-ind-2"></div>
+                                </div>
+                                <div class="control-group" style="margin-top: 10px; margin-bottom: 0;">
+                                    <label style="font-size: 11px;">Assigned HID Shortcut</label>
+                                    <select id="selKey2" class="btn-select"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BACK RIGHT BUTTON [1] CARD -->
+                        <div class="btn-card" id="btn-card-1">
+                            <div class="btn-card-header">
+                                <span class="btn-card-title">Back Right [1]</span>
+                                <span class="btn-badge">Pin 7</span>
+                            </div>
+                            <div class="btn-card-body">
+                                <div class="btn-status-row">
+                                    <span style="font-size: 11px; color: var(--text-dim);">Live Press State:</span>
+                                    <div class="btn-ind" id="btn-card-ind-1"></div>
+                                </div>
+                                <div class="control-group" style="margin-top: 10px; margin-bottom: 0;">
+                                    <label style="font-size: 11px;">Assigned HID Shortcut</label>
+                                    <select id="selKey1" class="btn-select"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- BUTTON SHORTCUTS GUIDE BOX -->
+                    <div class="guide-box guide-warning">
+                        <div class="guide-box-title">💡 BUTTON SHORTCUTS & LIVE FEEDBACK GUIDE</div>
+                        <div class="guide-box-text">
+                            Maps all 4 physical hardware push buttons to native 3DConnexion HID shortcuts recognized directly by CAD applications (SolidWorks, Fusion 360, Blender, FreeCAD). Physical button presses instantly highlight the corresponding card in real-time.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VIEW 2: MOTION & SENSITIVITIES -->
+    <div class="view-content" id="view-motion">
+        <div class="grid-2">
+            
+            <!-- LEFT COLUMN: SENSITIVITIES + INVERSIONS & SWAPPING -->
+            <div>
+                <!-- 1. INDIVIDUAL AXIS SENSITIVITIES (Q7) -->
+                <div class="panel">
+                    <h2>1. Individual Axis Sensitivities (Q7)</h2>
+                    
+                    <div class="control-group">
+                        <label>Translation X (Pan Left/Right) <span id="lblSensTX" class="val-display">0.80</span></label>
+                        <input type="range" id="slSensTX" min="0.1" max="3.0" step="0.05" value="0.8">
+                    </div>
+                    <div class="control-group">
+                        <label>Translation Y (Pan Up/Down) <span id="lblSensTY" class="val-display">1.00</span></label>
+                        <input type="range" id="slSensTY" min="0.1" max="3.0" step="0.05" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Push Down Z (Zoom In) <span id="lblSensPTZ" class="val-display">2.00</span></label>
+                        <input type="range" id="slSensPTZ" min="0.1" max="3.0" step="0.05" value="2.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Pull Up Z (Zoom Out) <span id="lblSensNTZ" class="val-display">1.00</span></label>
+                        <input type="range" id="slSensNTZ" min="0.1" max="3.0" step="0.05" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Rotation X (Tilt Front/Back) <span id="lblSensRX" class="val-display">1.20</span></label>
+                        <input type="range" id="slSensRX" min="0.1" max="3.0" step="0.05" value="1.2">
+                    </div>
+                    <div class="control-group">
+                        <label>Rotation Y (Tilt Left/Right) <span id="lblSensRY" class="val-display">1.20</span></label>
+                        <input type="range" id="slSensRY" min="0.1" max="3.0" step="0.05" value="1.2">
+                    </div>
+                    <div class="control-group">
+                        <label>Rotation Z (Twist) <span id="lblSensRZ" class="val-display">0.90</span></label>
+                        <input type="range" id="slSensRZ" min="0.1" max="3.0" step="0.05" value="0.9">
+                    </div>
+
+                    <!-- SENSITIVITY BEHAVIOR GUIDE WITH EXPLICIT UP/DOWN EFFECT -->
+                    <div class="guide-box">
+                        <div class="guide-box-title">💡 SENSITIVITY ADJUSTMENT GUIDE (Q7 DIVIDERS)</div>
+                        <div class="guide-box-text">
+                            In the C++ fixed-point engine, sensitivity parameters act as mathematical dividers.<br>
+                            <span class="highlight">• ▲ Increase Value (e.g., 0.8 → 2.5):</span> Decreases sensitivity. Axis moves <strong style="color: var(--warning);">SLOWER</strong> and requires larger physical displacement.<br>
+                            <span class="highlight">• ▼ Decrease Value (e.g., 2.0 → 0.5):</span> Increases sensitivity. Axis moves <strong style="color: var(--primary);">FASTER</strong> with light hand effort.<br>
+                            <span class="subtext">(Use asymmetric Z settings to balance stiff TPU push-down vs light pull-up forces)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. AXIS INVERSIONS & SWAPPING -->
+                <div class="panel">
+                    <h2>2. Axis Inversions & Swapping</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="switch-row"><label>Invert Translation X</label><button id="btnInvX" class="toggle-btn">OFF</button></div>
+                        <div class="switch-row"><label>Invert Translation Y</label><button id="btnInvY" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Invert Translation Z</label><button id="btnInvZ" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Invert Rotation X</label><button id="btnInvRX" class="toggle-btn">OFF</button></div>
+                        <div class="switch-row"><label>Invert Rotation Y</label><button id="btnInvRY" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Invert Rotation Z</label><button id="btnInvRZ" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Swap X and Y Axes</label><button id="btnSwpXY" class="toggle-btn">OFF</button></div>
+                        <div class="switch-row"><label>Swap Y and Z Axes</label><button id="btnSwpYZ" class="toggle-btn">OFF</button></div>
+                    </div>
+
+                    <!-- CAD DIRECTION & ORIENTATION GUIDE BOX -->
+                    <div class="guide-box guide-warning">
+                        <div class="guide-box-title">🧭 STANDARD CAD DIRECTION & ORIENTATION GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• ON (Inverted):</span> Reverses hardware signal direction. Reverses viewport camera movement.<br>
+                            <span class="highlight">• OFF (Normal):</span> Preserves natural physical sensor polarity.<br>
+                            <span class="highlight">• Standard 3DConnexion Industry Defaults (SolidWorks, Fusion 360, Inventor):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">Pan Left/Right (TX):</strong> Normal (OFF)<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">Pan Up/Down (TY):</strong> Inverted (ON)<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">Zoom In/Out (TZ):</strong> Inverted (ON)<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">Tilt Front/Back (RX):</strong> Normal (OFF)<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">Tilt Left/Right (RY):</strong> Inverted (ON)<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">Twist Left/Right (RZ):</strong> Inverted (ON)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: MODIFIER CURVES -->
+            <div>
+                <div class="panel">
+                    <h2>3. Modifier Curves & Slopes (Q8)</h2>
+                    <div class="control-group">
+                        <label>Modifier Curve Function</label>
+                        <select id="selModFunc">
+                            <option value="0">0: Linear (y = x)</option>
+                            <option value="1">1: Squared Function</option>
+                            <option value="3" selected>3: Squared Tangent (CAD Preferred)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Curve A Slope (Exponent 'a') <span id="lblSlopeA" class="val-display">1.15</span></label>
+                        <input type="range" id="slSlopeA" min="0.1" max="3.0" step="0.05" value="1.15">
+                    </div>
+                    <div class="control-group">
+                        <label>Curve B Slope (Factor 'b') <span id="lblSlopeB" class="val-display">1.35</span></label>
+                        <input type="range" id="slSlopeB" min="0.1" max="1.57" step="0.025" value="1.35">
+                    </div>
+
+                    <!-- VISUALIZATION CANVAS -->
+                    <div class="chart-container">
+                        <canvas id="functionChart"></canvas>
+                    </div>
+
+                    <!-- CURVE EXPLANATION GUIDE WITH UP/DOWN EFFECTS -->
+                    <div class="guide-box guide-secondary">
+                        <div class="guide-box-title">📐 MODIFIER CURVE SLOPES ADJUSTMENT GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• Parameter A (Slope at Zero / Exponent 'a'):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 1.15 → 2.5):</strong> Flattens central response curve. Expands precision zone for millimeter micro-adjustments.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 1.15 → 0.5):</strong> Makes initial movement immediate, sharp, and aggressive.<br>
+                            <span class="highlight">• Parameter B (Slope at End / Factor 'b' - Mode 3):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 1.35 → 1.55):</strong> Exponentially accelerates camera velocity near full deflection for rapid panning.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 1.35 → 1.05):</strong> Makes end-of-travel acceleration smooth and linear.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VIEW 3: GATES & DRIFT -->
+    <div class="view-content" id="view-advanced">
+        <div class="grid-2">
+            
+            <!-- LEFT COLUMN: NOISE GATES & DRIFT COMPENSATION -->
+            <div>
+                <!-- 1. NOISE GATES (CROSS-COUPLING MUTE) -->
+                <div class="panel">
+                    <h2>1. Noise Gates (Cross-Coupling Mute)</h2>
+                    <div class="control-group">
+                        <label>MicroGate (Pan X/Y Mute) <span id="lblGateTrans" class="val-display">6</span></label>
+                        <input type="range" id="slGateTrans" min="0" max="50" step="1" value="6">
+                    </div>
+                    <div class="control-group">
+                        <label>Gate Negative Z <span id="lblGateNTZ" class="val-display">25</span></label>
+                        <input type="range" id="slGateNTZ" min="0" max="100" step="1" value="25">
+                    </div>
+                    <div class="control-group">
+                        <label>Gate Rotation X <span id="lblGateRX" class="val-display">5</span></label>
+                        <input type="range" id="slGateRX" min="0" max="100" step="1" value="5">
+                    </div>
+                    <div class="control-group">
+                        <label>Gate Rotation Y <span id="lblGateRY" class="val-display">5</span></label>
+                        <input type="range" id="slGateRY" min="0" max="100" step="1" value="5">
+                    </div>
+                    <div class="control-group">
+                        <label>Gate Rotation Z <span id="lblGateRZ" class="val-display">5</span></label>
+                        <input type="range" id="slGateRZ" min="0" max="100" step="1" value="5">
+                    </div>
+
+                    <!-- NOISE GATES & CROSS-COUPLING EXPLANATION GUIDE -->
+                    <div class="guide-box">
+                        <div class="guide-box-title">💡 NOISE GATES & SMOOTH DEADBAND GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• ▲ Increase Gate Value:</span> Suppresses larger parasitic forces from neighboring axes. Prevents accidental rotation while panning, but requires more intentional push force to activate that axis.<br>
+                            <span class="highlight">• ▼ Decrease Gate Value:</span> Allows ultra-light hand pressure to activate the axis immediately, but may allow accidental axis bleed (cross-coupling).<br>
+                            <span class="highlight">• MicroGate (Pan X/Y):</span> Dedicated post-matrix low-level noise gate (3 to 10). Mutes 3D-print spring residual bleed while keeping Pan X/Y fluid.<br>
+                            <span class="highlight">• Smooth Deadband Peak Note (~340–345):</span> To eliminate initial zero-jump, the gate subtraction causes max peak outputs to read ~340–345 (98.6% max speed). This 1.4% subtraction is imperceptible in CAD while providing buttery-smooth motion.<br>
+                            <span class="highlight">• Gate Negative Z (Gate NTZ):</span> Prevents accidental Zoom Out when panning X/Y.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. THERMAL DRIFT TUNING -->
+                <div class="panel">
+                    <h2>2. Thermal Drift Compensation Engine</h2>
+                    <div class="switch-row" style="margin-bottom: 15px;">
+                        <label>Enable Dynamic Drift Compensation</label>
+                        <button id="btnCompEn" class="toggle-btn">ON</button>
+                    </div>
+                    <div class="control-group">
+                        <label>Sample Accumulation Points (COMP_NR) <span id="lblCompNr" class="val-display">50</span></label>
+                        <input type="range" id="slCompNr" min="1" max="500" step="1" value="50">
+                    </div>
+                    <div class="control-group">
+                        <label>Monitoring Wait Time (COMP_WAIT ms) <span id="lblCompWait" class="val-display">100ms</span></label>
+                        <input type="range" id="slCompWait" min="10" max="1000" step="10" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label>Max Noise Range (COMP_MDIFF) <span id="lblCompMDiff" class="val-display">10</span></label>
+                        <input type="range" id="slCompMDiff" min="1" max="100" step="1" value="10">
+                    </div>
+                    <div class="control-group">
+                        <label>Max Center Distance (COMP_CDIFF) <span id="lblCompCDiff" class="val-display">50</span></label>
+                        <input type="range" id="slCompCDiff" min="1" max="200" step="1" value="50">
+                    </div>
+
+                    <!-- THERMAL DRIFT ENGINE EXPLICIT UP/DOWN GUIDE -->
+                    <div class="guide-box">
+                        <div class="guide-box-title">💡 THERMAL DRIFT ENGINE PARAMETER GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• COMP_NR (Sample Accumulation Points):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 50 → 200):</strong> Larger averaging window. Prevents brief hand pauses from triggering false drift recalibration, but takes longer to lock new zero.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 50 → 10):</strong> Locks new thermal zero point rapidly, but risks mistaking steady hand holding for thermal drift.<br>
+                            <span class="highlight">• COMP_WAIT (Monitoring Wait Time):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 100ms → 500ms):</strong> Requires longer continuous rest before starting drift tracking.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 100ms → 20ms):</strong> Recalibrates zero almost instantly after releasing knob.<br>
+                            <span class="highlight">• COMP_MDIFF (Max Noise Range):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase:</strong> Accepts noisier rest signals as valid thermal drift.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease:</strong> Requires ultra-stable rest signal before compensating.<br>
+                            <span class="highlight">• COMP_CDIFF (Max Center Distance):</span><br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase:</strong> Allows compensating larger thermal shifts far away from boot zero.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease:</strong> Restricts compensation strictly near initial boot zero point.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: EXCLUSIVE MODE & COMPREHENSIVE SECTION OVERVIEW -->
+            <div>
+                <!-- 3. EXCLUSIVE MODE TUNING -->
+                <div class="panel">
+                    <h2>3. Exclusive Mode Tuning</h2>
+                    <div class="control-group">
+                        <label>Switch Hysteresis Threshold <span id="lblExclHyst" class="val-display">60</span></label>
+                        <input type="range" id="slExclHyst" min="0" max="300" step="5" value="60">
+                    </div>
+
+                    <!-- EXCLUSIVE HYSTERESIS GUIDE BOX -->
+                    <div class="guide-box guide-secondary">
+                        <div class="guide-box-title">💡 EXCLUSIVE HYSTERESIS PARAMETER GUIDE</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• Switch Hysteresis Threshold:</span> Force barrier required to break mid-motion dominance lock between Translation and Rotation.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 60 → 200):</strong> Requires significantly more intentional force to switch modes mid-motion. Prevents mode flickering for heavy hands.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 60 → 15):</strong> Makes switching dominance between Translation and Rotation effortless with subtle hand pressure changes.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION OVERVIEW PANEL (FILL OF VACANT SPACE) -->
+                <div class="panel">
+                    <h2>⚙️ How "Gates & Drift" Engines Interact With Your Mouse</h2>
+                    <div class="guide-box guide-warning" style="margin-top: 0;">
+                        <div class="guide-box-title">🛡️ THE 3-TIER FIRMWARE FILTERING FIREWALL</div>
+                        <div class="guide-box-text">
+                            The parameters on this page form a 3-tier filtering firewall inside the ATmega32U4 C++ kinematic engine:<br><br>
+                            <span class="highlight">1. Tier 1 - Thermal Drift Engine (MCU Temperature Stabilization):</span><br>
+                            As the Pro Micro microcontroller warms up during extended CAD sessions, Hall Effect resting voltages shift slightly. Tier 1 continuously tracks resting signals and recalibrates zero dynamically without interrupting your workflow.<br><br>
+                            <span class="highlight">2. Tier 2 - Noise Gates & MicroGate (Mechanical Bleed Elimination):</span><br>
+                            3D-printed TPU springs and gimbal joints have micro-asymmetries. Tier 2 strips post-matrix velocity bleed (e.g. 1 to 5) when you push or twist the knob, ensuring Pan X/Y and Zoom Z remain 100% independent.<br><br>
+                            <span class="highlight">3. Tier 3 - Exclusive Mode (Single-Mode Dominance Lock):</span><br>
+                            For users who want zero accidental camera rotation while panning, Tier 3 evaluates force dominance and locks the output exclusively to Translation OR Rotation until force drops below the relaxation threshold.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VIEW 4: DEBUG STUDIO -->
+    <div class="view-content" id="view-debug">
+        
+        <!-- TELEMETRY TOGGLE BAR -->
+        <div class="panel" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin: 0; border: none; padding: 0;">Telemetry Stream Control</h2>
+                    <span style="color: var(--text-dim); font-size: 13px;">Enable high-speed telemetry streaming (100 Hz) to monitor internal sensors.</span>
+                </div>
+                <button id="btnStream" class="btn-action btn-danger">Start Stream</button>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            
+            <!-- SENSOR PAIR ALIGNMENT -->
+            <div class="panel">
+                <h2>1. Sensor Pair Alignment (Deltas)</h2>
+                <div class="align-grid">
+                    <div class="align-card">
+                        <h3>NORTH (H6 | H7)</h3>
+                        <div class="sensor-vals" id="raw-N">0 | 0</div>
+                        <div class="delta" id="delta-N">Δ 0</div>
+                    </div>
+                    <div class="align-card">
+                        <h3>SOUTH (H0 | H1)</h3>
+                        <div class="sensor-vals" id="raw-S">0 | 0</div>
+                        <div class="delta" id="delta-S">Δ 0</div>
+                    </div>
+                    <div class="align-card">
+                        <h3>EAST (H2 | H3)</h3>
+                        <div class="sensor-vals" id="raw-E">0 | 0</div>
+                        <div class="delta" id="delta-E">Δ 0</div>
+                    </div>
+                    <div class="align-card">
+                        <h3>WEST (H8 | H9)</h3>
+                        <div class="sensor-vals" id="raw-W">0 | 0</div>
+                        <div class="delta" id="delta-W">Δ 0</div>
+                    </div>
+                </div>
+
+                <!-- SENSOR ALIGNMENT GUIDE BOX -->
+                <div class="guide-box">
+                    <div class="guide-box-title">💡 SENSOR ALIGNMENT GUIDE</div>
+                    <div class="guide-box-text">
+                        <span class="highlight">• Differential Pairs (N, S, E, W):</span> Opposing Hall Effect sensors measuring physical magnetic balance.<br>
+                        <span class="highlight">• Delta (Δ):</span> Absolute difference between paired sensors. A delta within <strong style="color: var(--primary);">Δ ≤ 100</strong> confirms proper magnet centering for FDM 3D printing tolerances.<br>
+                        <span class="highlight">• High Delta (<strong style="color: var(--danger);">Δ > 100</strong>):</span> Indicates severe mechanical tilt or an inverted magnet requiring physical adjustment.
+                    </div>
+                </div>
+            </div>
+
+            <!-- HARDWARE STATUS & KEYS -->
+            <div class="panel">
+                <h2>2. Hardware Status & Keys</h2>
+                <div class="status-grid" style="margin-bottom: 20px;">
+                    <div class="stat-box">
+                        <div style="color:var(--text-dim); font-size:11px;">REFRESH RATE</div>
+                        <div class="stat-value" id="hz-val">0 Hz</div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="color:var(--text-dim); font-size:11px;">KEY FRONT R</div>
+                        <div class="btn-ind" id="key-r"></div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="color:var(--text-dim); font-size:11px;">KEY FRONT L</div>
+                        <div class="btn-ind" id="key-l"></div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="color:var(--text-dim); font-size:11px;">KEY BACK 2</div>
+                        <div class="btn-ind" id="key-2"></div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="color:var(--text-dim); font-size:11px;">KEY BACK 1</div>
+                        <div class="btn-ind" id="key-1"></div>
+                    </div>
+                </div>
+
+                <h2>3. Active Debug Commands</h2>
+                <div class="tool-box">
+                    <div>
+                        <strong style="display:block; font-size: 14px;">Re-Zero Calibration</strong>
+                        <span style="color: var(--text-dim); font-size: 12px;">Recalibrates rest coordinates. Keep knob untouched.</span>
+                    </div>
+                    <button id="btnRezero" class="btn-action btn-warning">Re-Zero</button>
+                </div>
+
+                <div class="tool-box">
+                    <div>
+                        <strong style="display:block; font-size: 14px;">Restart Mouse</strong>
+                        <span style="color: var(--text-dim); font-size: 12px;">Triggers hardware software reset via Watchdog.</span>
+                    </div>
+                    <button id="btnRestart" class="btn-action btn-danger">Restart Mouse</button>
+                </div>
+
+                <div class="tool-box">
+                    <div>
+                        <strong style="display:block; font-size: 14px;">Factory Reset</strong>
+                        <span style="color: var(--text-dim); font-size: 12px;">Restores default EEPROM settings immediately.</span>
+                    </div>
+                    <button id="btnReset" class="btn-action btn-danger">Reset EEPROM</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 4. DYNAMIC LIMITS CALIBRATION WIZARD -->
+        <div class="panel">
+            <h2>4. Dynamic Limits Calibration Wizard</h2>
+            
+            <!-- BOUNDARY CALIBRATION GUIDE BOX -->
+            <div class="guide-box">
+                <div class="guide-box-title">💡 BOUNDARY CALIBRATION GUIDE</div>
+                <div class="guide-box-text">
+                    Executes a 20-second dynamic range test. Smoothly push, pull, tilt, and twist the knob to all mechanical stops. The device maps individual Hall sensor ADC limits to the HID logical output range. You can manually tweak the values below based on the raw signal table.
+                </div>
+            </div>
+
+            <div class="tool-box">
+                <div>
+                    <strong style="display:block; font-size: 14px;">20-Second Limits Test</strong>
+                    <span style="color: var(--text-dim); font-size: 12px;">Move the knob to all extreme physical boundaries for 20 seconds.</span>
+                </div>
+                <button id="btnStartCalWizard" class="btn-action btn-warning">Start 20s Test</button>
+            </div>
+            <div class="wizard-progress"><div class="wizard-fill" id="wizardFill"></div></div>
+            <div id="wizardStatus" style="font-family: var(--font-mono); font-size: 13px; margin-top: 8px; color: var(--text-dim);">Status: Idle</div>
+
+            <!-- MANUAL LIMITS FINE TUNING AREA -->
+            <div id="manualCalibrationContainer" style="margin-top: 20px;">
+                <h3 style="font-size: 13px; color: var(--primary); margin-bottom: 10px; text-transform: uppercase;">Manual Fine-Tuning & Limits Reference:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sensor Axis</th>
+                            <th>Min Limit</th>
+                            <th>Max Limit</th>
+                            <th>Range (Δ)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manualLimitsTable">
+                        <!-- Dynamically injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. DRIFT & SIGNALS TABLE -->
+        <div class="panel">
+            <h2>5. Signals & Thermal Drift Offsets</h2>
+            
+            <!-- THERMAL DRIFT & SIGNALS GUIDE BOX -->
+            <div class="guide-box guide-warning">
+                <div class="guide-box-title">💡 SIGNALS & THERMAL DRIFT GUIDE</div>
+                <div class="guide-box-text">
+                    <span class="highlight">• Thermal Drift:</span> Center point wandering caused by MCU ambient heating, thermal expansion, or mechanical spring hysteresis.<br>
+                    <span class="highlight">• Raw Read (0 - 1023):</span> Direct unfiltered ADC voltage output from physical Hall sensors.<br>
+                    <span class="highlight">• Centered Read:</span> Normalized deviation from rest position (<strong style="color: var(--primary);">Raw - Center + Offset</strong>).<br>
+                    <span class="highlight">• Thermal Drift Offset:</span> Dynamic correction factor continuously computed by the MCU to prevent resting cursor drift.
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sensor Axis</th>
+                        <th>Raw Read</th>
+                        <th>Centered Read</th>
+                        <th>Thermal Drift Offset</th>
+                    </tr>
+                </thead>
+                <tbody id="drift-table"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- GUIDED CALIBRATION WIZARD MODAL (OVERLAY)  -->
+    <!-- ========================================== -->
+    <div id="setupWizardModal" class="modal-overlay" style="display: none;">
+        <div class="modal-window">
+            
+            <div class="modal-header">
+                <h2>O.R.B.7 Guided Setup</h2>
+                <button id="btnWizardClose" class="btn-close-modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                
+                <!-- STEP 1: HARDWARE ALIGNMENT -->
+                <div id="wiz-step-1" class="wiz-step active">
+                    <h3>Step 1: Magnetic Hardware Check</h3>
+                    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 15px;">
+                        Let's verify the physical alignment of your Hall Effect sensors. 
+                        Ideally, all pairs should be balanced (Delta ≤ 100).
+                    </p>
+                    <div class="align-grid" style="margin-bottom: 15px;">
+                        <div class="align-card">
+                            <h3>NORTH</h3>
+                            <div class="delta" id="wiz-delta-N">Δ 0</div>
+                        </div>
+                        <div class="align-card">
+                            <h3>SOUTH</h3>
+                            <div class="delta" id="wiz-delta-S">Δ 0</div>
+                        </div>
+                        <div class="align-card">
+                            <h3>EAST</h3>
+                            <div class="delta" id="wiz-delta-E">Δ 0</div>
+                        </div>
+                        <div class="align-card">
+                            <h3>WEST</h3>
+                            <div class="delta" id="wiz-delta-W">Δ 0</div>
+                        </div>
+                    </div>
+                    <div class="guide-box">
+                        <div class="guide-box-text">
+                            Adjust the physical magnet position inside the chassis until all indicators turn <strong style="color: var(--primary);">GREEN</strong>. 
+                            If a value is extremely high (>400), check for inverted magnets.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: RE-ZERO NEUTRAL STATE -->
+                <div id="wiz-step-2" class="wiz-step" style="display: none;">
+                    <h3>Step 2: Neutral Calibration</h3>
+                    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 15px;">
+                        Remove your hand completely from the knob. Ensure it is fully at rest. 
+                        The system will now calculate the neutral center coordinates of the TPU springs.
+                    </p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <button id="wizBtnRezero" class="btn-action btn-warning" style="font-size: 15px; padding: 12px 24px;">Calibrate Neutral Center</button>
+                    </div>
+                    <p id="wizStep2Msg" style="text-align: center; font-weight: bold; color: var(--primary); height: 20px;"></p>
+                </div>
+
+                <!-- STEP 3: DYNAMIC LIMITS (20s TEST) -->
+                <div id="wiz-step-3" class="wiz-step" style="display: none;">
+                    <h3>Step 3: Range of Motion (Limits)</h3>
+                    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 15px;">
+                        We need to map the maximum physical travel of your specific springs. 
+                        When you click start, push, pull, tilt, and twist the knob to all its physical limits for 20 seconds.
+                    </p>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button id="wizBtnStartLimits" class="btn-action btn-warning" style="font-size: 15px; padding: 12px 24px;">Start 20s Boundaries Test</button>
+                    </div>
+                    <div class="wizard-progress"><div class="wizard-fill" id="wizLimitsFill"></div></div>
+                    <p id="wizStep3Msg" style="text-align: center; font-family: var(--font-mono); font-size: 13px; margin-top: 10px; color: var(--text-dim);">Ready to test</p>
+                </div>
+
+                <!-- STEP 4: AXIS VERIFICATION (INVERSIONS) -->
+                <div id="wiz-step-4" class="wiz-step" style="display: none;">
+                    <h3>Step 4: Orientation & Direction Setup</h3>
+                    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 10px;">
+                        Below are the <strong>Standard 3DConnexion Factory Defaults</strong> pre-configured for SolidWorks, Fusion 360, Inventor, and Blender:
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background-color: var(--bg-panel-alt); padding: 15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
+                        <div class="switch-row"><label>Invert Pan Left/Right (TX)</label><button id="wizInvX" class="toggle-btn">OFF</button></div>
+                        <div class="switch-row"><label>Invert Pan Up/Down (TY)</label><button id="wizInvY" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Invert Zoom In/Out (TZ)</label><button id="wizInvZ" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Invert Tilt Front/Back (RX)</label><button id="wizInvRX" class="toggle-btn">OFF</button></div>
+                        <div class="switch-row"><label>Invert Tilt Left/Right (RY)</label><button id="wizInvRY" class="toggle-btn active" data-active="1">ON</button></div>
+                        <div class="switch-row"><label>Invert Twist Left/Right (RZ)</label><button id="wizInvRZ" class="toggle-btn active" data-active="1">ON</button></div>
+                    </div>
+                    <!-- EXPLANATORY GUIDE BOX FOR FACTORY DEFAULTS -->
+                    <div class="guide-box guide-warning" style="margin-top: 0;">
+                        <div class="guide-box-title">🧭 WHY ARE Y, Z, RY, & RZ SET TO "ON" BY DEFAULT?</div>
+                        <div class="guide-box-text">
+                            <span class="highlight">• Standard 3D Navigation Convention:</span> 3DConnexion drivers invert Y, Z, RY, and RZ so that pulling UP moves the viewport UP, pushing DOWN zooms IN, and twisting rotates intuitively in 3D CAD space.<br>
+                            <span class="subtext">If your camera moves opposite to your hand in your specific software, simply toggle the switch above.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 5: CONCLUSION -->
+                <div id="wiz-step-5" class="wiz-step" style="display: none;">
+                    <div style="text-align: center; padding: 20px;">
+                        <h2 style="color: var(--primary); margin-bottom: 10px;">Setup Complete!</h2>
+                        <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">
+                            Your O.R.B.7 hardware is successfully calibrated and mapped.<br>
+                            Click below to save these baseline settings directly into the MCU EEPROM memory.
+                        </p>
+                        <button id="wizBtnFinish" class="btn-action" style="font-size: 16px; padding: 15px 30px;">SAVE & FINISH</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button id="wizBtnPrev" class="btn-outline btn-action" disabled>Back</button>
+                <div class="wiz-dots">
+                    <span class="wiz-dot active"></span>
+                    <span class="wiz-dot"></span>
+                    <span class="wiz-dot"></span>
+                    <span class="wiz-dot"></span>
+                    <span class="wiz-dot"></span>
+                </div>
+                <button id="wizBtnNext" class="btn-action">Next Step</button>
+            </div>
+            
+        </div>
+    </div>
+    <!-- ========================================== -->
+
+    <!-- FOOTER SECTION -->
+    <footer style="width: 100%; max-width: 1280px; margin-top: 30px; margin-bottom: 20px; padding: 15px 20px; box-sizing: border-box; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-panel); border-radius: 8px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: var(--primary);">O.R.B.7 Sentinel — 6DOF DIY SpaceMouse Studio</span>
+            <span style="font-size: 11px; color: var(--text-dim);">Open Source Hardware & Firmware | MIT License</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-dim);">
+            Designed & Engineered by <a href="https://github.com/SENTINEL-SND/orb7-diy-oled-spacemouse" target="_blank" rel="noopener noreferrer" style="color: var(--primary); font-weight: bold; text-decoration: none; border-bottom: 1px dashed var(--primary);">SENTINEL-SND</a>
+        </div>
+    </footer>
+
+    <!-- EMBEDDED JAVASCRIPT LOGIC -->
+    <script>
+        // ============================================================================
+        // 1. WEBHID COMMUNICATION & TELEMETRY PROTOCOL ENGINE (webhid.js)
+        // ============================================================================
+        const WEBHID_CMD_GET_CONFIG        = 0x01;
+        const WEBHID_CMD_SET_CONFIG        = 0x02;
+        const WEBHID_CMD_STREAM_RAW        = 0x03;
+        const WEBHID_CMD_REZERO            = 0x04;
+        const WEBHID_CMD_FACTORY_RESET     = 0x05;
+        const WEBHID_CMD_SET_CALIBRATION   = 0x06;
+        const WEBHID_CMD_GET_CALIBRATION   = 0x07;
+        const WEBHID_CMD_RESTART         = 0x08;
+        const REPORT_ID = 5;
+
+        // GLOBAL WEBHID STATE TRACKING
+        window.device = null;
+        window.isStreaming = false;
+        window.currentConfigData = new Uint8Array(64);
+        window.packetsReceived = 0;
+
+        // CALIBRATION WIZARD REAL-TIME TRACKING VARIABLES
+        window.isWizardActive = false;
+        window.wizardMin = [1023, 1023, 1023, 1023, 1023, 1023, 1023, 1023];
+        window.wizardMax = [-1023, -1023, -1023, -1023, -1023, -1023, -1023, -1023];
+        window.hasNewCalibration = false;
+
+        // SAFE PARSER HELPER PRESERVING ZERO VALUES
+        function safeParseInt(val, fallback) {
+            const parsed = parseInt(val, 10);
+            return isNaN(parsed) ? fallback : parsed;
+        }
+
+        // GLOBAL WEBHID USB DISCONNECT LISTENER (HANDLES UNPLUG & HARDWARE REBOOTS)
+        if (navigator.hid) {
+            navigator.hid.addEventListener('disconnect', (event) => {
+                if (window.device && event.device === window.device) {
+                    handleDisconnect();
+                }
+            });
+        }
+
+        function handleDisconnect() {
+            window.device = null;
+            window.isStreaming = false;
+            document.body.classList.remove('connected-state');
+
+            // Auto-close Setup Wizard modal if open during disconnect
+            if (typeof closeWizard === 'function') {
+                closeWizard();
+            }
+
+            const btnConnect = document.getElementById('btnConnect');
+            if (btnConnect) {
+                btnConnect.innerText = "CONNECT DEVICE";
+                btnConnect.style.borderColor = "";
+                btnConnect.style.color = "";
+            }
+
+            const healthConn = document.getElementById('healthConn');
+            if (healthConn) {
+                healthConn.innerText = "OFFLINE";
+                healthConn.className = "health-badge bad";
+            }
+
+            const healthEeprom = document.getElementById('healthEeprom');
+            if (healthEeprom) {
+                healthEeprom.innerText = "UNVERIFIED";
+                healthEeprom.className = "health-badge bad";
+            }
+
+            const healthBalance = document.getElementById('healthBalance');
+            if (healthBalance) {
+                healthBalance.innerText = "STANDBY";
+                healthBalance.className = "health-badge bad";
+            }
+
+            const healthHz = document.getElementById('healthHz');
+            if (healthHz) healthHz.innerText = "0 Hz";
+
+            const hzVal = document.getElementById('hz-val');
+            if (hzVal) hzVal.innerText = "0 Hz";
+
+            updateStreamBtnUI();
+        }
+
+        // USB CONNECT HANDLER
+        async function connectDevice() {
+            try {
+                const devices = await navigator.hid.requestDevice({ filters: [{ usagePage: 0xFF00, usage: 0x01 }] });
+                if (devices.length > 0) {
+                    window.device = devices[0];
+                    await window.device.open();
+                    window.device.addEventListener("inputreport", handleInputReport);
+                    
+                    const btnConnect = document.getElementById('btnConnect');
+                    btnConnect.innerText = "CONNECTED";
+                    btnConnect.style.borderColor = "var(--primary)";
+                    btnConnect.style.color = "var(--primary)";
+                    document.body.classList.add('connected-state');
+
+                    // Update Device Health Status Badge to ONLINE
+                    const healthConn = document.getElementById('healthConn');
+                    if (healthConn) {
+                        healthConn.innerText = "ONLINE";
+                        healthConn.className = "health-badge ok";
+                    }
+
+                    // Sync full state: Parameters -> Calibration -> Telemetry Stream
+                    setTimeout(async () => {
+                        await requestConfig();
+                        setTimeout(autoStartStream, 250);
+                    }, 100);
+                }
+            } catch (error) {
+                console.error("Connection failed:", error);
+            }
+        }
+
+        // INPUT REPORT DISPATCHER
+        function handleInputReport(event) {
+            const { reportId, data } = event;
+            if (reportId !== REPORT_ID) return;
+
+            const cmd = data.getUint8(0);
+            if (cmd === WEBHID_CMD_GET_CONFIG) {
+                for(let i = 0; i < 64; i++) window.currentConfigData[i] = data.getUint8(i);
+                parseConfigFromData(data);
+            } 
+            else if (cmd === WEBHID_CMD_GET_CALIBRATION) {
+                parseCalibrationData(data);
+            }
+            else if (cmd === WEBHID_CMD_STREAM_RAW) {
+                parseTelemetryData(data);
+            }
+            else if (cmd === WEBHID_CMD_REZERO) {
+                const btnRezero = document.getElementById('btnRezero');
+                if (btnRezero) {
+                    btnRezero.innerText = "Re-Zeroed!";
+                    setTimeout(() => btnRezero.innerText = "Re-Zero", 1500);
+                }
+            }
+            else if (cmd === WEBHID_CMD_FACTORY_RESET) {
+                for(let i = 0; i < 64; i++) window.currentConfigData[i] = data.getUint8(i);
+                parseConfigFromData(data);
+                const btnReset = document.getElementById('btnReset');
+                if (btnReset) {
+                    btnReset.innerText = "Reset Complete!";
+                    setTimeout(() => btnReset.innerText = "Reset EEPROM", 1500);
+                }
+            }
+            else if (cmd === WEBHID_CMD_RESTART) {
+                const btnRestart = document.getElementById('btnRestart');
+                if (btnRestart) {
+                    btnRestart.innerText = "Rebooting...";
+                    setTimeout(() => btnRestart.innerText = "Restart Mouse", 2500);
+                }
+            }
+        }
+
+        async function requestConfig() {
+            if (!window.device || !window.device.opened) return;
+            
+            // Request Primary Configuration Base
+            const payload = new Uint8Array(64);
+            payload[0] = WEBHID_CMD_GET_CONFIG;
+            await window.device.sendReport(REPORT_ID, payload);
+
+            // Give MCU USB interrupts time to process, then request EEPROM limits
+            setTimeout(async () => {
+                const calPayload = new Uint8Array(64);
+                calPayload[0] = WEBHID_CMD_GET_CALIBRATION;
+                await window.device.sendReport(REPORT_ID, calPayload);
+            }, 100);
+        }
+
+        async function autoStartStream() {
+            if (!window.device || !window.device.opened) return;
+            window.isStreaming = true;
+            const payload = new Uint8Array(64);
+            payload[0] = WEBHID_CMD_STREAM_RAW;
+            payload[1] = 0x01;
+            await window.device.sendReport(REPORT_ID, payload);
+            updateStreamBtnUI();
+        }
+
+        // PARSE EEPROM CALIBRATION LIMITS
+        function parseCalibrationData(data) {
+            window.isImportingOrFetching = true;
+            let offset = 1;
+            
+            // Unpack Mins (16 bytes)
+            for(let i=0; i<8; i++) {
+                let minEl = document.getElementById(`limit-min-${i}`);
+                if (minEl) {
+                    minEl.value = data.getInt16(offset, true);
+                    minEl.dispatchEvent(new Event('input'));
+                }
+                offset += 2;
+            }
+            // Unpack Maxs (16 bytes)
+            for(let i=0; i<8; i++) {
+                let maxEl = document.getElementById(`limit-max-${i}`);
+                if (maxEl) {
+                    maxEl.value = data.getInt16(offset, true);
+                    maxEl.dispatchEvent(new Event('input'));
+                }
+                offset += 2;
+            }
+            
+            window.isImportingOrFetching = false;
+            window.hasNewCalibration = false;
+            if (typeof markConfigClean === 'function') {
+                setTimeout(markConfigClean, 50); // Ensure clear state after sequential device fetch
+            }
+        }
+
+        // PARSE ALL PARAMETERS FROM EEPROM PAYLOAD
+        function parseConfigFromData(data) {
+            window.isImportingOrFetching = true;
+
+            // UPDATE DYNAMIC FIRMWARE VERSION FROM USB PAYLOAD (OFFSETS 60..62)
+            const healthFw = document.getElementById('healthFw');
+            if (healthFw && data.byteLength >= 63) {
+                let fwMajor = data.getUint8(60);
+                let fwMinor = data.getUint8(61);
+                let fwPatch = data.getUint8(62);
+                healthFw.innerText = `v${fwMajor}.${fwMinor}.${fwPatch}`;
+            }
+
+            // Update Device Health EEPROM Status Badge
+            const healthEeprom = document.getElementById('healthEeprom');
+            if (healthEeprom) {
+                healthEeprom.innerText = "VALID (XOR OK)";
+                healthEeprom.className = "health-badge ok";
+            }
+
+            // Offset 1: deadzone
+            if (typeof setVal === 'function') {
+                setVal('slDeadzone', 'lblDeadzone', data.getInt16(1, true));
+
+                // Offsets 3-10: Q7 Sensitivities (/ 128)
+                setFloatVal('slSensTX', 'lblSensTX', data.getInt16(3, true) / 128.0);
+                setFloatVal('slSensTY', 'lblSensTY', data.getInt16(5, true) / 128.0);
+                setFloatVal('slSensPTZ', 'lblSensPTZ', data.getInt16(7, true) / 128.0);
+                setFloatVal('slSensNTZ', 'lblSensNTZ', data.getInt16(9, true) / 128.0);
+
+                // Offsets 11-19: Noise Gates & MicroGate
+                setVal('slGateNTZ', 'lblGateNTZ', data.getInt16(11, true));
+                setVal('slGateRX', 'lblGateRX', data.getInt16(13, true));
+                setVal('slGateRY', 'lblGateRY', data.getInt16(15, true));
+                setVal('slGateRZ', 'lblGateRZ', data.getInt16(17, true));
+                setVal('slGateTrans', 'lblGateTrans', data.getInt16(19, true));
+
+                // Offsets 21-25: Q7 Rotational Sensitivities (/ 128)
+                setFloatVal('slSensRX', 'lblSensRX', data.getInt16(21, true) / 128.0);
+                setFloatVal('slSensRY', 'lblSensRY', data.getInt16(23, true) / 128.0);
+                setFloatVal('slSensRZ', 'lblSensRZ', data.getInt16(25, true) / 128.0);
+
+                // Offsets 27-31: Curves & Slopes (/ 256)
+                const selModFunc = document.getElementById('selModFunc');
+                if (selModFunc) selModFunc.value = data.getInt16(27, true);
+                setFloatVal('slSlopeA', 'lblSlopeA', data.getInt16(29, true) / 256.0);
+                setFloatVal('slSlopeB', 'lblSlopeB', data.getInt16(31, true) / 256.0);
+                
+                if (typeof updateCurveChart === 'function') updateCurveChart();
+
+                // Offsets 33-40: Flags & Swaps
+                setToggle('btnInvX', data.getInt8(33));
+                setToggle('btnInvY', data.getInt8(34));
+                setToggle('btnInvZ', data.getInt8(35));
+                setToggle('btnInvRX', data.getInt8(36));
+                setToggle('btnInvRY', data.getInt8(37));
+                setToggle('btnInvRZ', data.getInt8(38));
+                setToggle('btnSwpXY', data.getInt8(39));
+                setToggle('btnSwpYZ', data.getInt8(40));
+
+                // Offsets 41-43: Exclusive Mode & Hysteresis
+                setToggle('btnExclusive', data.getInt8(41));
+                setVal('slExclHyst', 'lblExclHyst', data.getInt16(42, true));
+
+                // Offsets 44-52: Thermal Drift
+                setToggle('btnCompEn', data.getInt8(44));
+                setVal('slCompNr', 'lblCompNr', data.getInt16(45, true));
+                setVal('slCompWait', 'lblCompWait', data.getInt16(47, true), 'ms');
+                setVal('slCompMDiff', 'lblCompMDiff', data.getInt16(49, true));
+                setVal('slCompCDiff', 'lblCompCDiff', data.getInt16(51, true));
+
+                // Offsets 53-55: Global Sens & Sleep
+                setVal('slSens', 'lblSens', data.getInt16(53, true), '%');
+                
+                // Handle OLED Screen Power state (-1 = Disabled, 0..3 = Sleep timer options)
+                let oledSleepVal = data.getInt8(55);
+                const grpOledSleep = document.getElementById('grpOledSleep');
+                const selOledSleep = document.getElementById('selOledSleep');
+                if (oledSleepVal === -1) {
+                    setToggle('btnOledPower', 0);
+                    if (grpOledSleep) {
+                        grpOledSleep.style.opacity = '0.4';
+                        grpOledSleep.style.pointerEvents = 'none';
+                    }
+                } else {
+                    setToggle('btnOledPower', 1);
+                    if (selOledSleep) selOledSleep.value = oledSleepVal;
+                    if (grpOledSleep) {
+                        grpOledSleep.style.opacity = '1';
+                        grpOledSleep.style.pointerEvents = 'auto';
+                    }
+                }
+
+                // Offsets 56-59: Shortcuts for ALL 4 Physical Buttons
+                const selKeyL = document.getElementById('selKeyL');
+                const selKeyR = document.getElementById('selKeyR');
+                const selKey2 = document.getElementById('selKey2');
+                const selKey1 = document.getElementById('selKey1');
+
+                if (selKeyL) selKeyL.value = data.getInt8(56);
+                if (selKeyR) selKeyR.value = data.getInt8(57);
+                if (selKey2) selKey2.value = data.getInt8(58);
+                if (selKey1) selKey1.value = data.getInt8(59);
+            }
+
+            window.isImportingOrFetching = false;
+            if (typeof markConfigClean === 'function') markConfigClean();
+        }
+
+        // PARSE LIVE TELEMETRY PAYLOAD
+        function parseTelemetryData(data) {
+            window.packetsReceived++;
+            let offset = 1;
+
+            let raw = [];
+            for(let i = 0; i < 8; i++) {
+                let v = data.getInt16(offset, true);
+                raw.push(v);
+                const el = document.getElementById(`raw-${i}`);
+                if (el) el.innerText = v;
+                offset += 2;
+            }
+
+            let centered = [];
+            for(let i = 0; i < 8; i++) {
+                let c = data.getInt16(offset, true);
+                centered.push(c);
+                const el = document.getElementById(`cent-${i}`);
+                if (el) el.innerText = c;
+                offset += 2;
+            }
+
+            for(let i = 0; i < 8; i++) {
+                let offVal = data.getInt16(offset, true);
+                const el = document.getElementById(`off-${i}`);
+                if (el) el.innerText = (offVal > 0 ? '+' : '') + offVal;
+                offset += 2;
+            }
+
+            // REAL-TIME TRACKING OF MIN/MAX BOUNDARIES WITH FULL-SCALE ADC RANGE (±1023)
+            if (window.isWizardActive) {
+                for (let i = 0; i < 8; i++) {
+                    let val = centered[i];
+                    // Permit full-scale ADC physical deflections (-1023 to +1023)
+                    if (val >= -1023 && val <= 1023) {
+                        if (val < window.wizardMin[i]) window.wizardMin[i] = val;
+                        if (val > window.wizardMax[i]) window.wizardMax[i] = val;
+                    }
+                }
+            }
+
+            let vels = [];
+            for(let i = 0; i < 6; i++) {
+                let vel = data.getInt16(offset, true);
+                vels.push(vel);
+                offset += 2;
+
+                const valEl = document.getElementById(`vel-val-${i}`);
+                if (valEl) valEl.innerText = vel;
+                
+                let percent = (Math.abs(vel) / 350) * 100;
+                if(percent > 100) percent = 100;
+
+                const negEl = document.getElementById(`vel-neg-${i}`);
+                const posEl = document.getElementById(`vel-pos-${i}`);
+
+                if(vel < 0) {
+                    if (negEl) negEl.style.width = percent + '%';
+                    if (posEl) posEl.style.width = '0%';
+                } else {
+                    if (negEl) negEl.style.width = '0%';
+                    if (posEl) posEl.style.width = percent + '%';
+                }
+            }
+
+            // Update 3D Viewport Target Positions/Rotations
+            if (window.targetPos && window.targetRot) {
+                window.targetPos.x = (vels[0] / 350.0) * 3.0;    // TX -> X
+                window.targetPos.y = (-vels[2] / 350.0) * 3.0;   // TZ -> Y
+                window.targetPos.z = (-vels[1] / 350.0) * 3.0;   // TY -> Z
+
+                window.targetRot.x = (-vels[3] / 350.0) * 0.4;   // RX -> Rot X
+                window.targetRot.y = (-vels[5] / 350.0) * 0.4;   // RZ -> Rot Y
+                window.targetRot.z = (vels[4] / 350.0) * 0.4;    // RY -> Rot Z
+            }
+
+            // Unpack bitmask at Byte 61 for ALL 4 physical hardware buttons
+            let keysByte = data.getUint8(61);
+            let keyR = (keysByte & 0x01) !== 0; // Bit 0: keys[0] Front Right
+            let keyL = (keysByte & 0x02) !== 0; // Bit 1: keys[1] Front Left
+            let key2 = (keysByte & 0x04) !== 0; // Bit 2: keys[2] Back Left
+            let key1 = (keysByte & 0x08) !== 0; // Bit 3: keys[3] Back Right
+
+            // HELPER TO UPDATE BOTH DEBUG LED INDICATORS AND INTERACTIVE BUTTON CARDS
+            const setButtonUIState = (indId, cardIndId, cardId, active) => {
+                const ind = document.getElementById(indId);
+                const cardInd = document.getElementById(cardIndId);
+                const card = document.getElementById(cardId);
+                
+                if (ind) {
+                    if (active) ind.classList.add('active');
+                    else ind.classList.remove('active');
+                }
+                if (cardInd) {
+                    if (active) cardInd.classList.add('active');
+                    else cardInd.classList.remove('active');
+                }
+                if (card) {
+                    if (active) card.classList.add('active');
+                    else card.classList.remove('active');
+                }
+            };
+
+            // UPDATE ALL 4 BUTTONS ACROSS DEBUG & INTERACTIVE CARDS
+            setButtonUIState('key-r', 'btn-card-ind-r', 'btn-card-r', keyR);
+            setButtonUIState('key-l', 'btn-card-ind-l', 'btn-card-l', keyL);
+            setButtonUIState('key-2', 'btn-card-ind-2', 'btn-card-2', key2);
+            setButtonUIState('key-1', 'btn-card-ind-1', 'btn-card-1', key1);
+
+            // Calculate Pair Deltas
+            let delN = Math.abs(raw[4] - raw[5]);
+            let delS = Math.abs(raw[0] - raw[1]);
+            let delE = Math.abs(raw[2] - raw[3]);
+            let delW = Math.abs(raw[6] - raw[7]);
+
+            updateAlignment('N', raw[4], raw[5]); 
+            updateAlignment('S', raw[0], raw[1]); 
+            updateAlignment('E', raw[2], raw[3]); 
+            updateAlignment('W', raw[6], raw[7]); 
+
+            // Dynamic Device Health Magnetic Balance Check
+            const healthBalance = document.getElementById('healthBalance');
+            if (healthBalance) {
+                let maxDelta = Math.max(delN, delS, delE, delW);
+                if (maxDelta <= 100) {
+                    healthBalance.innerText = "BALANCED";
+                    healthBalance.className = "health-badge ok";
+                } else {
+                    healthBalance.innerText = "ALIGNMENT NEEDED";
+                    healthBalance.className = "health-badge warn";
+                }
+            }
+        }
+
+        // UPDATE SENSOR ALIGNMENT DISPLAY CARDS IN DEBUG STUDIO
+        function updateAlignment(id, valA, valB) {
+            let delta = Math.abs(valA - valB);
+            let el = document.getElementById(`delta-${id}`);
+            if (el) {
+                el.innerText = `Δ ${delta}`;
+                el.className = (delta <= 100) ? 'delta ok' : 'delta bad';
+            }
+
+            // Dynamically update raw sensor pair readings display
+            let rawEl = document.getElementById(`raw-${id}`);
+            if (rawEl) {
+                rawEl.innerText = `${valA} | ${valB}`;
+            }
+        }
+
+        // SAVE CONFIG TO MOUSE EEPROM
+        async function saveConfigToDevice() {
+            const btnSaveConfig = document.getElementById('btnSaveConfig');
+            if(!window.device || !window.device.opened || (btnSaveConfig && btnSaveConfig.disabled)) return;
+
+            // VALIDATION GUARD: Verify if any manual calibration row is in INVALID state before saving
+            let hasInvalidLimits = false;
+            for (let i = 0; i < 8; i++) {
+                const statusEl = document.getElementById(`limit-status-${i}`);
+                if (statusEl && statusEl.innerText === 'INVALID') {
+                    hasInvalidLimits = true;
+                    break;
+                }
+            }
+
+            if (hasInvalidLimits) {
+                alert("⚠️ Cannot Save to Mouse!\nOne or more sensor limit ranges are marked as INVALID.\nPlease ensure minimum < -Deadzone, maximum > Deadzone, and range >= 80 for all sensors.");
+                return;
+            }
+            
+            let view = new DataView(window.currentConfigData.buffer);
+            window.currentConfigData[0] = WEBHID_CMD_SET_CONFIG;
+
+            view.setInt16(1, safeParseInt(document.getElementById('slDeadzone').value, 10), true);
+            view.setInt16(3, Math.round(parseFloat(document.getElementById('slSensTX').value) * 128), true);
+            view.setInt16(5, Math.round(parseFloat(document.getElementById('slSensTY').value) * 128), true);
+            view.setInt16(7, Math.round(parseFloat(document.getElementById('slSensPTZ').value) * 128), true);
+            view.setInt16(9, Math.round(parseFloat(document.getElementById('slSensNTZ').value) * 128), true);
+            view.setInt16(11, safeParseInt(document.getElementById('slGateNTZ').value, 15), true);
+            view.setInt16(13, safeParseInt(document.getElementById('slGateRX').value, 5), true);
+            view.setInt16(15, safeParseInt(document.getElementById('slGateRY').value, 5), true);
+            view.setInt16(17, safeParseInt(document.getElementById('slGateRZ').value, 5), true);
+            view.setInt16(19, safeParseInt(document.getElementById('slGateTrans').value, 6), true);
+            view.setInt16(21, Math.round(parseFloat(document.getElementById('slSensRX').value) * 128), true);
+            view.setInt16(23, Math.round(parseFloat(document.getElementById('slSensRY').value) * 128), true);
+            view.setInt16(25, Math.round(parseFloat(document.getElementById('slSensRZ').value) * 128), true);
+            
+            view.setInt16(27, safeParseInt(document.getElementById('selModFunc').value, 3), true);
+            view.setInt16(29, Math.round(parseFloat(document.getElementById('slSlopeA').value) * 256), true);
+            view.setInt16(31, Math.round(parseFloat(document.getElementById('slSlopeB').value) * 256), true);
+
+            const btnInvX = document.getElementById('btnInvX');
+            const btnInvY = document.getElementById('btnInvY');
+            const btnInvZ = document.getElementById('btnInvZ');
+            const btnInvRX = document.getElementById('btnInvRX');
+            const btnInvRY = document.getElementById('btnInvRY');
+            const btnInvRZ = document.getElementById('btnInvRZ');
+            const btnSwpXY = document.getElementById('btnSwpXY');
+            const btnSwpYZ = document.getElementById('btnSwpYZ');
+
+            view.setInt8(33, safeParseInt(btnInvX ? btnInvX.dataset.active : '0', 0));
+            view.setInt8(34, safeParseInt(btnInvY ? btnInvY.dataset.active : '0', 0));
+            view.setInt8(35, safeParseInt(btnInvZ ? btnInvZ.dataset.active : '0', 0));
+            view.setInt8(36, safeParseInt(btnInvRX ? btnInvRX.dataset.active : '0', 0));
+            view.setInt8(37, safeParseInt(btnInvRY ? btnInvRY.dataset.active : '0', 0));
+            view.setInt8(38, safeParseInt(btnInvRZ ? btnInvRZ.dataset.active : '0', 0));
+            view.setInt8(39, safeParseInt(btnSwpXY ? btnSwpXY.dataset.active : '0', 0));
+            view.setInt8(40, safeParseInt(btnSwpYZ ? btnSwpYZ.dataset.active : '0', 0));
+
+            const btnExclusive = document.getElementById('btnExclusive');
+            view.setInt8(41, safeParseInt(btnExclusive ? btnExclusive.dataset.active : '0', 0));
+            view.setInt16(42, safeParseInt(document.getElementById('slExclHyst').value, 60), true);
+
+            const btnCompEn = document.getElementById('btnCompEn');
+            view.setInt8(44, safeParseInt(btnCompEn ? btnCompEn.dataset.active : '0', 0));
+            view.setInt16(45, safeParseInt(document.getElementById('slCompNr').value, 50), true);
+            view.setInt16(47, safeParseInt(document.getElementById('slCompWait').value, 100), true);
+            view.setInt16(49, safeParseInt(document.getElementById('slCompMDiff').value, 10), true);
+            view.setInt16(51, safeParseInt(document.getElementById('slCompCDiff').value, 50), true);
+
+            view.setInt16(53, safeParseInt(document.getElementById('slSens').value, 100), true);
+
+            const btnOledPower = document.getElementById('btnOledPower');
+            let isOledOn = safeParseInt(btnOledPower ? btnOledPower.dataset.active : '1', 1);
+            if (isOledOn === 0) {
+                view.setInt8(55, -1);
+            } else {
+                view.setInt8(55, safeParseInt(document.getElementById('selOledSleep').value, 2));
+            }
+
+            view.setInt8(56, safeParseInt(document.getElementById('selKeyL').value, 2));
+            view.setInt8(57, safeParseInt(document.getElementById('selKeyR').value, 1));
+            view.setInt8(58, safeParseInt(document.getElementById('selKey2').value, 13));
+            view.setInt8(59, safeParseInt(document.getElementById('selKey1').value, 12));
+
+            // Send the base configuration payload (Triggers EEPROM write block on MCU)
+            await window.device.sendReport(REPORT_ID, window.currentConfigData);
+
+            if (window.hasNewCalibration) {
+                
+                // Wait 400ms for ATmega32U4 to finish the blocking EEPROM.put() loop 
+                // (~96 bytes * 3.3ms = ~316ms) before sending the second payload. Prevents USB data drop.
+                await new Promise(resolve => setTimeout(resolve, 400));
+
+                let calPayload = new Uint8Array(64);
+                calPayload[0] = WEBHID_CMD_SET_CALIBRATION;
+                let calView = new DataView(calPayload.buffer);
+                
+                let offset = 1;
+                for (let i = 0; i < 8; i++) {
+                    const minEl = document.getElementById(`limit-min-${i}`);
+                    let val = minEl ? safeParseInt(minEl.value, -400) : -400;
+                    calView.setInt16(offset, val, true);
+                    offset += 2;
+                }
+                for (let i = 0; i < 8; i++) {
+                    const maxEl = document.getElementById(`limit-max-${i}`);
+                    let val = maxEl ? safeParseInt(maxEl.value, 175) : 175;
+                    calView.setInt16(offset, val, true);
+                    offset += 2;
+                }
+                
+                await window.device.sendReport(REPORT_ID, calPayload);
+                window.hasNewCalibration = false;
+            }
+            
+            if (btnSaveConfig) {
+                btnSaveConfig.innerText = "SAVED!";
+                setTimeout(() => {
+                    if (typeof markConfigClean === 'function') markConfigClean();
+                }, 1500);
+            }
+        }
+
+        // TOGGLE STREAM STATE
+        async function toggleStream() {
+            if(!window.device || !window.device.opened) return;
+            window.isStreaming = !window.isStreaming;
+            const payload = new Uint8Array(64);
+            payload[0] = WEBHID_CMD_STREAM_RAW;
+            payload[1] = window.isStreaming ? 0x01 : 0x00;
+            await window.device.sendReport(REPORT_ID, payload);
+            updateStreamBtnUI();
+        }
+
+        function updateStreamBtnUI() {
+            const btnStream = document.getElementById('btnStream');
+            if (!btnStream) return;
+            if(window.isStreaming) {
+                btnStream.innerText = "STOP STREAM";
+                btnStream.classList.add('active');
+            } else {
+                btnStream.innerText = "START STREAM";
+                btnStream.classList.remove('active');
+            }
+        }
+
+        // REZERO COMMAND
+        async function sendRezeroCommand() {
+            if(!window.device || !window.device.opened) return;
+            const btnRezero = document.getElementById('btnRezero');
+            if (btnRezero) btnRezero.innerText = "Calibrating...";
+            const payload = new Uint8Array(64);
+            payload[0] = WEBHID_CMD_REZERO;
+            await window.device.sendReport(REPORT_ID, payload);
+        }
+
+        // FACTORY RESET COMMAND
+        async function sendFactoryResetCommand() {
+            if(!window.device || !window.device.opened) return;
+            if(!confirm("Are you sure you want to restore factory default EEPROM settings?")) return;
+            const btnReset = document.getElementById('btnReset');
+            if (btnReset) btnReset.innerText = "Restoring...";
+            const payload = new Uint8Array(64);
+            payload[0] = WEBHID_CMD_FACTORY_RESET;
+            await window.device.sendReport(REPORT_ID, payload);
+        }
+
+        // RESTART MOUSE HARDWARE COMMAND
+        async function sendRestartCommand() {
+            if(!window.device || !window.device.opened) return;
+            if(!confirm("Are you sure you want to reboot the SpaceMouse hardware?")) return;
+            const btnRestart = document.getElementById('btnRestart');
+            if (btnRestart) btnRestart.innerText = "Rebooting...";
+            const payload = new Uint8Array(64);
+            payload[0] = WEBHID_CMD_RESTART;
+            await window.device.sendReport(REPORT_ID, payload);
+        }
+
+        // ============================================================================
+        // 2. THREE.JS 3D VIEWPORT INITIALIZATION (viewport3d.js)
+        // ============================================================================
+        window.targetPos = { x: 0, y: 0, z: 0 };
+        window.targetRot = { x: 0, y: 0, z: 0 };
+
+        let scene, camera, renderer, puckMesh;
+
+        function init3DViewport() {
+            const container = document.getElementById('canvas3d-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f2f5); // CAD Light Grey / Off-White Background
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 11, 16);
+            camera.lookAt(0, 0, 0);
+
+            // Add CAD 3D Grid Helper on X-Z Plane with Electric Cyan/Blue Center Line
+            const grid = new THREE.GridHelper(26, 26, 0x05ACFF, 0xc5cbd3);
+            grid.position.y = -0.6;
+            scene.add(grid);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create Ceramic Black SpaceMouse Puck Geometry
+            const puckGroup = new THREE.Group();
+
+            // Satin/Matte Ceramic Black Body Material
+            const blackMat = new THREE.MeshPhongMaterial({
+                color: 0x18181c,
+                specular: 0x555555,
+                shininess: 50
+            });
+
+            // 1. Base ring
+            const baseGeo = new THREE.CylinderGeometry(4.0, 4.3, 1.2, 32);
+            const baseMesh = new THREE.Mesh(baseGeo, blackMat);
+
+            // 2. Main Black Knob Body
+            const capGeo = new THREE.CylinderGeometry(3.6, 3.8, 2.8, 32);
+            const capMesh = new THREE.Mesh(capGeo, blackMat);
+            capMesh.position.y = 1.8;
+
+            // 3. Waist Accent Ring (Electric Cyan/Blue contrast line)
+            const ringGeo = new THREE.TorusGeometry(3.7, 0.08, 16, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x05ACFF });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            ringMesh.rotation.x = Math.PI / 2;
+            ringMesh.position.y = 0.4;
+
+            // 4. Lateral Rotation Markings
+            const markerGroup = new THREE.Group();
+
+            // Main Front Indicator Stripe (Electric Cyan/Blue vertical line)
+            const frontNotchGeo = new THREE.BoxGeometry(0.35, 2.7, 0.2);
+            const frontNotchMat = new THREE.MeshBasicMaterial({ color: 0x05ACFF });
+            const frontNotch = new THREE.Mesh(frontNotchGeo, frontNotchMat);
+            frontNotch.position.set(0, 1.8, 3.65);
+            markerGroup.add(frontNotch);
+
+            // 8 Side Ribs/Markings around perimeter for clear 360-degree rotation visibility
+            const ribGeo = new THREE.BoxGeometry(0.12, 2.2, 0.15);
+            const ribMat = new THREE.MeshPhongMaterial({ color: 0x3d4354, specular: 0x888888, shininess: 30 });
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const rib = new THREE.Mesh(ribGeo, ribMat);
+                const radius = 3.62;
+                rib.position.x = Math.sin(angle) * radius;
+                rib.position.z = Math.cos(angle) * radius;
+                rib.position.y = 1.8;
+                rib.rotation.y = angle;
+                markerGroup.add(rib);
+            }
+
+            puckGroup.add(baseMesh);
+            puckGroup.add(capMesh);
+            puckGroup.add(ringMesh);
+            puckGroup.add(markerGroup);
+            scene.add(puckGroup);
+            puckMesh = puckGroup;
+
+            // Balanced lighting for dark object against CAD light grid
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(12, 20, 10);
+            scene.add(dirLight);
+
+            const sideLight = new THREE.DirectionalLight(0x05ACFF, 0.5);
+            sideLight.position.set(-12, -10, -10);
+            scene.add(sideLight);
+
+            // Window resize listener ensuring smooth 3D viewport canvas scaling
+            window.addEventListener('resize', onWindowResize);
+
+            animate3D();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas3d-container');
+            if (!container || !renderer || !camera) return;
+
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            if(puckMesh) {
+                puckMesh.position.x += (window.targetPos.x - puckMesh.position.x) * 0.2;
+                puckMesh.position.y += (window.targetPos.y - puckMesh.position.y) * 0.2;
+                puckMesh.position.z += (window.targetPos.z - puckMesh.position.z) * 0.2;
+
+                puckMesh.rotation.x += (window.targetRot.x - puckMesh.rotation.x) * 0.2;
+                puckMesh.rotation.y += (window.targetRot.y - puckMesh.rotation.y) * 0.2;
+                puckMesh.rotation.z += (window.targetRot.z - puckMesh.rotation.z) * 0.2;
+            }
+            renderer.render(scene, camera);
+        }
+
+        // Initialize 3D Viewport on script load
+        init3DViewport();
+
+        // ============================================================================
+        // 3. USER INTERFACE & BINDINGS LOGIC (ui.js)
+        // ============================================================================
+        // COMPLETE 32 NATIVE 3DCONNEXION HID SHORTCUT CONSTANTS
+        const SHORTCUTS = [
+            { id: 0, name: "MENU (0)", group: "System" },
+            { id: 1, name: "FIT (1)", group: "View" },
+            { id: 2, name: "TOP (2)", group: "View" },
+            { id: 3, name: "LEFT (3)", group: "View" },
+            { id: 4, name: "RIGHT (4)", group: "View" },
+            { id: 5, name: "FRONT (5)", group: "View" },
+            { id: 6, name: "BOTTOM (6)", group: "View" },
+            { id: 7, name: "BACK (7)", group: "View" },
+            { id: 8, name: "ROLL CW (8)", group: "View" },
+            { id: 9, name: "ROLL CCW (9)", group: "View" },
+            { id: 10, name: "ISO 1 (10)", group: "View" },
+            { id: 11, name: "ISO 2 (11)", group: "View" },
+            { id: 12, name: "BUTTON 1 (12)", group: "Numbers" },
+            { id: 13, name: "BUTTON 2 (13)", group: "Numbers" },
+            { id: 14, name: "BUTTON 3 (14)", group: "Numbers" },
+            { id: 15, name: "BUTTON 4 (15)", group: "Numbers" },
+            { id: 16, name: "BUTTON 5 (16)", group: "Numbers" },
+            { id: 17, name: "BUTTON 6 (17)", group: "Numbers" },
+            { id: 18, name: "BUTTON 7 (18)", group: "Numbers" },
+            { id: 19, name: "BUTTON 8 (19)", group: "Numbers" },
+            { id: 20, name: "BUTTON 9 (20)", group: "Numbers" },
+            { id: 21, name: "BUTTON 10 (21)", group: "Numbers" },
+            { id: 22, name: "ESC (22)", group: "Modifiers" },
+            { id: 23, name: "ALT (23)", group: "Modifiers" },
+            { id: 24, name: "SHIFT (24)", group: "Modifiers" },
+            { id: 25, name: "CTRL (25)", group: "Modifiers" },
+            { id: 26, name: "ROTATE (26)", group: "Control" },
+            { id: 27, name: "PAN / ZOOM (27)", group: "Control" },
+            { id: 28, name: "DOMINANT (28)", group: "Control" },
+            { id: 29, name: "SCALE + (29)", group: "Control" },
+            { id: 30, name: "SCALE - (30)", group: "Control" },
+            { id: 31, name: "SPIN (31)", group: "Control" }
+        ];
+
+        // QUICK BUTTON PRESETS FOR POPULAR CAD SOFTWARES
+        const BUTTON_PRESETS = {
+            solidworks: { keyL: 2, keyR: 1, key2: 13, key1: 12 },  // Top, Fit, Button 2, Button 1
+            blender:    { keyL: 10, keyR: 1, key2: 24, key1: 25 }, // Iso1, Fit, Shift, Ctrl
+            modifiers:  { keyL: 22, keyR: 24, key2: 25, key1: 23 },// Esc, Shift, Ctrl, Alt
+            views:      { keyL: 2, keyR: 5, key2: 4, key1: 1 }     // Top, Front, Right, Fit
+        };
+
+        // GLOBAL FLAG PREVENTING DIRTY TRIGGERS ON FETCH/LOAD
+        window.isImportingOrFetching = false;
+
+        // STATE TRACKING FOR SAVE BUTTON (GREY / ACTIVE)
+        function markConfigDirty() {
+            const btnSaveConfig = document.getElementById('btnSaveConfig');
+            if (btnSaveConfig) {
+                btnSaveConfig.disabled = false;
+                btnSaveConfig.innerText = "SAVE TO MOUSE";
+            }
+        }
+
+        function markConfigClean() {
+            const btnSaveConfig = document.getElementById('btnSaveConfig');
+            if (btnSaveConfig) {
+                btnSaveConfig.disabled = true;
+                btnSaveConfig.innerText = "SAVE TO MOUSE";
+            }
+        }
+
+        // TAB NAVIGATION LOGIC
+        const tabBtns = ['landing', 'motion', 'advanced', 'debug'];
+        tabBtns.forEach(tab => {
+            const btn = document.getElementById(`tabNav-${tab}`);
+            if (btn) {
+                btn.addEventListener('click', (e) => switchTab(tab, e.target));
+            }
+        });
+
+        function switchTab(tabName, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(`view-${tabName}`).classList.add('active');
+
+            // Trigger Chart.js canvas resize and update when switching to the Sensitivities tab
+            if (tabName === 'motion' && typeof curveChart !== 'undefined' && curveChart) {
+                curveChart.resize();
+                curveChart.update('none');
+            }
+        }
+
+        // POPULATE ALL 4 SHORTCUT SELECTORS WITH GROUPED CATEGORIES
+        function populateShortcutSelectors() {
+            const selectors = [
+                document.getElementById('selKeyL'),
+                document.getElementById('selKeyR'),
+                document.getElementById('selKey2'),
+                document.getElementById('selKey1')
+            ];
+
+            selectors.forEach(sel => {
+                if (!sel) return;
+                sel.innerHTML = '';
+                
+                let currentGroup = '';
+                let optGroup = null;
+
+                SHORTCUTS.forEach(s => {
+                    if (s.group !== currentGroup) {
+                        currentGroup = s.group;
+                        optGroup = document.createElement('optgroup');
+                        optGroup.label = `--- ${currentGroup.toUpperCase()} ---`;
+                        sel.appendChild(optGroup);
+                    }
+                    const option = document.createElement('option');
+                    option.value = s.id;
+                    option.innerText = s.name;
+                    optGroup.appendChild(option);
+                });
+            });
+        }
+        populateShortcutSelectors();
+
+        // APPLY QUICK CAD PRESET HANDLER
+        const btnApplyPreset = document.getElementById('btnApplyPreset');
+        const selBtnPreset = document.getElementById('selBtnPreset');
+
+        if (btnApplyPreset && selBtnPreset) {
+            btnApplyPreset.addEventListener('click', () => {
+                const presetKey = selBtnPreset.value;
+                if (!BUTTON_PRESETS[presetKey]) return;
+
+                const p = BUTTON_PRESETS[presetKey];
+                const selL = document.getElementById('selKeyL');
+                const selR = document.getElementById('selKeyR');
+                const sel2 = document.getElementById('selKey2');
+                const sel1 = document.getElementById('selKey1');
+
+                if (selL) selL.value = p.keyL;
+                if (selR) selR.value = p.keyR;
+                if (sel2) sel2.value = p.key2;
+                if (sel1) sel1.value = p.key1;
+
+                if (!window.isImportingOrFetching) {
+                    markConfigDirty();
+                }
+            });
+        }
+
+        // LISTEN FOR DROPDOWN CHANGES TO MARK CONFIG DIRTY
+        ['selOledSleep', 'selModFunc', 'selKeyL', 'selKeyR', 'selKey2', 'selKey1'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => {
+                if (!window.isImportingOrFetching) markConfigDirty();
+            });
+        });
+
+        // OLED POWER TOGGLE WITH SAFETY CONFIRMATION WARNING
+        const btnOledPower = document.getElementById('btnOledPower');
+        if (btnOledPower) {
+            btnOledPower.addEventListener('click', () => {
+                let cur = safeParseInt(btnOledPower.dataset.active || '1', 1);
+                if (cur === 1) {
+                    const confirmDisable = confirm(
+                        "⚠️ WARNING: Disabling OLED Screen Power\n\n" +
+                        "Turning off the OLED display will power off screen pixels and pause hardware menu rendering on the mouse.\n\n" +
+                        "• 3D movement and Web Studio controls remain 100% operational.\n" +
+                        "• You can re-enable the OLED screen anytime from this Web Studio.\n\n" +
+                        "Do you want to proceed and turn off the OLED display?"
+                    );
+                    if (!confirmDisable) return;
+                    
+                    setToggle('btnOledPower', 0);
+                    const grpOledSleep = document.getElementById('grpOledSleep');
+                    if (grpOledSleep) {
+                        grpOledSleep.style.opacity = '0.4';
+                        grpOledSleep.style.pointerEvents = 'none';
+                    }
+                } else {
+                    setToggle('btnOledPower', 1);
+                    const grpOledSleep = document.getElementById('grpOledSleep');
+                    if (grpOledSleep) {
+                        grpOledSleep.style.opacity = '1';
+                        grpOledSleep.style.pointerEvents = 'auto';
+                    }
+                }
+                if (!window.isImportingOrFetching) markConfigDirty();
+            });
+        }
+
+        // EXPORT PROFILE TO JSON FILE WITH DYNAMIC FIRMWARE VERSION
+        function exportProfile() {
+            const btnOledPower = document.getElementById('btnOledPower');
+            const isOledOn = safeParseInt(btnOledPower ? btnOledPower.dataset.active : '1', 1);
+            const selOledSleep = document.getElementById('selOledSleep');
+            const oledSleepVal = (isOledOn === 0) ? -1 : safeParseInt(selOledSleep ? selOledSleep.value : '2', 2);
+
+            const healthFwEl = document.getElementById('healthFw');
+            const activeFwVer = healthFwEl ? healthFwEl.innerText : "v0.1.0";
+
+            const profile = {
+                deviceName: "O.R.B.7 SpaceMouse",
+                firmwareVersion: activeFwVer,
+                webStudioVersion: "1.6.3",
+                exportedAt: new Date().toISOString(),
+                settings: {
+                    globalSens: safeParseInt(document.getElementById('slSens').value, 100),
+                    deadzone: safeParseInt(document.getElementById('slDeadzone').value, 10),
+                    transX_sens: parseFloat(document.getElementById('slSensTX').value) || 0.8,
+                    transY_sens: parseFloat(document.getElementById('slSensTY').value) || 1.0,
+                    pos_transZ_sens: parseFloat(document.getElementById('slSensPTZ').value) || 2.0,
+                    neg_transZ_sens: parseFloat(document.getElementById('slSensNTZ').value) || 1.0,
+                    rotX_sens: parseFloat(document.getElementById('slSensRX').value) || 1.2,
+                    rotY_sens: parseFloat(document.getElementById('slSensRY').value) || 1.2,
+                    rotZ_sens: parseFloat(document.getElementById('slSensRZ').value) || 0.9,
+                    gate_trans: safeParseInt(document.getElementById('slGateTrans').value, 6),
+                    gate_neg_transZ: safeParseInt(document.getElementById('slGateNTZ').value, 25),
+                    gate_rotX: safeParseInt(document.getElementById('slGateRX').value, 5),
+                    gate_rotY: safeParseInt(document.getElementById('slGateRY').value, 5),
+                    gate_rotZ: safeParseInt(document.getElementById('slGateRZ').value, 5),
+                    modFunc: safeParseInt(document.getElementById('selModFunc').value, 3),
+                    slopeA: parseFloat(document.getElementById('slSlopeA').value) || 1.15,
+                    slopeB: parseFloat(document.getElementById('slSlopeB').value) || 1.35,
+                    invX: safeParseInt(document.getElementById('btnInvX').dataset.active || '0', 0),
+                    invY: safeParseInt(document.getElementById('btnInvY').dataset.active || '1', 1),
+                    invZ: safeParseInt(document.getElementById('btnInvZ').dataset.active || '1', 1),
+                    invRX: safeParseInt(document.getElementById('btnInvRX').dataset.active || '0', 0),
+                    invRY: safeParseInt(document.getElementById('btnInvRY').dataset.active || '1', 1),
+                    invRZ: safeParseInt(document.getElementById('btnInvRZ').dataset.active || '1', 1),
+                    switchXY: safeParseInt(document.getElementById('btnSwpXY').dataset.active || '0', 0),
+                    switchYZ: safeParseInt(document.getElementById('btnSwpYZ').dataset.active || '0', 0),
+                    exclusiveMode: safeParseInt(document.getElementById('btnExclusive').dataset.active || '0', 0),
+                    exclusiveHysteresis: safeParseInt(document.getElementById('slExclHyst').value, 60),
+                    compEnabled: safeParseInt(document.getElementById('btnCompEn').dataset.active || '0', 0),
+                    compNr: safeParseInt(document.getElementById('slCompNr').value, 50),
+                    compWait: safeParseInt(document.getElementById('slCompWait').value, 100),
+                    compMDiff: safeParseInt(document.getElementById('slCompMDiff').value, 10),
+                    compCDiff: safeParseInt(document.getElementById('slCompCDiff').value, 50),
+                    oledSleepTimer: oledSleepVal,
+                    keyL_shortcut: safeParseInt(document.getElementById('selKeyL').value, 2),
+                    keyR_shortcut: safeParseInt(document.getElementById('selKeyR').value, 1),
+                    key2_shortcut: safeParseInt(document.getElementById('selKey2').value, 13),
+                    key1_shortcut: safeParseInt(document.getElementById('selKey1').value, 12),
+                    minVals: [],
+                    maxVals: []
+                }
+            };
+
+            // Grab dynamic limits from the manual inputs table
+            for (let i = 0; i < 8; i++) {
+                const minEl = document.getElementById(`limit-min-${i}`);
+                const maxEl = document.getElementById(`limit-max-${i}`);
+                profile.settings.minVals.push(minEl ? safeParseInt(minEl.value, -400) : -400);
+                profile.settings.maxVals.push(maxEl ? safeParseInt(maxEl.value, 175) : 175);
+            }
+
+            const jsonStr = JSON.stringify(profile, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ORB7_Profile_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // IMPORT PROFILE FROM JSON FILE
+        function importProfile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const s = data.settings || data;
+
+                    if (!s || typeof s !== 'object') {
+                        alert("⚠️ Invalid JSON profile format!");
+                        return;
+                    }
+
+                    window.isImportingOrFetching = true;
+
+                    // Populate UI controls
+                    if (s.globalSens !== undefined) setVal('slSens', 'lblSens', s.globalSens, '%');
+                    if (s.deadzone !== undefined) setVal('slDeadzone', 'lblDeadzone', s.deadzone);
+                    if (s.transX_sens !== undefined) setFloatVal('slSensTX', 'lblSensTX', s.transX_sens);
+                    if (s.transY_sens !== undefined) setFloatVal('slSensTY', 'lblSensTY', s.transY_sens);
+                    if (s.pos_transZ_sens !== undefined) setFloatVal('slSensPTZ', 'lblSensPTZ', s.pos_transZ_sens);
+                    if (s.neg_transZ_sens !== undefined) setFloatVal('slSensNTZ', 'lblSensNTZ', s.neg_transZ_sens);
+                    if (s.rotX_sens !== undefined) setFloatVal('slSensRX', 'lblSensRX', s.rotX_sens);
+                    if (s.rotY_sens !== undefined) setFloatVal('slSensRY', 'lblSensRY', s.rotY_sens);
+                    if (s.rotZ_sens !== undefined) setFloatVal('slSensRZ', 'lblSensRZ', s.rotZ_sens);
+                    if (s.gate_trans !== undefined) setVal('slGateTrans', 'lblGateTrans', s.gate_trans);
+                    if (s.gate_neg_transZ !== undefined) setVal('slGateNTZ', 'lblGateNTZ', s.gate_neg_transZ);
+                    if (s.gate_rotX !== undefined) setVal('slGateRX', 'lblGateRX', s.gate_rotX);
+                    if (s.gate_rotY !== undefined) setVal('slGateRY', 'lblGateRY', s.gate_rotY);
+                    if (s.gate_rotZ !== undefined) setVal('slGateRZ', 'lblGateRZ', s.gate_rotZ);
+
+                    if (s.modFunc !== undefined) {
+                        const selModFunc = document.getElementById('selModFunc');
+                        if (selModFunc) selModFunc.value = s.modFunc;
+                    }
+                    if (s.slopeA !== undefined) setFloatVal('slSlopeA', 'lblSlopeA', s.slopeA);
+                    if (s.slopeB !== undefined) setFloatVal('slSlopeB', 'lblSlopeB', s.slopeB);
+
+                    if (s.invX !== undefined) setToggle('btnInvX', s.invX);
+                    if (s.invY !== undefined) setToggle('btnInvY', s.invY);
+                    if (s.invZ !== undefined) setToggle('btnInvZ', s.invZ);
+                    if (s.invRX !== undefined) setToggle('btnInvRX', s.invRX);
+                    if (s.invRY !== undefined) setToggle('btnInvRY', s.invRY);
+                    if (s.invRZ !== undefined) setToggle('btnInvRZ', s.invRZ);
+                    if (s.switchXY !== undefined) setToggle('btnSwpXY', s.switchXY);
+                    if (s.switchYZ !== undefined) setToggle('btnSwpYZ', s.switchYZ);
+
+                    if (s.exclusiveMode !== undefined) setToggle('btnExclusive', s.exclusiveMode);
+                    if (s.exclusiveHysteresis !== undefined) setVal('slExclHyst', 'lblExclHyst', s.exclusiveHysteresis);
+
+                    if (s.compEnabled !== undefined) setToggle('btnCompEn', s.compEnabled);
+                    if (s.compNr !== undefined) setVal('slCompNr', 'lblCompNr', s.compNr);
+                    if (s.compWait !== undefined) setVal('slCompWait', 'lblCompWait', s.compWait, 'ms');
+                    if (s.compMDiff !== undefined) setVal('slCompMDiff', 'lblCompMDiff', s.compMDiff);
+                    if (s.compCDiff !== undefined) setVal('slCompCDiff', 'lblCompCDiff', s.compCDiff);
+
+                    if (s.oledSleepTimer !== undefined) {
+                        const grpOledSleep = document.getElementById('grpOledSleep');
+                        const selOledSleep = document.getElementById('selOledSleep');
+                        if (s.oledSleepTimer === -1) {
+                            setToggle('btnOledPower', 0);
+                            if (grpOledSleep) {
+                                grpOledSleep.style.opacity = '0.4';
+                                grpOledSleep.style.pointerEvents = 'none';
+                            }
+                        } else {
+                            setToggle('btnOledPower', 1);
+                            if (selOledSleep) selOledSleep.value = s.oledSleepTimer;
+                            if (grpOledSleep) {
+                                grpOledSleep.style.opacity = '1';
+                                grpOledSleep.style.pointerEvents = 'auto';
+                            }
+                        }
+                    }
+
+                    const selKeyL = document.getElementById('selKeyL');
+                    const selKeyR = document.getElementById('selKeyR');
+                    const selKey2 = document.getElementById('selKey2');
+                    const selKey1 = document.getElementById('selKey1');
+
+                    if (s.keyL_shortcut !== undefined && selKeyL) selKeyL.value = s.keyL_shortcut;
+                    if (s.keyR_shortcut !== undefined && selKeyR) selKeyR.value = s.keyR_shortcut;
+                    if (s.key2_shortcut !== undefined && selKey2) selKey2.value = s.key2_shortcut;
+                    if (s.key1_shortcut !== undefined && selKey1) selKey1.value = s.key1_shortcut;
+
+                    // Reset Preset Dropdown to "custom" when custom JSON profile is loaded
+                    const selBtnPreset = document.getElementById('selBtnPreset');
+                    if (selBtnPreset) selBtnPreset.value = "custom";
+
+                    // Import manual calibration limits if present in profile
+                    if (s.minVals && s.minVals.length === 8 && s.maxVals && s.maxVals.length === 8) {
+                        for (let i = 0; i < 8; i++) {
+                            const minEl = document.getElementById(`limit-min-${i}`);
+                            const maxEl = document.getElementById(`limit-max-${i}`);
+                            if (minEl && maxEl) {
+                                minEl.value = s.minVals[i];
+                                maxEl.value = s.maxVals[i];
+                                minEl.dispatchEvent(new Event('input'));
+                            }
+                        }
+                        window.hasNewCalibration = true;
+                    }
+
+                    updateCurveChart();
+                    window.isImportingOrFetching = false;
+                    
+                    markConfigDirty();
+
+                    alert("✅ Profile imported successfully!\nClick 'SAVE TO MOUSE' to apply settings to the device.");
+                } catch (err) {
+                    console.error(err);
+                    alert("⚠️ Failed to parse profile file! Please ensure it is a valid JSON file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = "";
+        }
+
+        // BIND EXPORT AND IMPORT PROFILE BUTTONS
+        const btnExportProfile = document.getElementById('btnExportProfile');
+        if (btnExportProfile) btnExportProfile.addEventListener('click', exportProfile);
+
+        const btnImportProfile = document.getElementById('btnImportProfile');
+        const fileImportProfile = document.getElementById('fileImportProfile');
+        if (btnImportProfile && fileImportProfile) {
+            btnImportProfile.addEventListener('click', () => fileImportProfile.click());
+            fileImportProfile.addEventListener('change', importProfile);
+        }
+
+        // CHART.JS INTERACTIVE MODIFIER CURVES PLOTTER
+        let curveChart = null;
+
+        function generateCurveData(a, b) {
+            const xValues = [];
+            const yF = [];
+            const yG = [];
+            const tanB = Math.tan(b);
+
+            for (let x = 0; x <= 350; x += 5) {
+                const xNorm = x / 350.0;
+                const sign = Math.sign(x);
+                const absXNormPowA = Math.pow(Math.abs(xNorm), a);
+                const fx = sign * absXNormPowA;
+                let gx = 0;
+
+                if (Math.abs(tanB) > 1e-6) {
+                    gx = Math.tan(b * sign * absXNormPowA) / tanB;
+                } else {
+                    gx = fx;
+                }
+
+                xValues.push(x);
+                yF.push(fx);
+                yG.push(gx);
+            }
+            return { xValues, yF, yG };
+        }
+
+        function initCurveChart() {
+            const canvas = document.getElementById('functionChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const slSlopeA = document.getElementById('slSlopeA');
+            const slSlopeB = document.getElementById('slSlopeB');
+            const a = slSlopeA ? parseFloat(slSlopeA.value) || 1.15 : 1.15;
+            const b = slSlopeB ? parseFloat(slSlopeB.value) || 1.35 : 1.35;
+            
+            const initialData = generateCurveData(a, b);
+
+            curveChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: initialData.xValues,
+                    datasets: [
+                        {
+                            label: '1: "Squared" function y(x) = (|x|/350)^a · sign(x)',
+                            data: initialData.yF,
+                            borderColor: '#05ACFF',      // Electric Cyan/Blue (#05ACFF)
+                            backgroundColor: '#05ACFF',  // Electric Cyan/Blue (#05ACFF)
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: '3: "Squared tangent" function y(x) = tan(b · |x/350|^a · sign(x)) / tan(b)',
+                            data: initialData.yG,
+                            borderColor: '#ff007f',
+                            backgroundColor: '#ff007f',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: '#ffffff', font: { size: 10, family: 'Segoe UI' } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Input x', color: '#7a869a' },
+                            grid: { color: '#262b3d' },
+                            ticks: { color: '#7a869a', font: { size: 9 } }
+                        },
+                        y: {
+                            title: { display: true, text: 'Function output', color: '#7a869a' },
+                            grid: { color: '#262b3d' },
+                            ticks: { color: '#7a869a', font: { size: 9 } },
+                            min: 0,
+                            max: 1.0
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCurveChart() {
+            if (!curveChart) return;
+            const slSlopeA = document.getElementById('slSlopeA');
+            const slSlopeB = document.getElementById('slSlopeB');
+            const a = slSlopeA ? parseFloat(slSlopeA.value) || 1.15 : 1.15;
+            const b = slSlopeB ? parseFloat(slSlopeB.value) || 1.35 : 1.35;
+            
+            const data = generateCurveData(a, b);
+            curveChart.data.labels = data.xValues;
+            curveChart.data.datasets[0].data = data.yF;
+            curveChart.data.datasets[1].data = data.yG;
+            curveChart.update('none');
+        }
+
+        initCurveChart();
+
+        // SETUP 6DOF BARS
+        const axes = ['TX', 'TY', 'TZ', 'RX', 'RY', 'RZ'];
+        const velContainer = document.getElementById('velocity-container');
+        if (velContainer) {
+            axes.forEach((axis, i) => {
+                velContainer.innerHTML += `
+                    <div class="axis-row">
+                        <div class="axis-label">${axis}</div>
+                        <div class="bi-bar-container">
+                            <div class="bi-bar-center"></div>
+                            <div class="bar-left"><div class="fill-left" id="vel-neg-${i}"></div></div>
+                            <div class="bar-right"><div class="fill-right" id="vel-pos-${i}"></div></div>
+                        </div>
+                        <div class="axis-val" id="vel-val-${i}">0</div>
+                    </div>
+                `;
+            });
+        }
+
+        // SETUP DRIFT TABLE
+        const driftTable = document.getElementById('drift-table');
+        const sensorNames = ['H0 (South-A)', 'H1 (South-B)', 'H2 (East-A)', 'H3 (East-B)', 'H6 (North-A)', 'H7 (North-B)', 'H8 (West-A)', 'H9 (West-B)'];
+        if (driftTable) {
+            sensorNames.forEach((name, i) => {
+                driftTable.innerHTML += `
+                    <tr>
+                        <td>${name}</td>
+                        <td id="raw-${i}">0</td>
+                        <td id="cent-${i}">0</td>
+                        <td style="color:var(--warning)" id="off-${i}">0</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // MANUAL CALIBRATION LIMITS TABLE BUILDER
+        function initManualLimitsTable() {
+            const manualLimitsTable = document.getElementById('manualLimitsTable');
+            if (!manualLimitsTable) return;
+            manualLimitsTable.innerHTML = '';
+
+            sensorNames.forEach((name, i) => {
+                manualLimitsTable.innerHTML += `
+                    <tr>
+                        <td>${name}</td>
+                        <td><input type="number" class="limit-input" id="limit-min-${i}" value="-400" step="1"></td>
+                        <td><input type="number" class="limit-input" id="limit-max-${i}" value="175" step="1"></td>
+                        <td id="limit-range-${i}" style="color:var(--warning)">575</td>
+                        <td><span id="limit-status-${i}" class="delta ok">OK</span></td>
+                    </tr>
+                `;
+            });
+
+            // Add interactive event listeners for dynamic recalculation
+            for (let i = 0; i < 8; i++) {
+                const minEl = document.getElementById(`limit-min-${i}`);
+                const maxEl = document.getElementById(`limit-max-${i}`);
+
+                const updateRow = () => {
+                    const min = safeParseInt(minEl.value, -400);
+                    const max = safeParseInt(maxEl.value, 175);
+                    const range = max - min;
+                    
+                    // STRICT SANITY RULE: Range >= 80, min < -Deadzone, max > Deadzone
+                    const dz = safeParseInt(document.getElementById('slDeadzone').value, 10);
+                    const isOk = (range >= 80 && min < -dz && max > dz);
+
+                    const rangeEl = document.getElementById(`limit-range-${i}`);
+                    if (rangeEl) rangeEl.innerText = range;
+                    
+                    const statusEl = document.getElementById(`limit-status-${i}`);
+                    if (statusEl) {
+                        statusEl.innerText = isOk ? 'OK' : 'INVALID';
+                        statusEl.className = `delta ${isOk ? 'ok' : 'bad'}`;
+                    }
+
+                    if (!window.isImportingOrFetching) {
+                        window.hasNewCalibration = true;
+                        markConfigDirty();
+                    }
+                };
+
+                if (minEl) minEl.addEventListener('input', updateRow);
+                if (maxEl) maxEl.addEventListener('input', updateRow);
+            }
+        }
+        initManualLimitsTable();
+
+        // RE-VALIDATE MANUAL LIMITS TABLE IF DEADZONE SLIDER CHANGES
+        const slDzInput = document.getElementById('slDeadzone');
+        if (slDzInput) {
+            slDzInput.addEventListener('input', () => {
+                for (let i = 0; i < 8; i++) {
+                    const minEl = document.getElementById(`limit-min-${i}`);
+                    if (minEl) minEl.dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        // REFRESH RATE HZ COUNTER
+        setInterval(() => {
+            const hzVal = document.getElementById('hz-val');
+            const healthHz = document.getElementById('healthHz');
+            
+            let currentHz = 0;
+            if(window.isStreaming) {
+                currentHz = window.packetsReceived;
+                window.packetsReceived = 0;
+            }
+
+            if (hzVal) hzVal.innerText = currentHz + " Hz";
+            if (healthHz) healthHz.innerText = currentHz + " Hz";
+        }, 1000);
+
+        // TAB VISIBILITY MONITOR (PREVENTS WIZARD THROTTLING WHEN TAB IS HIDDEN)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && window.isWizardActive) {
+                const wizardStatus = document.getElementById('wizardStatus');
+                const wizStep3Msg = document.getElementById('wizStep3Msg');
+                
+                const alertText = "⚠️ WARNING: Tab lost focus! Background throttling may impair measurement accuracy.";
+                if (wizardStatus) {
+                    wizardStatus.innerText = alertText;
+                    wizardStatus.style.color = "var(--danger)";
+                }
+                if (wizStep3Msg) {
+                    wizStep3Msg.innerText = alertText;
+                    wizStep3Msg.style.color = "var(--danger)";
+                }
+            }
+        });
+
+        // HELPER FUNCTIONS FOR UI CONTROLS
+        function setVal(slId, lblId, val, suffix = '') {
+            const sl = document.getElementById(slId);
+            const lbl = document.getElementById(lblId);
+            if (sl) sl.value = val;
+            if (lbl) lbl.innerText = val + suffix;
+        }
+
+        function setFloatVal(slId, lblId, val) {
+            const sl = document.getElementById(slId);
+            const lbl = document.getElementById(lblId);
+            if (sl) sl.value = val;
+            if (lbl) lbl.innerText = parseFloat(val).toFixed(2);
+        }
+
+        function setToggle(btnId, val) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.dataset.active = val;
+            if(val === 1) {
+                btn.innerText = "ON";
+                btn.classList.add('active');
+            } else {
+                btn.innerText = "OFF";
+                btn.classList.remove('active');
+            }
+
+            // Automatically sync counterpart wizard inversion button if present
+            if (btnId.startsWith('btnInv')) {
+                const axis = btnId.replace('btnInv', '');
+                const wizBtn = document.getElementById(`wizInv${axis}`);
+                if (wizBtn && wizBtn.dataset.active !== String(val)) {
+                    setToggle(`wizInv${axis}`, val);
+                }
+            }
+        }
+
+        // TOGGLE SWITCH EVENT LISTENERS
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            // Exclude OledPower and Wizard inversion buttons (handled separately)
+            if (btn.id === 'btnOledPower' || btn.id.startsWith('wizInv')) return;
+            
+            btn.addEventListener('click', () => {
+                let cur = safeParseInt(btn.dataset.active || '0', 0);
+                let newVal = cur === 1 ? 0 : 1;
+                setToggle(btn.id, newVal);
+                
+                if (!window.isImportingOrFetching) markConfigDirty();
+            });
+        });
+
+        // RANGE SLIDER BINDING HELPER
+        const bindSlider = (slId, lblId, suffix = '', isFloat = false) => {
+            const el = document.getElementById(slId);
+            if(!el) return;
+            el.addEventListener('input', (e) => {
+                let v = parseFloat(e.target.value);
+                const lbl = document.getElementById(lblId);
+                if (lbl) lbl.innerText = (isFloat ? v.toFixed(2) : Math.round(v)) + suffix;
+                
+                if (slId === 'slSlopeA' || slId === 'slSlopeB') {
+                    updateCurveChart();
+                }
+
+                if (!window.isImportingOrFetching) markConfigDirty();
+            });
+        };
+
+        bindSlider('slSens', 'lblSens', '%', false);
+        bindSlider('slDeadzone', 'lblDeadzone', '', false);
+        bindSlider('slSensTX', 'lblSensTX', '', true);
+        bindSlider('slSensTY', 'lblSensTY', '', true);
+        bindSlider('slSensPTZ', 'lblSensPTZ', '', true);
+        bindSlider('slSensNTZ', 'lblSensNTZ', '', true);
+        bindSlider('slSensRX', 'lblSensRX', '', true);
+        bindSlider('slSensRY', 'lblSensRY', '', true);
+        bindSlider('slSensRZ', 'lblSensRZ', '', true);
+        bindSlider('slSlopeA', 'lblSlopeA', '', true);
+        bindSlider('slSlopeB', 'lblSlopeB', '', true);
+        bindSlider('slGateTrans', 'lblGateTrans', '', false);
+        bindSlider('slGateNTZ', 'lblGateNTZ', '', false);
+        bindSlider('slGateRX', 'lblGateRX', '', false);
+        bindSlider('slGateRY', 'lblGateRY', '', false);
+        bindSlider('slGateRZ', 'lblGateRZ', '', false);
+        bindSlider('slCompNr', 'lblCompNr', '', false);
+        bindSlider('slCompWait', 'lblCompWait', 'ms', false);
+        bindSlider('slCompMDiff', 'lblCompMDiff', '', false);
+        bindSlider('slCompCDiff', 'lblCompCDiff', '', false);
+        bindSlider('slExclHyst', 'lblExclHyst', '', false);
+
+        const selModFunc = document.getElementById('selModFunc');
+        if (selModFunc) {
+            selModFunc.addEventListener('change', () => {
+                updateCurveChart();
+                if (!window.isImportingOrFetching) markConfigDirty();
+            });
+        }
+
+        // BIND TOP ACTION BUTTONS
+        const btnConnect = document.getElementById('btnConnect');
+        if (btnConnect) btnConnect.addEventListener('click', connectDevice);
+
+        const btnSaveConfig = document.getElementById('btnSaveConfig');
+        if (btnSaveConfig) btnSaveConfig.addEventListener('click', saveConfigToDevice);
+
+        const btnStream = document.getElementById('btnStream');
+        if (btnStream) btnStream.addEventListener('click', toggleStream);
+
+        const btnRezero = document.getElementById('btnRezero');
+        if (btnRezero) btnRezero.addEventListener('click', sendRezeroCommand);
+
+        const btnRestart = document.getElementById('btnRestart');
+        if (btnRestart) btnRestart.addEventListener('click', sendRestartCommand);
+
+        const btnReset = document.getElementById('btnReset');
+        if (btnReset) btnReset.addEventListener('click', sendFactoryResetCommand);
+
+
+        // ============================================================================
+        // DYNAMIC LIMITS 20-SECOND TEST LOGIC (REUSABLE FOR DEBUG PANEL & WIZARD)
+        // ============================================================================
+        async function execute20sTest(btnEl, fillEl, statusEl) {
+            if(!window.device || !window.device.opened) {
+                alert("Please connect the device first!");
+                return;
+            }
+
+            btnEl.disabled = true;
+            if (statusEl) {
+                statusEl.innerText = "Status: Executing auto Re-Zero... Keep knob untouched!";
+                statusEl.style.color = "var(--warning)";
+            }
+
+            // Proactive Step 1: Force auto Re-Zero to establish clean rest baseline prior to test
+            if (typeof sendRezeroCommand === 'function') {
+                await sendRezeroCommand();
+                // The critical 1200ms delay to allow the MCU loop enough time to zero safely
+                await new Promise(resolve => setTimeout(resolve, 1200)); 
+            }
+
+            // Proactive Step 2: Ensure telemetry stream is active
+            if (!window.isStreaming && typeof toggleStream === 'function') {
+                await toggleStream();
+            }
+            
+            window.wizardMin = [1023, 1023, 1023, 1023, 1023, 1023, 1023, 1023];
+            window.wizardMax = [-1023, -1023, -1023, -1023, -1023, -1023, -1023, -1023];
+            window.isWizardActive = true;
+
+            let elapsed = 0;
+            if (statusEl) {
+                statusEl.innerText = "Status: Re-Zeroed! Move knob to all physical extremes now!";
+                statusEl.style.color = "var(--warning)";
+            }
+
+            let interval = setInterval(() => {
+                elapsed += 200;
+                let percent = (elapsed / 20000) * 100;
+                if (fillEl) fillEl.style.width = percent + '%';
+
+                let remaining = Math.ceil((20000 - elapsed) / 1000);
+                if (statusEl && !document.hidden) {
+                    statusEl.innerText = `Status: Testing boundaries... ${remaining}s remaining`;
+                }
+
+                if(elapsed >= 20000) {
+                    clearInterval(interval);
+                    window.isWizardActive = false;
+                    btnEl.disabled = false;
+                    if (fillEl) fillEl.style.width = '100%';
+                    if (statusEl) {
+                        statusEl.innerText = "Status: Calibration cycle finished! Measured limits applied.";
+                        statusEl.style.color = "var(--primary)";
+                    }
+
+                    renderWizardResults();
+                }
+            }, 200);
+        }
+
+        function renderWizardResults() {
+            window.isImportingOrFetching = true;
+            for (let i = 0; i < 8; i++) {
+                const minEl = document.getElementById(`limit-min-${i}`);
+                const maxEl = document.getElementById(`limit-max-${i}`);
+                
+                if (minEl && maxEl) {
+                    minEl.value = window.wizardMin[i];
+                    maxEl.value = window.wizardMax[i];
+                    // Trigger recalculation logic in input events
+                    minEl.dispatchEvent(new Event('input'));
+                }
+            }
+            window.isImportingOrFetching = false;
+            
+            // Explicitly flag changes for user to save
+            window.hasNewCalibration = true;
+            markConfigDirty();
+        }
+
+        // Bind to Debug Panel Button
+        const btnStartCalWizard = document.getElementById('btnStartCalWizard');
+        const wizardFill = document.getElementById('wizardFill');
+        const wizardStatus = document.getElementById('wizardStatus');
+        if (btnStartCalWizard) {
+            btnStartCalWizard.addEventListener('click', () => {
+                execute20sTest(btnStartCalWizard, wizardFill, wizardStatus);
+            });
+        }
+
+
+        // ============================================================================
+        // GUIDED SETUP WIZARD (STATE MACHINE & LOGIC)
+        // ============================================================================
+        let currentWizStep = 1;
+        const totalWizSteps = 5;
+
+        const setupWizardModal = document.getElementById('setupWizardModal');
+        const btnRunWizard = document.getElementById('btnRunWizard');
+        const btnWizardClose = document.getElementById('btnWizardClose');
+        const wizBtnPrev = document.getElementById('wizBtnPrev');
+        const wizBtnNext = document.getElementById('wizBtnNext');
+        const wizDots = document.querySelectorAll('.wiz-dot');
+
+        // Apply CAD Standard Factory Defaults for Step 4
+        function applyFactoryInversions() {
+            const defaults = { X: 0, Y: 1, Z: 1, RX: 0, RY: 1, RZ: 1 };
+            ['X', 'Y', 'Z', 'RX', 'RY', 'RZ'].forEach(axis => {
+                const val = defaults[axis];
+                setToggle(`wizInv${axis}`, val);
+                setToggle(`btnInv${axis}`, val);
+            });
+            if (!window.isImportingOrFetching) markConfigDirty();
+        }
+
+        function updateWizStep() {
+            // Hide all steps, show current
+            document.querySelectorAll('.wiz-step').forEach((el, index) => {
+                el.style.display = (index + 1 === currentWizStep) ? 'block' : 'none';
+                
+                // Trigger active animation strictly on display
+                if (index + 1 === currentWizStep) {
+                    el.classList.remove('active');
+                    void el.offsetWidth; // force reflow
+                    el.classList.add('active');
+                }
+            });
+
+            // Update Dots
+            wizDots.forEach((dot, index) => {
+                if (index + 1 === currentWizStep) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+
+            // Manage Prev/Next Buttons
+            if (wizBtnPrev) wizBtnPrev.disabled = (currentWizStep === 1);
+            
+            if (wizBtnNext) {
+                if (currentWizStep === totalWizSteps) {
+                    wizBtnNext.style.display = 'none'; // Hide next on last step
+                } else {
+                    wizBtnNext.style.display = 'block';
+                    wizBtnNext.innerText = "Next Step";
+                }
+            }
+
+            // Auto-apply factory defaults when arriving at Step 4
+            if (currentWizStep === 4) {
+                applyFactoryInversions();
+            }
+        }
+
+        // Trigger Wizard Modal
+        if (btnRunWizard) {
+            btnRunWizard.addEventListener('click', async () => {
+                if (!window.device || !window.device.opened) {
+                    alert("⚠️ Please connect the O.R.B.7 device first before running the setup wizard.");
+                    return;
+                }
+                
+                // Ensure Telemetry is flowing for Step 1
+                if (!window.isStreaming && typeof toggleStream === 'function') {
+                    await toggleStream();
+                }
+
+                currentWizStep = 1;
+                updateWizStep();
+                if (setupWizardModal) setupWizardModal.style.display = 'flex';
+            });
+        }
+
+        // Close Modals
+        const closeWizard = () => { if (setupWizardModal) setupWizardModal.style.display = 'none'; };
+        if (btnWizardClose) btnWizardClose.addEventListener('click', closeWizard);
+
+        // Next / Prev Triggers
+        if (wizBtnPrev) {
+            wizBtnPrev.addEventListener('click', () => {
+                if (currentWizStep > 1) {
+                    currentWizStep--;
+                    updateWizStep();
+                }
+            });
+        }
+        if (wizBtnNext) {
+            wizBtnNext.addEventListener('click', () => {
+                if (window.isWizardActive) {
+                    alert("⚠️ Boundary test is in progress! Please wait for the 20-second test to complete before advancing to the next step.");
+                    return;
+                }
+                if (currentWizStep < totalWizSteps) {
+                    currentWizStep++;
+                    updateWizStep();
+                }
+            });
+        }
+
+        // Hook global updateAlignment to feed data into Wizard Step 1 UI
+        const originalUpdateAlignment = window.updateAlignment;
+        if (typeof originalUpdateAlignment === 'function') {
+            window.updateAlignment = function(id, valA, valB) {
+                // Execute original logic for Debug Studio
+                originalUpdateAlignment(id, valA, valB);
+                
+                // Feed simultaneous logic into Wizard Step 1
+                let delta = Math.abs(valA - valB);
+                let wizEl = document.getElementById(`wiz-delta-${id}`);
+                if (wizEl) {
+                    wizEl.innerText = `Δ ${delta}`;
+                    wizEl.className = (delta <= 100) ? 'delta ok' : 'delta bad';
+                }
+            };
+        }
+
+        // Wizard Step 2: Trigger Re-Zero Command
+        const wizBtnRezero = document.getElementById('wizBtnRezero');
+        const wizStep2Msg = document.getElementById('wizStep2Msg');
+        if (wizBtnRezero) {
+            wizBtnRezero.addEventListener('click', async () => {
+                wizBtnRezero.disabled = true;
+                wizBtnRezero.innerText = "Calibrating...";
+                if (wizStep2Msg) wizStep2Msg.innerText = "Processing neutral centers...";
+                
+                if (typeof sendRezeroCommand === 'function') {
+                    await sendRezeroCommand();
+                }
+                
+                setTimeout(() => {
+                    wizBtnRezero.innerText = "Recalibrate (If needed)";
+                    wizBtnRezero.disabled = false;
+                    if (wizStep2Msg) wizStep2Msg.innerText = "Neutral Center calibrated successfully!";
+                }, 1200);
+            });
+        }
+
+        // Wizard Step 3: Trigger 20s Limits Test
+        const wizBtnStartLimits = document.getElementById('wizBtnStartLimits');
+        const wizLimitsFill = document.getElementById('wizLimitsFill');
+        const wizStep3Msg = document.getElementById('wizStep3Msg');
+        if (wizBtnStartLimits) {
+            wizBtnStartLimits.addEventListener('click', () => {
+                execute20sTest(wizBtnStartLimits, wizLimitsFill, wizStep3Msg);
+            });
+        }
+
+        // Wizard Step 4: Axis Inversions Bidirectional Sync
+        const axesInv = ['X', 'Y', 'Z', 'RX', 'RY', 'RZ'];
+        axesInv.forEach(axis => {
+            const wizBtn = document.getElementById(`wizInv${axis}`);
+            const mainBtn = document.getElementById(`btnInv${axis}`);
+            
+            if (wizBtn && mainBtn) {
+                // Observer pattern to keep Wizard UI in sync with Main UI
+                wizBtn.dataset.active = mainBtn.dataset.active;
+                wizBtn.innerText = mainBtn.innerText;
+                if(wizBtn.dataset.active === '1') wizBtn.classList.add('active');
+                else wizBtn.classList.remove('active');
+
+                wizBtn.addEventListener('click', () => {
+                    let cur = safeParseInt(wizBtn.dataset.active || '0', 0);
+                    let newVal = cur === 1 ? 0 : 1;
+                    
+                    // Sync both UIs instantly
+                    setToggle(`wizInv${axis}`, newVal);
+                    setToggle(`btnInv${axis}`, newVal);
+                    
+                    if (!window.isImportingOrFetching) markConfigDirty();
+                });
+            }
+        });
+
+        // Wizard Step 5: Save and Finish
+        const wizBtnFinish = document.getElementById('wizBtnFinish');
+        if (wizBtnFinish) {
+            wizBtnFinish.addEventListener('click', async () => {
+                wizBtnFinish.disabled = true;
+                wizBtnFinish.innerText = "SAVING...";
+                
+                if (typeof saveConfigToDevice === 'function') {
+                    await saveConfigToDevice();
+                }
+                
+                setTimeout(() => {
+                    wizBtnFinish.innerText = "SAVE & FINISH";
+                    wizBtnFinish.disabled = false;
+                    closeWizard();
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>

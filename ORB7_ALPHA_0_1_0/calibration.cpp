@@ -105,6 +105,7 @@ void debugOutputOffsets(int16_t* offset) {
 }
 
 void debugDriftPlotter(int16_t* raw, int16_t* centered, int16_t* offset, int16_t axis) {
+  if (axis < 0 || axis >= 8) return; // Boundary check preventing out-of-bounds array reads
   if (isDebugOutputDue()) {
     Serial.print(raw[axis]);
     Serial.print("\t");
@@ -305,7 +306,6 @@ void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData&
   }
 
   // Strictly clamp validPts to range [1, 500] to prevent int16_t counter overflow & infinite accumulation loops.
-  // Directly resolves bug where arbitrary EEPROM parameters could permanently brick the offset logic.
   int16_t validPts = constrain(par.values->compNoOfPoints, 1, 500);
 
   // Independent axis resolution iteration

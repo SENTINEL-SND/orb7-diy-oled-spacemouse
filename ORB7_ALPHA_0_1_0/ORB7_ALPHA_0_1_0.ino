@@ -1,6 +1,6 @@
 /*
  * SPACE MOUSE PRO EMULATOR (6DOF DIY) - MAIN INO ENTRY FILE
- * Firmware Version: ALPHA 0.0.8
+ * Firmware Version: ALPHA 0.1.0
  * Architecture: ATmega32U4 (Arduino Pro Micro, 5V, 16 MHz)
  */
 
@@ -96,8 +96,11 @@ ParamData par = {.values = &parStorage,
                      {PARAM_TYPE_INT, "COMP_MDIFF", &parStorage.compMinMaxDiff},          // 30
                      {PARAM_TYPE_INT, "COMP_CDIFF", &parStorage.compCenterDiff},          // 31
                      {PARAM_TYPE_INT, "GLB_SENS", &parStorage.globalSens},                 // 32
-                     {PARAM_TYPE_INT, "KEY2_SHORT", &parStorage.key2_shortcut},           // 33
-                     {PARAM_TYPE_INT, "KEY1_SHORT", &parStorage.key1_shortcut}            // 34
+                     {PARAM_TYPE_BOOL, "OLED_SLEEP", &parStorage.oledSleepTimer},         // 33 (Fixed int8_t type mapping)
+                     {PARAM_TYPE_BOOL, "KEYL_SHORT", &parStorage.keyL_shortcut},          // 34 (Fixed int8_t type mapping)
+                     {PARAM_TYPE_BOOL, "KEYR_SHORT", &parStorage.keyR_shortcut},          // 35 (Fixed int8_t type mapping)
+                     {PARAM_TYPE_BOOL, "KEY2_SHORT", &parStorage.key2_shortcut},          // 36 (Fixed int8_t type mapping)
+                     {PARAM_TYPE_BOOL, "KEY1_SHORT", &parStorage.key1_shortcut}           // 37 (Fixed int8_t type mapping)
                  }};
 #else
 ParamData par = {.values = &parStorage};
@@ -117,7 +120,7 @@ void setup() {
   wdt_disable();
 
   // Directly configure the hardware multiplexer ADC prescaler via the ADCSRA register.
-  // E.g., 0x05 scales the clock to 500 kHz, safely reducing per-read sampling time from 52us down to 26us.
+  // E.g., 0x06 scales the clock to 250 kHz, safely reducing per-read sampling time while maintaining 10-bit accuracy.
   ADCSRA = (ADCSRA & 0xF8) | (ADC_PRESCALER_PRESET & 0x07);
 
 // Initialize configuration definitions from EEPROM block with XOR checks
@@ -355,12 +358,12 @@ void loop() {
 
   // Execute Kill-Key override mutations if designated by the configuration
 #if (NUMKILLKEYS == 2)
-  if (keyVals[KILLROT] == LOW) {
+  if (keyState[KILLROT] == 1) {
     velocity[ROTX] = 0;
     velocity[ROTY] = 0;
     velocity[ROTZ] = 0;
   }
-  if (keyVals[KILLTRANS] == LOW) {
+  if (keyState[KILLTRANS] == 1) {
     velocity[TRANSX] = 0;
     velocity[TRANSY] = 0;
     velocity[TRANSZ] = 0;

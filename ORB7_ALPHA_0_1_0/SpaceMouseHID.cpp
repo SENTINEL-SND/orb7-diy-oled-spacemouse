@@ -75,10 +75,10 @@ int SpaceMouseHID_::SendReport(uint8_t id, const void *data, int len) {
 void SpaceMouseHID_::receiveHostData(ParamData& par) {
   uint8_t numBytes = USB_Available(USBControllerRX);
   if (numBytes > 0) {
-    uint8_t buffer[65]; // Uninitialized local stack buffer to save Flash
+    uint8_t buffer[65]; // Local stack buffer
     uint8_t readLen = (numBytes > 65) ? 65 : numBytes;
     
-    // Safely store actual received bytes from USB_Recv to prevent processing uninitialized stack memory
+    // Safely store actual received bytes from USB_Recv to prevent processing uninitialized memory
     int actualRead = USB_Recv(USBControllerRX, buffer, readLen);
 
     if (actualRead > 0) {
@@ -135,11 +135,18 @@ bool SpaceMouseHID_::send_command(int16_t rx, int16_t ry, int16_t rz, int16_t x,
       lastHIDsentRep += HIDUPDATERATE_MS;
       hasSentNewData = true;
 
-      if (x == 0 && y == 0 && z == 0) countTransZeros++;
-      else countTransZeros = 0;
+      // Saturate zero counters at 255 to prevent uint8_t wraparound back to 0 during idle rest
+      if (x == 0 && y == 0 && z == 0) {
+        if (countTransZeros < 255) countTransZeros++;
+      } else {
+        countTransZeros = 0;
+      }
       
-      if (rx == 0 && ry == 0 && rz == 0) countRotZeros++;
-      else countRotZeros = 0;
+      if (rx == 0 && ry == 0 && rz == 0) {
+        if (countRotZeros < 255) countRotZeros++;
+      } else {
+        countRotZeros = 0;
+      }
       
 #if (NUMKEYS > 0)
       if (memcmp(keyData, prevKeyData, 4) != 0) nextState = ST_SENDKEYS;

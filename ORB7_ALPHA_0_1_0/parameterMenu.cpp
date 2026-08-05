@@ -18,16 +18,16 @@ static uint8_t calculateChecksum(const ParamStorage &storage) {
 void getParametersFromEEPROM(ParamData &par) {
   long magicNumber = 0L;
   EEPROM.get(BASE_ADDRESS_MAGIC, magicNumber);
-  
+
   bool checksumValid = false;
   if (magicNumber == MAGIC_NUMBER) {
     EEPROM.get(BASE_ADDRESS_PAR, *par.values);
-    
+
     // Retrieve stored 8-bit XOR checksum from sequential address directly succeeding the payload
     uint8_t storedChecksum = 0;
     int checksumAddress = BASE_ADDRESS_PAR + sizeof(ParamStorage);
     EEPROM.get(checksumAddress, storedChecksum);
-    
+
     // Compare stored with dynamically computed checksum
     if (storedChecksum == calculateChecksum(*par.values)) {
       checksumValid = true;
@@ -36,20 +36,20 @@ void getParametersFromEEPROM(ParamData &par) {
 
   // Fallback to factory defaults if the memory block fails integrity checks
   if (!checksumValid) {
-    putParametersToEEPROM(par); 
+    putParametersToEEPROM(par);
   }
 
   // --- EEPROM BOUNDARY CLEANSING ---
   // Enforces strict operational boundaries against corrupt or manually manipulated EEPROM data.
   // Prevents division-by-zero, array out-of-bounds, and mathematical asymptote explosions.
-  
+
   if (par.values->deadzone < 0 || par.values->deadzone > 200) par.values->deadzone = DEADZONE;
   if (par.values->globalSens < 10 || par.values->globalSens > 300) par.values->globalSens = 100;
   if (par.values->slope_at_zero_q8 < 26 || par.values->slope_at_zero_q8 > 768) par.values->slope_at_zero_q8 = SLOPE_A_Q8;
   if (par.values->slope_at_end_q8 < 26 || par.values->slope_at_end_q8 > 402) par.values->slope_at_end_q8 = SLOPE_B_Q8;
   if (par.values->exclusiveHysteresis < 0 || par.values->exclusiveHysteresis > 500) par.values->exclusiveHysteresis = EXCL_HYST;
   if (par.values->oledSleepTimer < -1 || par.values->oledSleepTimer > 3) par.values->oledSleepTimer = 2;
-  
+
   // Sanitize key shortcut indices (Range 0..31) for ALL 4 hardware buttons
   if (par.values->keyL_shortcut < 0 || par.values->keyL_shortcut >= 32) par.values->keyL_shortcut = 2;  // SM_T
   if (par.values->keyR_shortcut < 0 || par.values->keyR_shortcut >= 32) par.values->keyR_shortcut = 1;  // SM_FIT
@@ -87,7 +87,7 @@ void putParametersToEEPROM(ParamData &par) {
   long magicNumber = MAGIC_NUMBER;
   EEPROM.put(BASE_ADDRESS_PAR, *par.values);
   EEPROM.put(BASE_ADDRESS_MAGIC, magicNumber);
-  
+
   // Calculate and commit the XOR checksum immediately following the struct payload
   uint8_t checksum = calculateChecksum(*par.values);
   int checksumAddress = BASE_ADDRESS_PAR + sizeof(ParamStorage);
@@ -99,7 +99,7 @@ long invalidNum = 0xFFFFFFFF;
 
 /// @brief Fully non-blocking serial character accumulator replacing the legacy synchronous Serial.parseFloat().
 /// Prevents the main loop and USB HID reports from freezing while waiting for user inputs.
-int userInput(double &value) { 
+int userInput(double &value) {
   static char rxBuffer[16] = {0};
   static uint8_t rxIndex = 0;
 
@@ -112,16 +112,16 @@ int userInput(double &value) {
         value = atof(rxBuffer);
         rxIndex = 0;
         rxBuffer[0] = '\0';
-        return 1; 
+        return 1;
       } else {
-        return 0; 
+        return 0;
       }
     }
 
     if (lowerCh == 'q' || ch == 27) {
       rxIndex = 0;
       rxBuffer[0] = '\0';
-      return 2; 
+      return 2;
     }
 
     if (isDigit(ch) || ch == '.' || ch == '-') {
@@ -129,13 +129,13 @@ int userInput(double &value) {
         rxBuffer[rxIndex++] = ch;
         rxBuffer[rxIndex] = '\0';
       }
-      return 0; 
+      return 0;
     }
 
     if (ch != ' ' && ch != '\t') {
       rxIndex = 0;
       rxBuffer[0] = '\0';
-      return 4; 
+      return 4;
     }
   }
 
@@ -146,13 +146,13 @@ int parameterMenu(ParamData &par) {
   static int state = 0;
   static int menuMode = -1;
 
-  if (state == 0 || state == 1) { 
+  if (state == 0 || state == 1) {
     Serial.println(F("\r\n[1] List [3] Load [4] Save"));
-    menuMode = -1; 
-    state = 2;     
+    menuMode = -1;
+    state = 2;
   }
 
-  if (state == 2) { 
+  if (state == 2) {
     double num;
     int result = userInput(num);
     if (result == 1) {
@@ -160,34 +160,34 @@ int parameterMenu(ParamData &par) {
       state = 3;
     } 
     else if (result == 2) {
-      state = 0; 
+      state = 0;
     } 
     else if (result == 3 || result == 4) {
-      state = 1; 
+      state = 1;
     }
   }
 
-  if (state == 3) { 
+  if (state == 3) {
     switch (menuMode) {
     case 1:
       printAllParameters(par, true);
-      state = 1; 
+      state = 1;
       break;
     case 2:
       if (editParameters(par) == 0) {
-        state = 1; 
+        state = 1;
       }
       break;
     case 3:
       getParametersFromEEPROM(par);
-      state = 1; 
+      state = 1;
       break;
     case 4:
       putParametersToEEPROM(par);
-      state = 1; 
+      state = 1;
       break;
     default:
-      state = 1; 
+      state = 1;
     }
   }
   return state;
@@ -200,49 +200,49 @@ int editParameters(ParamData &par) {
   static double parValue = 0.0;
   int result = 0;
 
-  if (state == 0) { 
+  if (state == 0) {
     parIndex = 0;
     parValue = 0.0;
-    state = 1; 
+    state = 1;
   }
 
-  if (state == 1) { 
+  if (state == 1) {
     printAllParameters(par, true);
     state = 2;
   }
 
-  if (state == 2) { 
+  if (state == 2) {
     double num;
     result = userInput(num);
     if (result == 1) {
       parIndex = (int)num;
-      state = 3; 
+      state = 3;
     } else if (result == 2) {
-      state = 0; 
-    } else if (result != 0) {
-      state = 1; 
-    }
-  }
-
-  if (state == 3) { 
-    if (parIndex >= 1 && parIndex <= NUM_PARAMS) {
-      isFloat = printOneParameter(parIndex, par, false, true);
-      state = 4; 
-    } else {
-      state = 1; 
-    }
-  }
-
-  if (state == 4) { 
-    result = userInput(parValue);
-    if (result == 1) {
-      state = 5; 
+      state = 0;
     } else if (result != 0) {
       state = 1;
     }
   }
 
-  if (state == 5) { 
+  if (state == 3) {
+    if (parIndex >= 1 && parIndex <= NUM_PARAMS) {
+      isFloat = printOneParameter(parIndex, par, false, true);
+      state = 4;
+    } else {
+      state = 1;
+    }
+  }
+
+  if (state == 4) {
+    result = userInput(parValue);
+    if (result == 1) {
+      state = 5;
+    } else if (result != 0) {
+      state = 1;
+    }
+  }
+
+  if (state == 5) {
     writeParameter(parIndex, parValue, par);
     state = 1;
   }
@@ -270,8 +270,8 @@ bool printOneParameter(int i, ParamData &par, bool line, bool numbering) {
   bool isFloat = false;
   if (i >= 1 && i <= NUM_PARAMS) {
     // Treat Q7 and Q8 parameters logically as floats in serial CLI outputs to preserve human readability
-    isFloat = (par.description[i].type == PARAM_TYPE_FLOAT) || 
-              (i == 2 || i == 3 || i == 4 || i == 5 || i == 10 || i == 11 || i == 12 || i == 14 || i == 15);
+    isFloat = (par.description[i].type == PARAM_TYPE_FLOAT) ||
+              (i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13 || i == 15 || i == 16);
     if (numbering) {
       if (i <= 9) Serial.print(' ');
       Serial.print(i);
@@ -296,9 +296,9 @@ bool printOneParameter(int i, ParamData &par, bool line, bool numbering) {
 double readParameter(int i, ParamData &par) {
   double value = NAN;
   if (i >= 1 && i <= NUM_PARAMS) {
-    if (i == 2 || i == 3 || i == 4 || i == 5 || i == 10 || i == 11 || i == 12) {
+    if (i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
       value = (double)(*(int16_t *)par.description[i].storage) / 128.0; // Decode Q7 back to standard decimal
-    } else if (i == 14 || i == 15) {
+    } else if (i == 15 || i == 16) {
       value = (double)(*(int16_t *)par.description[i].storage) / 256.0; // Decode Q8 back to standard decimal
     } else {
       switch (par.description[i].type) {
@@ -320,13 +320,13 @@ double readParameter(int i, ParamData &par) {
 /// @brief Receives human inputs from the Serial CLI and safely converts them to fixed-point integers.
 void writeParameter(int i, double value, ParamData &par) {
   if (i >= 1 && i <= NUM_PARAMS) {
-    if (i == 2 || i == 3 || i == 4 || i == 5 || i == 10 || i == 11 || i == 12) {
+    if (i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
       // Clamped Q7 conversion against double precision overflow bounds (16-bit safe max)
       double q7_val = value * 128.0;
       if (q7_val < 1.0) q7_val = 1.0;
       if (q7_val > 32767.0) q7_val = 32767.0;
       *(int16_t *)par.description[i].storage = (int16_t)trunc(q7_val);
-    } else if (i == 14 || i == 15) {
+    } else if (i == 15 || i == 16) {
       // Clamped Q8 conversion against double precision overflow & strict math domain errors
       double q8_val = value * 256.0;
       if (q8_val < 26.0) q8_val = 26.0; // Constrain curve bottom minimum to 0.1

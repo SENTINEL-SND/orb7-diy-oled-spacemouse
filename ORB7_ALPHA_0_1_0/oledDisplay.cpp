@@ -613,6 +613,8 @@ static int16_t printSensorLine(char label, int16_t valA, int16_t valB, uint8_t r
 }
 
 void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
+  static int8_t lastSleepTimerParam = -1;
+  unsigned long now = millis();
 
   // If OLED is disabled via Web Studio (oledSleepTimer == -1), power off display and exit
   if (par.values->oledSleepTimer < 0) {
@@ -620,10 +622,18 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       oledPowerState = false;
       oled.ssd1306WriteCmd(SSD1306_DISPLAYOFF);
     }
+    lastSleepTimerParam = -1;
     return;
   }
 
-  unsigned long now = millis();
+  // Immediate display re-awakening when OLED is re-enabled from Web Studio
+  if (lastSleepTimerParam < 0 && par.values->oledSleepTimer >= 0) {
+    oledPowerState = true;
+    oled.ssd1306WriteCmd(SSD1306_DISPLAYON);
+    lastActivityTime = now;
+    forceFullViewRedraw = true;
+  }
+
   static unsigned long lastOledUpdate = 0;
 
   if (now - lastOledUpdate < 30) return;
@@ -666,13 +676,12 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   }
 
   if (oledPowerState && par.values->oledSleepTimer > 0) {
-    static int8_t lastSleepTimerParam = -1;
     static unsigned long cachedSleepTimeout = 0;
 
     if (par.values->oledSleepTimer != lastSleepTimerParam) {
       lastSleepTimerParam = par.values->oledSleepTimer;
-      
-      // Replaced 32-bit math formula with a static lookup array 
+
+      // Replaced 32-bit math formula with a static lookup array
       // Eliminates underflow risks and saves Flash by bypassing multiplication instructions
       static const unsigned long sleep_ms[4] = {0, 60000UL, 180000UL, 300000UL};
       uint8_t safeIdx = (lastSleepTimerParam >= 0 && lastSleepTimerParam <= 3) ? lastSleepTimerParam : 2;
@@ -682,10 +691,12 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
     if (now - lastActivityTime >= cachedSleepTimeout) {
       oledPowerState = false;
       oled.ssd1306WriteCmd(SSD1306_DISPLAYOFF);
-      menuState = 0; 
+      menuState = 0;
       submenuSelect = 0; // Reset cursor on auto-sleep
       forceFullViewRedraw = true;
     }
+  } else {
+    lastSleepTimerParam = par.values->oledSleepTimer;
   }
 
   if (!oledPowerState) return;
@@ -872,7 +883,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       forceFullViewRedraw = false;
     }
 
-    // Optimization: Now using the returned delta values, saving 4 redundant abs() calculations
+    // Optimization: Using returned delta values, saving 4 redundant abs() calculations
     int16_t delN = printSensorLine('N', rawReads[4], rawReads[5], 2);
     int16_t delS = printSensorLine('S', rawReads[0], rawReads[1], 3);
     int16_t delE = printSensorLine('E', rawReads[2], rawReads[3], 4);

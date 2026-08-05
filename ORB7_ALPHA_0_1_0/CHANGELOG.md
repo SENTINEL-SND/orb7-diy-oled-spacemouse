@@ -2,6 +2,31 @@
 
 All notable changes to the SpaceMouse Pro Emulator (O.R.B.7) project will be documented in this file.
 
+## [v0.1.0 / Web Studio v1.6.3] - 2026-08-04 (Firmware Audit, Kinematic Overflow Fix, CLI Memory Safety & USB Idle Suppression)
+
+### Fixed
+- **Translation Z Physical Direction Inversion Alignment** (`kinematics.cpp`): Relocated software axis inversion flags (`invX`..`invRZ`) to execute after physical sensitivity and noise gate processing (`processAxis`). Prevents standard CAD inversions (`invZ = 1`) from misinterpreting physical Push Down gestures (+Z) as Pull Up (-Z), ensuring TPU spring asymmetry settings (`SENS_PTZ` vs `SENS_NTZ` / `GATE_NTZ`) remain 100% aligned with physical hand gestures regardless of software direction settings.
+- **Full 37-Parameter Serial CLI Mapping Realignment** (`parameterMenu.h`, `ORB7_...ino`, `parameterMenu.cpp`): Expanded `NUM_PARAMS` from 34 to 37, updated `par.description` descriptor array, and corrected Q7/Q8 fixed-point index checks in `parameterMenu.cpp`. Restores full Serial CLI access to `oledSleepTimer`, `keyL_shortcut`, and `keyR_shortcut`.
+- **OLED Screen Power Immediate Re-awakening** (`oledDisplay.cpp`): Added state transition tracking for `oledSleepTimer` in `updateOledDisplay()`. Re-enabling OLED display power from Web Studio now triggers immediate hardware activation (`SSD1306_DISPLAYON`) and view redraw without requiring physical knob movement.
+- **Sensor Pair Alignment Cards Dynamic Raw Value Rendering** (`js/webhid.js`): Fixed a visual UI rendering bug in `updateAlignment()` where `#raw-N`, `#raw-S`, `#raw-E`, and `#raw-W` DOM elements on the alignment cards were not being updated with live raw sensor pair readings (`valA | valB`).
+- **Chart.js Canvas Tab-Switch Resizing** (`js/ui.js`): Fixed a Chart.js canvas sizing bug in `switchTab()` where switching to the "Sensitivities" tab from a hidden state collapsed or squished the modifier curve plot. Added explicit `curveChart.resize()` and `curveChart.update('none')` calls upon tab activation.
+- **3D Viewport Three.js Window Resize Listener** (`js/viewport3d.js`): Integrated a `window.addEventListener('resize', onWindowResize)` handler in `init3DViewport()` to dynamically update camera aspect ratio and WebGL renderer dimensions when the browser window or container resizes.
+- **USB Disconnect Diagnostic Badge Reset & Modal Auto-Close** (`js/webhid.js`): Updated `handleDisconnect()` to reset the Magnetic Balance badge (`#healthBalance`) to `"STANDBY"` (`health-badge bad`) and automatically close the Setup Wizard modal (`closeWizard()`) if open when the device is unplugged or rebooted.
+- **Setup Wizard 20s Test Navigation Guard** (`js/ui.js`): Added an active test validation check in `#wizBtnNext` handler (`if (window.isWizardActive)`) preventing users from advancing premature wizard steps while the 20-second boundary sampling test is running.
+- **Preset Selector & Wizard Inversion Sync on JSON Profile Import** (`js/ui.js`): Updated `importProfile()` to set `#selBtnPreset.value = "custom"` and automatically synchronize counterpart wizard inversion buttons (`#wizInv${axis}`) in `setToggle()` upon importing a profile.
+- **Q7 Kinematic Division Overflow Guard** (`kinematics.cpp`): Added 32-bit `constrain` bounds inside `divideBySensitivity()` prior to 16-bit integer casting. Prevents high-sensitivity Q7 division results ($sens\_q7 \le 1$) from overflowing signed `int16_t` bounds ($> 32,767 \to -20,736$), which previously caused physical peak deflections to invert directions unexpectedly.
+- **Serial CLI 8-bit Parameter Type Mapping** (`ORB7_...ino`): Corrected parameter descriptor types for parameters 33 to 37 (`OLED_SLEEP`, `KEYL_SHORT`, `KEYR_SHORT`, `KEY2_SHORT`, `KEY1_SHORT`) in `par.description` array from `PARAM_TYPE_INT` to `PARAM_TYPE_BOOL`. Eliminates 16-bit pointer dereferencing on `int8_t` variables that previously caused CLI parameter edits on `OLED_SLEEP` to corrupt adjacent memory fields in `ParamStorage`.
+- **USB Bus Idle Flooding Prevention** (`SpaceMouseHID.cpp`): Added saturation caps (`countTransZeros < 255` and `countRotZeros < 255`) in `send_command()` state machine. Prevents 8-bit zero counters from wrapping around from 255 back to 0 every ~2 seconds during rest, eliminating phantom USB zero-report transmissions.
+- **Serial Debug Macro Compilation Fix** (`config.h`): Declared missing `#define DEBUGDELAY 100` macro in `config.h`, resolving compilation errors (`'DEBUGDELAY' was not declared in this scope`) when `#define ENABLE_SERIAL_DEBUG 1` is enabled.
+- **OLED Header Function Prototype Syntax Fix** (`oledDisplay.h`): Added missing `void` return type to `showCalibrationWarningScreen()` prototype declaration in `oledDisplay.h`.
+- **Debug Drift Plotter Array Boundary Guard** (`calibration.cpp`): Added an array index safety check (`axis < 0 || axis >= 8`) in `debugDriftPlotter()` to prevent out-of-bounds sensor array reads during serial debug plotting.
+- **Debounced Kill-Keys Evaluation** (`ORB7_...ino`): Updated `NUMKILLKEYS` evaluation in `loop()` to check debounced logical state (`keyState[KILLROT] == 1`) instead of raw un-debounced pin reads (`keyVals[KILLROT] == LOW`).
+
+### Changed
+- **Firmware Release Version Milestone Bump** (`release.h`, `index.html`): Promoted firmware release version to official milestone `v0.1.0`.
+- **Translation MicroGate Factory Default Realignment** (`config.h`): Updated `#define GATE_TRANS` default macro from `10` to `6` to align 1:1 with file header documentation (`Default: 6`) and Web Studio initial EEPROM defaults.
+- **Code Cleanup** (`kinematics.cpp`): Removed unused `#define sign(x)` macro definition.
+
 ## [vALPHA 0.0.9 / Web Studio v1.6.3] - 2026-08-04 (Smooth Deadband Kinematics, Guided Setup Wizard, 100Hz Telemetry & Electric Cyan Theme)
 
 ### Added

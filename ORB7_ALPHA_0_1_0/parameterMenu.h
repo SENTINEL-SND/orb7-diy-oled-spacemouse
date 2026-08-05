@@ -7,8 +7,8 @@
   #include <Arduino.h> // Required for int16_t, int8_t and standard types
   #include "config.h"
 
-  // Defines the absolute number of persistent parameters managed by the EEPROM
-  #define NUM_PARAMS         34   
+  // Defines the absolute number of persistent parameters managed by the EEPROM (37 individual parameters)
+  #define NUM_PARAMS         37   
 
   #define MAX_PARAM_NAME_LEN 10   // maximum length of any parameter name for the Serial CLI
 
