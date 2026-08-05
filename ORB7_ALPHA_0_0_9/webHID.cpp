@@ -139,7 +139,8 @@ void streamWebHIDRawData(int16_t* rawReads) {
   if (!isStreamingRaw) return;
 
   unsigned long now = millis();
-  if (now - lastStreamTime < 30) return; 
+  // OPTIMIZED: Reduced stream delay from 30ms (33Hz) to 10ms (100Hz) for high-speed dynamic calibration peak capture
+  if (now - lastStreamTime < 10) return; 
   lastStreamTime = now;
 
   // Zero-initialize telemetry buffer to prevent leaking memory in unused payload bytes

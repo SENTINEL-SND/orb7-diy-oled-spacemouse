@@ -113,18 +113,18 @@ GATE_TRANS: Dedicated micro-gate for Translation X and Y (Pan) to suppress
             keeping intentional panning movements 100% fluid and independent.
             Recommended range: 3 to 10 (Default: 6).
 */
-#define SENS_TX 0.6
-#define SENS_TY 0.6
-#define SENS_PTZ 0.5 // sensitivity for positive translation z (pushing down)
-#define SENS_NTZ 0.6 // sensitivity for negative translation z (pulling up)
+#define SENS_TX 0.60
+#define SENS_TY 0.60
+#define SENS_PTZ 0.70 // sensitivity for positive translation z (pushing down)
+#define SENS_NTZ 0.50 // sensitivity for negative translation z (pulling up)
 #define GATE_TRANS 10 // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
 #define GATE_NTZ 15 // gate value below which negative z movements will be ignored.
 #define GATE_RX 5 // Value under which rotX values will be forced to zero
 #define GATE_RY 5 // Value under which roty values will be forced to zero
 #define GATE_RZ 5 // Value under which rotz values will be forced to zero
-#define SENS_RX 0.8
-#define SENS_RY 0.8
-#define SENS_RZ 0.6
+#define SENS_RX 0.70
+#define SENS_RY 0.70
+#define SENS_RZ 0.60
 
 /* Fifth calibration: Modifier Function
 ========================================
@@ -161,7 +161,7 @@ Dynamically tracks and eliminates center point wandering due to thermal expansio
 */
 #define COMP_EN 1  // enable the compensation
 #define COMP_NR 50 // number of points to build the mean-value (Must be 1-500)
-#define COMP_WAIT 50 // [ms] time to wait and monitor before compensating
+#define COMP_WAIT 100 // [ms] time to wait and monitor before compensating
 #define COMP_MDIFF 10 // [incr] maximum range of raw-values to be considered as only drift
 #define COMP_CDIFF 50 // [incr] maximum distance from the center-value to be only drift
 

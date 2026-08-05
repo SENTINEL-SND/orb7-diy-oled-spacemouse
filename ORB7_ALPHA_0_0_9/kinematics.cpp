@@ -212,11 +212,18 @@ void _calculateKinematicSensors(int16_t* centered, int16_t* velocity){
   #endif
 }
 
-/// @brief Inline kinematic processor for scaling, mapping, and gating 6DOF signals
 __attribute__((noinline)) static void processAxis(int16_t &vel, int16_t sens_q7, int16_t gate, ParamData& par) {
   if (vel != 0) {
     vel = modifierFunction(divideBySensitivity(vel, sens_q7), par);
-    if (abs(vel) < gate) vel = 0;
+    
+    // Smooth Deadband: Remove o 'salto' inicial e garante uma transição amanteigada do zero
+    if (vel > gate) {
+      vel -= gate;
+    } else if (vel < -gate) {
+      vel += gate;
+    } else {
+      vel = 0;
+    }
   }
 }
 

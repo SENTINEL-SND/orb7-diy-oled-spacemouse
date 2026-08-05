@@ -2,8 +2,30 @@
 
 All notable changes to the SpaceMouse Pro Emulator (O.R.B.7) project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [vALPHA 0.0.9 / Web Studio v1.6.3] - 2026-08-04 (Smooth Deadband Kinematics, Guided Setup Wizard, 100Hz Telemetry & Electric Cyan Theme)
+
+### Added
+- **Interactive 5-Step Guided Setup Wizard** (`index.html`, `style.css`, `ui.js`): Integrated an onboarding modal overlay for freshly assembled hardware builds featuring an interactive 5-step guided calibration flow:
+  - Step 1: Magnetic Pair Check (Live Differential Deltas $\Delta \le 100$).
+  - Step 2: TPU Neutral Re-Zero.
+  - Step 3: 20-Second Dynamic Boundaries Test.
+  - Step 4: CAD Factory Inversions Verification.
+  - Step 5: Complete & EEPROM Persistence.
+- **CAD Industry Standard Factory Defaults in Wizard** (`index.html`, `ui.js`): Pre-configured Step 4 orientation toggles to 3DConnexion industry defaults (`TX: OFF, TY: ON, TZ: ON, RX: OFF, RY: ON, RZ: ON`) matching SolidWorks, Fusion 360, Inventor, and Blender, complete with an explanatory guide box detailing camera-relative navigation physics.
+- **Comprehensive Parameter Impact Guides & 3-Tier Firewall Overview** (`index.html`): Enhanced all Web Studio guide boxes with explicit **INCREASE [▲] / DECREASE [▼]** parameter impact breakdowns. Filled vacant UI area under Exclusive Mode Tuning with a detailed 3-tier firmware firewall overview (Tier 1: Thermal Drift, Tier 2: Noise Gates/MicroGate, Tier 3: Exclusive Mode).
+- **Persistent Floating Footer & Attribution** (`index.html`, `style.css`): Added a fixed-position persistent footer linking to the official open-source GitHub repository (`SENTINEL-SND/orb7-diy-oled-spacemouse`) under the MIT License.
+- **Google Fonts Orbitron Typography** (`index.html`, `style.css`): Imported Orbitron font (wght 700/900) for logo branding (`.brand-title h1`) and modal headers (`.modal-header h2`).
+
+### Fixed
+- **Smooth Deadband Kinematic Continuous Subtraction** (`kinematics.cpp`): Refactored `processAxis()` from a hard step cutoff (`if (abs(vel) < gate) vel = 0`) to a smooth continuous deadband subtraction (`if (vel > gate) vel -= gate; else if (vel < -gate) vel += gate; else vel = 0;`). Completely eliminates initial motion "jumps" when exiting rest position, delivering buttery-smooth 6DOF acceleration starting from 0.
+- **Full-Scale ADC Physical Range Capture in Wizard** (`webhid.js`): Expanded outlier noise filter range inside `parseTelemetryData` from `[-900..900]` to full ADC scale `[-1023..1023]`, preventing valid physical sensor deflections at extreme mechanical stops from being incorrectly discarded as noise glitches.
+- **Deadzone-Aware Calibration Limits Validation** (`ui.js`): Fixed manual limits table and wizard validation rules to strictly check `min < -dz` and `max > dz` (using active EEPROM deadzone `slDeadzone`) instead of `min < 0` and `max > 0`. Prevents saving narrow limits that resulted in negative/zero denominators (`denom = -dz - minVals[i]`) in C++ `FilterAnalogReadOuts()`, which previously zeroed out sensor outputs.
+- **Re-Zero Hardware Delay Realignment** (`ui.js`): Increased JS async delay from `800ms` to `1200ms` prior to starting the 20-second dynamic limits test, ensuring the MCU hardware `busyZeroing()` sampling loop (1000 iterations ~832ms + OLED/I2C overhead) finishes cleanly before telemetry recording begins.
+
+### Changed
+- **Electric Cyan/Blue UI Theme Palette (`#05ACFF`)** (`style.css`, `viewport3d.js`, `ui.js`): Replaced green/cyan accents (`#00ffcc`) with Electric Cyan/Blue `#05ACFF` across CSS variables, Three.js 3D puck waist ring and grid centerlines (`0x05ACFF`), and Chart.js curve plotters.
+- **Quadrupled Telemetry Streaming Refresh Rate** (`webHID.cpp`): Reduced streaming interval in `streamWebHIDRawData()` from `30ms` (33 Hz) to `10ms` (100 Hz). Allows Web Studio to capture fast physical motion peaks during dynamic calibration without dropping 75% of MCU samples.
+- **Firmware Version Release Bump** (`release.h`): Incremented firmware release patch version to `ALPHA 0.0.9`.
 
 ## [vALPHA 0.0.8 / Web Studio v1.6.2] - 2026-08-03 (Dynamic Version Reporting, Hardware Reboot Command & Metrological Hardening)
 
