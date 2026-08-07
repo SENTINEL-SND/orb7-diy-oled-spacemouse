@@ -162,9 +162,9 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 | **Hall Sensor HES7** | North Pair (B) | **6 (A7)** | Analog Input |
 | **Hall Sensor HES8** | West Pair (A) | **8 (A8)** | Analog Input |
 | **Hall Sensor HES9** | West Pair (B) | **9 (A9)** | Analog Input |
-| **Front Right Button [R]** | `keys[0]` | **5** | Dynamic HID Shortcut |
-| **Front Left Button [L]** | `keys[1]` | **0 (RX)** | Dynamic HID Shortcut |
-| **Back Left Button [2]** | `keys[2]` | **1 (TX)** | Dynamic HID Shortcut |
+| **Front Right Button [R]** | `keys[0]` | **0** | Dynamic HID Shortcut |
+| **Front Left Button [L]** | `keys[1]` | **1 (RX)** | Dynamic HID Shortcut |
+| **Back Left Button [2]** | `keys[2]` | **5 (TX)** | Dynamic HID Shortcut |
 | **Back Right Button [1]** | `keys[3]` | **7** | Dynamic HID Shortcut |
 
 *(Note: If building a 2-button or custom layout, buttons can be mapped to any available GPIO pins in `config.h`)*
