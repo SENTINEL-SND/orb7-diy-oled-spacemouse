@@ -104,41 +104,12 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 * **💾 JSON Profile Management:** Save complete configuration profiles (`.json`) locally on PC and restore them into the Web Studio in 1 click.
 * **🌐 Monolithic HTML Deployment:** Hosted as a single, standalone HTML file (`O.R.B.7 Web Studio v1.6.5.html`) that can be run locally by double-clicking.
 
-<br>
-
-### 🔵 1. Dashboard & 3D Motion Studio
-*Live 3D puck visualization, 6DOF velocity bars, system telemetry health, and 4-button CAD shortcuts studio.*
-
-<p align="center">
-  <img src="images/Web-Studio-Dashboard.jpeg" alt="Web Studio Dashboard" width="900">
-</p>
-
-<br>
-
-### 🟣 2. Sensitivities & Modifier Curves
-*Q7 per-axis tuning, axis inversions, and Chart.js real-time Q8 curve plotter.*
-
-<p align="center">
-  <img src="images/Web-Studio-Sensitivities.jpeg" alt="Web Studio Sensitivities" width="900">
-</p>
-
-<br>
-
-### 🟡 3. Gates & Drift
-*MicroGate control, noise thresholds, thermal anti-drift engine, and exclusive mode tuning.*
-
-<p align="center">
-  <img src="images/Web-Studio-Gates-Drift.jpeg" alt="Web Studio Gates & Drift" width="900">
-</p>
-
-<br>
-
-### 🟢 4. Debug Studio & Calibration Wizard
-*Sensor pair alignment, 20s dynamic limits wizard, and manual fine-tuning reference table.*
-
-<p align="center">
-  <img src="images/Web-Studio-Debug.jpeg" alt="Web Studio Debug" width="900">
-</p>
+| 🔵 **Dashboard & 3D Motion Studio** | 🟣 **Sensitivities & Modifier Curves** |
+| :---: | :---: |
+| ![Dashboard](images/Web-Studio-Dashboard.jpeg)<br><br><em>Live 3D puck visualization, 6DOF bars, telemetry health & 4-button studio.</em> | ![Sensitivities](images/Web-Studio-Sensitivities.jpeg)<br><br><em>Q7 per-axis tuning, axis inversions & real-time Q8 curve plotter.</em> |
+| | |
+| 🟡 **Gates & Drift** | 🟢 **Debug Studio & Calibration Wizard** |
+| ![Gates & Drift](images/Web-Studio-Gates-Drift.jpeg)<br><br><em>MicroGate control, noise thresholds, thermal anti-drift & exclusive mode.</em> | ![Debug Studio](images/Web-Studio-Debug.jpeg)<br><br><em>Sensor pair deltas, 20s dynamic limits wizard & manual fine-tuning.</em> |
 
 ---
 
