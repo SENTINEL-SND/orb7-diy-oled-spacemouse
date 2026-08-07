@@ -1,21 +1,21 @@
-# 🛸 O.R.B.7 (Orbital Rotation Base + OLED & Web Studio v1.6.2)
-### DIY 6DOF SpaceMouse Pro Firmware & Printable Chassis (COMING SOON) | Standalone OLED Hardware Debugger & Driverless Web Studio
+# 🛸 O.R.B.7 (Orbital Rotation Base + OLED & Web Studio v1.6.5)
+### DIY 6DOF SpaceMouse Pro Firmware & Printable Chassis | Standalone OLED Hardware Debugger & Driverless Web Studio
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Firmware](https://img.shields.io/badge/Firmware-Alpha_v0.0.8-blue.svg)]()
-[![Web Studio](https://img.shields.io/badge/Web_Studio-v1.6.2-00ffcc.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v0.0.5-blue.svg)]()
+[![Web Studio](https://img.shields.io/badge/Web_Studio-v1.6.5-00ffcc.svg)]()
 [![Hardware](https://img.shields.io/badge/MCU-ATmega32U4-red.svg)]()
 [![3D Print](https://img.shields.io/badge/3D_Print-STL_Files-ff007f.svg)]()
 [![Web API](https://img.shields.io/badge/API-WebHID-00ffcc.svg)]()
 
-> ⚠️ **Note from the Author:** I am a CAD & maker enthusiast, not a professional software engineer! I'm currently learning programming and built this project using AI tools to help bring my vision to life. If you find bugs, rough code, or non-standard practices—or if you don't even know how to use `git` (just like me!)—you're in good company. Feedback, cleanups, and Pull Requests are always welcome!
+> ⚠️ **Note from the Author:** I am a CAD & maker enthusiast, not a professional software engineer! I'm currently learning programming and built this project using AI tools to help bring my vision to life. If you find bugs, rough code, or non-standard practices or if you don't even know how to use `git` properly (just like me!), you're in good company. Feedback, cleanups, and Pull Requests are always welcome!
 
 ---
 
 > [!TIP]
 > ### ⚡ OFFICIAL O.R.B.7 PRINTABLE CHASSIS & UNIVERSAL DIY COMPATIBILITY
 > 
-> **O.R.B.7** includes an official **custom 4-button 3D-printable housing/chassis** (STL files COMING SOON in this repository under `/3D_Files` and Release Assets!).
+> **O.R.B.7** includes an official **custom 4-button 3D-printable housing/chassis** (*STL files COMING SOON - currently under final modeling refinement and testing!*).
 > 
 > **Using a different DIY SpaceMouse model or don't have an OLED screen? No problem!** 
 > The O.R.B.7 firmware is **100% backward-compatible** with legacy 8-channel Hall-effect builds (e.g., *TeachingTech* or *ArdunHH* designs, with 0, 2, or 4 buttons). If your build omits the OLED display, simply open `config.h` and set:
@@ -35,7 +35,7 @@
 
 An ultra-optimized, high-performance firmware and hardware ecosystem for DIY 6-DOF (Six Degrees of Freedom) 3D navigation controllers based on the **ATmega32U4** (Arduino Pro Micro). 
 
-Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B.7** combines a **custom 4-button 3D-printed chassis**, a **standalone OLED hardware assembly debugger**, an integer-only **Q7/Q8 fixed-point math engine**, decoupled real-time drift compensation, and a **driverless single-page WebHID 3D Studio (v1.6.2)** to deliver a smooth, high-precision CAD navigation experience.
+Emulating a native **3Dconnexion SpaceMouse Pro** USB HID device, **O.R.B.7** combines a **custom 4-button 3D-printed chassis**, a **standalone OLED hardware assembly debugger**, an integer-only **Q7/Q8 fixed-point math engine**, decoupled real-time drift compensation, and a **driverless monolithic WebHID 3D Studio (v1.6.5)** to deliver a smooth, high-precision CAD navigation experience.
 
 --- 
 
@@ -45,7 +45,7 @@ What started as a simple hobby project to enhance [AndunHH](https://github.com/A
 
 My initial goal was modest: add a small OLED display for a sleek look and easier debugging. However, as I built and assembled the physical hardware, I realized the OLED could do something revolutionary: **turn the controller into a standalone hardware diagnostic station.** 
 
-In **v0.0.8 / Web Studio v1.6.2**, the ecosystem expands into a complete web management suite paired with the official **O.R.B.7 3D-printable 4-button enclosure**. Featuring dynamic hardware telemetry, an interactive 4-button studio, a Three.js 3D motion viewport, Chart.js curve visualizer, a metrologically hardened calibration wizard, and JSON profile management, O.R.B.7 offers a complete end-to-end DIY 3D navigation experience.
+In **v0.0.5 / Web Studio v1.6.5**, the ecosystem expands into a complete web management suite paired with the official **O.R.B.7 3D-printable 4-button enclosure**. Featuring dynamic hardware telemetry, an interactive 4-button studio, a Three.js 3D motion viewport, Chart.js curve visualizer, a metrologically hardened calibration wizard, and JSON profile management, O.R.B.7 offers a complete end-to-end DIY 3D navigation experience.
 
 > [!IMPORTANT]
 > ### 🎯 THE CROWN JEWEL: PC-FREE HARDWARE ASSEMBLY & SENSOR ALIGNMENT
@@ -66,7 +66,7 @@ In **v0.0.8 / Web Studio v1.6.2**, the ecosystem expands into a complete web man
 ## ✨ Key Features
 
 ### 🖨️ Official O.R.B.7 3D-Printable Enclosure & Universal Support
-* **Official O.R.B.7 4-Button Chassis:** Purpose-built 3D-printable (COMING SOON) housing optimized for FDM 3D printing tolerances, featuring an integrated OLED bezel and 4 tactile push-buttons (*STL files COMING SOON in `/3D_Files` and Release assets*).
+* **Official O.R.B.7 4-Button Chassis:** Purpose-built 3D-printable housing optimized for FDM 3D printing tolerances, featuring an integrated OLED bezel and 4 tactile push-buttons (*STL files COMING SOON - currently under final modeling refinement*).
 * **Universal Backward Compatibility:** Fully compatible with legacy DIY SpaceMouse designs (*TeachingTech*, *ArdunHH*, or custom builds) supporting 0, 2, or 4 buttons.
 
 ---
@@ -84,7 +84,7 @@ Turn your Pro Micro into a standalone electronics workbench diagnostic tool usin
 
 ---
 
-### 🌐 Driverless WebHID 3D Studio Suite (v1.6.2)
+### 🌐 Driverless WebHID 3D Studio Suite (v1.6.5)
 Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brave without installing any background services or executable drivers.
 
 * **🩺 Device Health & System Telemetry:** Live monitoring of dynamic Firmware Version, EEPROM XOR Checksum Integrity (`VALID`), ADC Reference Voltage (`2.56V Internal`), Magnetic Balance (`BALANCED`), USB Connection State, and Sampling Frequency (Hz).
@@ -102,14 +102,14 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 * **🧊 Interactive 3D Viewport (Three.js):** Real-time rendering of a 3D SpaceMouse knob that mirrors hand movements in 6DOF.
 * **📈 Curve Visualizer (Chart.js):** Plot Q8 math modifiers (Slope A / Slope B) in real-time to fine-tune CAD panning and zooming curves.
 * **💾 JSON Profile Management:** Save complete configuration profiles (`.json`) locally on PC and restore them into the Web Studio in 1 click.
-* **🌐 Single-File Web Deployment:** Hosted as a single, standalone HTML file (`O.R.B.7 Web Studio v1.6.2.html`) that can be deployed via GitHub Pages or run locally by double-clicking.
+* **🌐 Monolithic HTML Deployment:** Hosted as a single, standalone HTML file (`O.R.B.7 Web Studio v1.6.5.html`) that can be run locally by double-clicking.
 
 ---
 
 ### 📐 Core Kinematics & Extreme Optimization
 * **Fixed-Point Arithmetic (Q7/Q8):** The 6DOF motion vector path is 100% free of runtime floating-point operations. Sensitivities are scaled via fast bit-shifts, drastically reducing cycle latency on 8-bit AVR architecture.
-* **Dedicated Translation MicroGate (`gate_trans`):** Low-level noise gate (3 to 10) applied strictly to Translation X and Y (Pan) to eliminate post-matrix residual spring bleed without introducing initial movement resistance.
-* **Full Physical Travel Matrix Restoration:** Restored optimal matrix divisors (`/4` and `/8`) to eliminate premature 50% physical travel deadband clipping and restore full stroke resolution.
+* **Direct Root MicroGate (`gate_trans`):** Pre-sensitivity low-level noise gate (0 to 50) applied directly to Translation X and Y. Intercepts and annihilates raw matrix parasitic spring bleed at the physical root before Q7 amplification, keeping rotations completely clean.
+* **Full Physical Travel Matrix Restoration:** Restored optimal matrix divisors (`/2` and `/4`) to eliminate premature physical travel deadband clipping and restore full stroke resolution.
 * **Master Global Sensitivity & Per-Axis Noise Gates:** Symmetrical noise gates across all 6 axes eliminate parasitic axis crosstalk and accidental inputs.
 * **Enhanced Exclusive Mode:** Features *Neutral Unlocking on Relaxation* (`EXCL_RELAX_THRESHOLD`), allowing fluid switching between Translation and Rotation dominance mid-movement.
 
@@ -117,13 +117,13 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 
 ### ⚡ ADC Acceleration & Thermal Drift Processing
 * **250 kHz ADC Clock:** Hardware prescaler configuration (`0x06`) reduces analog conversion time to **~26 µs** per sample while maintaining clean 10-bit resolution.
-* **2x Oversampling & Integer EMA Filtering:** Non-blocking Exponential Moving Average filter ($\alpha = 0.25$) with non-stuck rounding logic for smooth, noise-free motion output.
+* **2x Oversampling & Integer EMA Filtering:** Non-blocking Exponential Moving Average filter with non-stuck rounding logic for smooth, noise-free motion output.
 * **Decoupled Per-Axis Drift Tracking:** Independent tracking channels per sensor pair. Eliminates thermal zero-point drift (caused by ambient temperature changes or spring fatigue) in real time without blocking active movement.
 
 ---
 
 ### 🛡️ System Integrity & Reliability
-* **Memory Corruption Firewall:** EEPROM parameter structure is protected by an 8-bit XOR checksum and rigid mathematical boundaries. Protects the MCU from zero-division crashes even if corrupted data is injected.
+* **Memory Corruption Firewall:** EEPROM parameter structure (`ParamStorage`, 37 parameters packed with `__attribute__((packed))`) is protected by an 8-bit XOR checksum and rigid mathematical boundaries. Protects the MCU from zero-division crashes even if corrupted data is injected.
 * **Clean Watchdog Reset Recovery:** Immediate clearing of Watchdog flags (`MCUSR = 0; wdt_disable();`) at boot prevents infinite boot loops upon software reboot.
 * **Non-Blocking Boot Fallback:** 3-attempt zeroing retry on startup with OLED visual warning and lock-bypass fallback if the knob is touched during boot.
 * **I2C Bus Recovery Guard:** 3 ms hardware timeout handling automatically clears I2C bus stalls caused by ESD or electrical noise.
@@ -133,7 +133,7 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 
 ## 🛠️ Hardware Requirements & 3D Printed Chassis
 
-* **3D Printed Chassis:** Official **O.R.B.7 4-Button Enclosure** (*STL files COMING SOON in `/3D_Files`*) OR any standard DIY SpaceMouse housing (*TeachingTech*, *ArdunHH*).
+* **3D Printed Chassis:** Official **O.R.B.7 4-Button Enclosure** (*STL files COMING SOON*) OR any standard DIY SpaceMouse housing (*TeachingTech*, *ArdunHH*).
 * **Microcontroller:** ATmega32U4 (Arduino Pro Micro 5V / 16 MHz).
 * **Sensors:** 8x Ratiometric Linear Hall-Effect Sensors (AH49E or equivalent).
 * **Display (Optional):** 0.96" OLED SSD1306 (128x64 pixels, I2C address `0x3C`). Set `#define ENABLE_OLED 0` in `config.h` if omitted.
