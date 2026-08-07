@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O.R.B.7 - SpaceMouse Studio v1.6.3 (FW v0.1.0)</title>
+    <title>O.R.B.7 - SpaceMouse Studio v1.6.5 (FW v0.1.2)</title>
     
     <!-- Google Fonts: Orbitron -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +15,7 @@
     <!-- Chart.js CDN for Interactive Curve Plotting -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- EMBEDDED CSS STYLES -->
+    <!-- EMBEDDED CSS (style.css) -->
     <style>
         :root {
             --bg-base: #0a0b10;
@@ -441,6 +441,7 @@
             font-family: var(--font-mono);
         }
         .delta.ok { color: #000; background-color: var(--primary); }
+        .delta.warn { color: #000; background-color: var(--warning); }
         .delta.bad { color: #fff; background-color: var(--danger); }
 
         /* TABLES */
@@ -883,7 +884,7 @@
                     <div class="health-grid">
                         <div class="health-card">
                             <span class="health-label">Firmware Version</span>
-                            <span class="health-value" id="healthFw">v0.1.0</span>
+                            <span class="health-value" id="healthFw">v0.1.2</span>
                         </div>
                         <div class="health-card">
                             <span class="health-label">EEPROM Status</span>
@@ -912,7 +913,7 @@
                         <div class="guide-box-title">💡 HARDWARE DIAGNOSTICS GUIDE</div>
                         <div class="guide-box-text">
                             <span class="highlight">• EEPROM Checksum:</span> Validates struct data integrity using an 8-bit XOR checksum. Prevents booting with corrupted parameters.<br>
-                            <span class="highlight">• Magnetic Balance:</span> Measures differential voltage between opposing N/S/E/W Hall Effect sensor pairs. Green (<strong style="color: var(--primary);">BALANCED</strong>) confirms optimal physical magnet centering.<br>
+                            <span class="highlight">• Magnetic Balance:</span> Measures differential voltage between opposing N/S/E/W Hall Effect sensor pairs. Validates resting signal range (450~650 LSB) and differential balance. Green (<strong style="color: var(--primary);">PERFECT</strong>) confirms optimal physical magnet centering and plate height.<br>
                             <span class="highlight">• Sampling Frequency:</span> Displays live USB WebHID streaming refresh rate (Target: 100 Hz).
                         </div>
                     </div>
@@ -1091,32 +1092,32 @@
                     <h2>1. Individual Axis Sensitivities (Q7)</h2>
                     
                     <div class="control-group">
-                        <label>Translation X (Pan Left/Right) <span id="lblSensTX" class="val-display">0.80</span></label>
-                        <input type="range" id="slSensTX" min="0.1" max="3.0" step="0.05" value="0.8">
+                        <label>Translation X (Pan Left/Right) <span id="lblSensTX" class="val-display">0.60</span></label>
+                        <input type="range" id="slSensTX" min="0.1" max="3.0" step="0.05" value="0.6">
                     </div>
                     <div class="control-group">
-                        <label>Translation Y (Pan Up/Down) <span id="lblSensTY" class="val-display">1.00</span></label>
-                        <input type="range" id="slSensTY" min="0.1" max="3.0" step="0.05" value="1.0">
+                        <label>Translation Y (Pan Up/Down) <span id="lblSensTY" class="val-display">0.60</span></label>
+                        <input type="range" id="slSensTY" min="0.1" max="3.0" step="0.05" value="0.6">
                     </div>
                     <div class="control-group">
-                        <label>Push Down Z (Zoom In) <span id="lblSensPTZ" class="val-display">2.00</span></label>
-                        <input type="range" id="slSensPTZ" min="0.1" max="3.0" step="0.05" value="2.0">
+                        <label>Push Down Z (Zoom In) <span id="lblSensPTZ" class="val-display">0.70</span></label>
+                        <input type="range" id="slSensPTZ" min="0.1" max="3.0" step="0.05" value="0.7">
                     </div>
                     <div class="control-group">
-                        <label>Pull Up Z (Zoom Out) <span id="lblSensNTZ" class="val-display">1.00</span></label>
-                        <input type="range" id="slSensNTZ" min="0.1" max="3.0" step="0.05" value="1.0">
+                        <label>Pull Up Z (Zoom Out) <span id="lblSensNTZ" class="val-display">0.50</span></label>
+                        <input type="range" id="slSensNTZ" min="0.1" max="3.0" step="0.05" value="0.5">
                     </div>
                     <div class="control-group">
-                        <label>Rotation X (Tilt Front/Back) <span id="lblSensRX" class="val-display">1.20</span></label>
-                        <input type="range" id="slSensRX" min="0.1" max="3.0" step="0.05" value="1.2">
+                        <label>Rotation X (Tilt Front/Back) <span id="lblSensRX" class="val-display">0.70</span></label>
+                        <input type="range" id="slSensRX" min="0.1" max="3.0" step="0.05" value="0.7">
                     </div>
                     <div class="control-group">
-                        <label>Rotation Y (Tilt Left/Right) <span id="lblSensRY" class="val-display">1.20</span></label>
-                        <input type="range" id="slSensRY" min="0.1" max="3.0" step="0.05" value="1.2">
+                        <label>Rotation Y (Tilt Left/Right) <span id="lblSensRY" class="val-display">0.70</span></label>
+                        <input type="range" id="slSensRY" min="0.1" max="3.0" step="0.05" value="0.7">
                     </div>
                     <div class="control-group">
-                        <label>Rotation Z (Twist) <span id="lblSensRZ" class="val-display">0.90</span></label>
-                        <input type="range" id="slSensRZ" min="0.1" max="3.0" step="0.05" value="0.9">
+                        <label>Rotation Z (Twist) <span id="lblSensRZ" class="val-display">0.60</span></label>
+                        <input type="range" id="slSensRZ" min="0.1" max="3.0" step="0.05" value="0.6">
                     </div>
 
                     <!-- SENSITIVITY BEHAVIOR GUIDE WITH EXPLICIT UP/DOWN EFFECT -->
@@ -1124,7 +1125,7 @@
                         <div class="guide-box-title">💡 SENSITIVITY ADJUSTMENT GUIDE (Q7 DIVIDERS)</div>
                         <div class="guide-box-text">
                             In the C++ fixed-point engine, sensitivity parameters act as mathematical dividers.<br>
-                            <span class="highlight">• ▲ Increase Value (e.g., 0.8 → 2.5):</span> Decreases sensitivity. Axis moves <strong style="color: var(--warning);">SLOWER</strong> and requires larger physical displacement.<br>
+                            <span class="highlight">• ▲ Increase Value (e.g., 0.6 → 2.5):</span> Decreases sensitivity. Axis moves <strong style="color: var(--warning);">SLOWER</strong> and requires larger physical displacement.<br>
                             <span class="highlight">• ▼ Decrease Value (e.g., 2.0 → 0.5):</span> Increases sensitivity. Axis moves <strong style="color: var(--primary);">FASTER</strong> with light hand effort.<br>
                             <span class="subtext">(Use asymmetric Z settings to balance stiff TPU push-down vs light pull-up forces)</span>
                         </div>
@@ -1211,7 +1212,7 @@
     <div class="view-content" id="view-advanced">
         <div class="grid-2">
             
-            <!-- LEFT COLUMN: NOISE GATES & DRIFT COMPENSATION -->
+            <!-- LEFT COLUMN: NOISE GATES & THERMAL DRIFT -->
             <div>
                 <!-- 1. NOISE GATES (CROSS-COUPLING MUTE) -->
                 <div class="panel">
@@ -1221,8 +1222,8 @@
                         <input type="range" id="slGateTrans" min="0" max="50" step="1" value="6">
                     </div>
                     <div class="control-group">
-                        <label>Gate Negative Z <span id="lblGateNTZ" class="val-display">25</span></label>
-                        <input type="range" id="slGateNTZ" min="0" max="100" step="1" value="25">
+                        <label>Gate Negative Z <span id="lblGateNTZ" class="val-display">15</span></label>
+                        <input type="range" id="slGateNTZ" min="0" max="100" step="1" value="15">
                     </div>
                     <div class="control-group">
                         <label>Gate Rotation X <span id="lblGateRX" class="val-display">5</span></label>
@@ -1239,12 +1240,11 @@
 
                     <!-- NOISE GATES & CROSS-COUPLING EXPLANATION GUIDE -->
                     <div class="guide-box">
-                        <div class="guide-box-title">💡 NOISE GATES & SMOOTH DEADBAND GUIDE</div>
+                        <div class="guide-box-title">💡 NOISE GATES & HARD CUTOFF GUIDE</div>
                         <div class="guide-box-text">
-                            <span class="highlight">• ▲ Increase Gate Value:</span> Suppresses larger parasitic forces from neighboring axes. Prevents accidental rotation while panning, but requires more intentional push force to activate that axis.<br>
+                            <span class="highlight">• ▲ Increase Gate Value:</span> Suppresses larger parasitic forces from neighboring axes. Prevents accidental rotation while panning, requiring more intentional push force to activate that axis.<br>
                             <span class="highlight">• ▼ Decrease Gate Value:</span> Allows ultra-light hand pressure to activate the axis immediately, but may allow accidental axis bleed (cross-coupling).<br>
                             <span class="highlight">• MicroGate (Pan X/Y):</span> Dedicated post-matrix low-level noise gate (3 to 10). Mutes 3D-print spring residual bleed while keeping Pan X/Y fluid.<br>
-                            <span class="highlight">• Smooth Deadband Peak Note (~340–345):</span> To eliminate initial zero-jump, the gate subtraction causes max peak outputs to read ~340–345 (98.6% max speed). This 1.4% subtraction is imperceptible in CAD while providing buttery-smooth motion.<br>
                             <span class="highlight">• Gate Negative Z (Gate NTZ):</span> Prevents accidental Zoom Out when panning X/Y.
                         </div>
                     </div>
@@ -1283,13 +1283,7 @@
                             &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 50 → 10):</strong> Locks new thermal zero point rapidly, but risks mistaking steady hand holding for thermal drift.<br>
                             <span class="highlight">• COMP_WAIT (Monitoring Wait Time):</span><br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 100ms → 500ms):</strong> Requires longer continuous rest before starting drift tracking.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 100ms → 20ms):</strong> Recalibrates zero almost instantly after releasing knob.<br>
-                            <span class="highlight">• COMP_MDIFF (Max Noise Range):</span><br>
-                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase:</strong> Accepts noisier rest signals as valid thermal drift.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease:</strong> Requires ultra-stable rest signal before compensating.<br>
-                            <span class="highlight">• COMP_CDIFF (Max Center Distance):</span><br>
-                            &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase:</strong> Allows compensating larger thermal shifts far away from boot zero.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease:</strong> Restricts compensation strictly near initial boot zero point.
+                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 100ms → 20ms):</strong> Recalibrates zero almost instantly after releasing knob.
                         </div>
                     </div>
                 </div>
@@ -1316,19 +1310,21 @@
                     </div>
                 </div>
 
-                <!-- SECTION OVERVIEW PANEL (FILL OF VACANT SPACE) -->
+                <!-- SECTION OVERVIEW PANEL -->
                 <div class="panel">
                     <h2>⚙️ How "Gates & Drift" Engines Interact With Your Mouse</h2>
                     <div class="guide-box guide-warning" style="margin-top: 0;">
-                        <div class="guide-box-title">🛡️ THE 3-TIER FIRMWARE FILTERING FIREWALL</div>
+                        <div class="guide-box-title">🛡️ THE 4-TIER FIRMWARE FILTERING FIREWALL</div>
                         <div class="guide-box-text">
-                            The parameters on this page form a 3-tier filtering firewall inside the ATmega32U4 C++ kinematic engine:<br><br>
-                            <span class="highlight">1. Tier 1 - Thermal Drift Engine (MCU Temperature Stabilization):</span><br>
-                            As the Pro Micro microcontroller warms up during extended CAD sessions, Hall Effect resting voltages shift slightly. Tier 1 continuously tracks resting signals and recalibrates zero dynamically without interrupting your workflow.<br><br>
-                            <span class="highlight">2. Tier 2 - Noise Gates & MicroGate (Mechanical Bleed Elimination):</span><br>
-                            3D-printed TPU springs and gimbal joints have micro-asymmetries. Tier 2 strips post-matrix velocity bleed (e.g. 1 to 5) when you push or twist the knob, ensuring Pan X/Y and Zoom Z remain 100% independent.<br><br>
-                            <span class="highlight">3. Tier 3 - Exclusive Mode (Single-Mode Dominance Lock):</span><br>
-                            For users who want zero accidental camera rotation while panning, Tier 3 evaluates force dominance and locks the output exclusively to Translation OR Rotation until force drops below the relaxation threshold.
+                            The parameters on this page form a 4-tier filtering firewall inside the ATmega32U4 C++ kinematic engine:<br><br>
+                            <span class="highlight">1. Tier 1 - Hardware Oversampling & Integer EMA (ADC Noise Elimination):</span><br>
+                            Hardware analog sampling (2x oversampling + fixed EMA shift) eliminates electrical ADC noise instantly without floating-point math latency.<br><br>
+                            <span class="highlight">2. Tier 2 - Thermal Drift Engine (MCU Temperature Stabilization):</span><br>
+                            Continuously tracks resting signals and recalibrates zero dynamically as the MCU warms up during extended CAD sessions.<br><br>
+                            <span class="highlight">3. Tier 3 - Noise Gates & MicroGate (Mechanical Bleed Elimination):</span><br>
+                            Strips post-matrix velocity bleed (e.g. 1 to 5) caused by TPU spring micro-asymmetries, ensuring Pan X/Y and Zoom Z remain independent.<br><br>
+                            <span class="highlight">4. Tier 4 - Exclusive Mode (Single-Mode Dominance Lock):</span><br>
+                            Evaluates force dominance and locks the output exclusively to Translation OR Rotation until force drops below the relaxation threshold.
                         </div>
                     </div>
                 </div>
@@ -1381,11 +1377,11 @@
 
                 <!-- SENSOR ALIGNMENT GUIDE BOX -->
                 <div class="guide-box">
-                    <div class="guide-box-title">💡 SENSOR ALIGNMENT GUIDE</div>
+                    <div class="guide-box-title">💡 SENSOR ALIGNMENT & RANGE GUIDE</div>
                     <div class="guide-box-text">
                         <span class="highlight">• Differential Pairs (N, S, E, W):</span> Opposing Hall Effect sensors measuring physical magnetic balance.<br>
-                        <span class="highlight">• Delta (Δ):</span> Absolute difference between paired sensors. A delta within <strong style="color: var(--primary);">Δ ≤ 100</strong> confirms proper magnet centering for FDM 3D printing tolerances.<br>
-                        <span class="highlight">• High Delta (<strong style="color: var(--danger);">Δ > 100</strong>):</span> Indicates severe mechanical tilt or an inverted magnet requiring physical adjustment.
+                        <span class="highlight">• Target Range & Delta:</span> Sensors must rest within <strong style="color: var(--primary);">450~650 LSB</strong> (plate height). Target <strong style="color: var(--primary);">Δ ≤ 30 LSB</strong> for Perfect Alignment (or <strong style="color: var(--warning);">Δ ≤ 60 LSB</strong> for Good).<br>
+                        <span class="highlight">• Warnings:</span> High Delta (Δ > 60) indicates mechanical tilt. Values > 800 (<strong style="color: var(--danger);">NO MAG</strong>) indicate missing magnets or plate too high. Values < 250 (<strong style="color: var(--danger);">LOW/POL</strong>) indicate plate too low or inverted magnets.
                     </div>
                 </div>
             </div>
@@ -1480,7 +1476,7 @@
                         </tr>
                     </thead>
                     <tbody id="manualLimitsTable">
-                        <!-- Dynamically injected via JS -->
+                        <!-- Dynamically injected via JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -1533,8 +1529,7 @@
                 <div id="wiz-step-1" class="wiz-step active">
                     <h3>Step 1: Magnetic Hardware Check</h3>
                     <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 15px;">
-                        Let's verify the physical alignment of your Hall Effect sensors. 
-                        Ideally, all pairs should be balanced (Delta ≤ 100).
+                        Let's verify your Hall Effect sensors. Target: Resting range 450~650 LSB and Delta ≤ 30 LSB for Perfect Alignment.
                     </p>
                     <div class="align-grid" style="margin-bottom: 15px;">
                         <div class="align-card">
@@ -1556,8 +1551,7 @@
                     </div>
                     <div class="guide-box">
                         <div class="guide-box-text">
-                            Adjust the physical magnet position inside the chassis until all indicators turn <strong style="color: var(--primary);">GREEN</strong>. 
-                            If a value is extremely high (>400), check for inverted magnets.
+                            Adjust physical magnet height/screws until all indicators turn <strong style="color: var(--primary);">GREEN (Δ ≤ 30, range 450~650 LSB)</strong>. Yellow (Δ ≤ 60) is acceptable, while Red indicates missing magnets, incorrect plate height, or alignment error.
                         </div>
                     </div>
                 </div>
@@ -1654,11 +1648,10 @@
         </div>
     </footer>
 
-    <!-- EMBEDDED JAVASCRIPT LOGIC -->
+    <!-- EMBEDDED JAVASCRIPT: WEBHID ENGINE (webhid.js) -->
     <script>
-        // ============================================================================
-        // 1. WEBHID COMMUNICATION & TELEMETRY PROTOCOL ENGINE (webhid.js)
-        // ============================================================================
+        // WEBHID COMMUNICATION & TELEMETRY PROTOCOL ENGINE
+        // COMMAND DEFINITIONS
         const WEBHID_CMD_GET_CONFIG        = 0x01;
         const WEBHID_CMD_SET_CONFIG        = 0x02;
         const WEBHID_CMD_STREAM_RAW        = 0x03;
@@ -1666,7 +1659,7 @@
         const WEBHID_CMD_FACTORY_RESET     = 0x05;
         const WEBHID_CMD_SET_CALIBRATION   = 0x06;
         const WEBHID_CMD_GET_CALIBRATION   = 0x07;
-        const WEBHID_CMD_RESTART         = 0x08;
+        const WEBHID_CMD_RESTART           = 0x08;
         const REPORT_ID = 5;
 
         // GLOBAL WEBHID STATE TRACKING
@@ -1875,12 +1868,12 @@
         function parseConfigFromData(data) {
             window.isImportingOrFetching = true;
 
-            // UPDATE DYNAMIC FIRMWARE VERSION FROM USB PAYLOAD (OFFSETS 60..62)
+            // UPDATE DYNAMIC FIRMWARE VERSION FROM UNPACKED USB PAYLOAD (OFFSETS 62..63)
             const healthFw = document.getElementById('healthFw');
-            if (healthFw && data.byteLength >= 63) {
-                let fwMajor = data.getUint8(60);
-                let fwMinor = data.getUint8(61);
-                let fwPatch = data.getUint8(62);
+            if (healthFw && data.byteLength >= 64) {
+                let fwMajor = (data.getUint8(62) >> 4) & 0x0F;
+                let fwMinor = data.getUint8(62) & 0x0F;
+                let fwPatch = data.getUint8(63);
                 healthFw.innerText = `v${fwMajor}.${fwMinor}.${fwPatch}`;
             }
 
@@ -2101,30 +2094,56 @@
             updateAlignment('E', raw[2], raw[3]); 
             updateAlignment('W', raw[6], raw[7]); 
 
-            // Dynamic Device Health Magnetic Balance Check
+            // Dynamic Device Health Magnetic Balance Check (Dual Validation: Range & Delta)
             const healthBalance = document.getElementById('healthBalance');
             if (healthBalance) {
+                let noMagnetsOrFar = raw.some(v => v > 800);
+                let plateTooLow = raw.some(v => v < 250);
                 let maxDelta = Math.max(delN, delS, delE, delW);
-                if (maxDelta <= 100) {
-                    healthBalance.innerText = "BALANCED";
+
+                if (noMagnetsOrFar) {
+                    healthBalance.innerText = "NO MAGNETS / PLATE FAR";
+                    healthBalance.className = "health-badge bad";
+                } else if (plateTooLow) {
+                    healthBalance.innerText = "PLATE LOW / POLARITY";
+                    healthBalance.className = "health-badge bad";
+                } else if (maxDelta <= 30) {
+                    healthBalance.innerText = "PERFECT";
                     healthBalance.className = "health-badge ok";
+                } else if (maxDelta <= 60) {
+                    healthBalance.innerText = "BALANCED";
+                    healthBalance.className = "health-badge warn";
                 } else {
                     healthBalance.innerText = "ALIGNMENT NEEDED";
-                    healthBalance.className = "health-badge warn";
+                    healthBalance.className = "health-badge bad";
                 }
             }
         }
 
-        // UPDATE SENSOR ALIGNMENT DISPLAY CARDS IN DEBUG STUDIO
+        // UPDATE SENSOR ALIGNMENT DISPLAY CARDS IN DEBUG STUDIO (DUAL VALIDATION: RANGE & DELTA)
         function updateAlignment(id, valA, valB) {
             let delta = Math.abs(valA - valB);
             let el = document.getElementById(`delta-${id}`);
             if (el) {
-                el.innerText = `Δ ${delta}`;
-                el.className = (delta <= 100) ? 'delta ok' : 'delta bad';
+                if (valA > 800 || valB > 800) {
+                    el.innerText = `NO MAG`;
+                    el.className = 'delta bad';
+                } else if (valA < 250 || valB < 250) {
+                    el.innerText = `LOW/POL`;
+                    el.className = 'delta bad';
+                } else {
+                    el.innerText = `Δ ${delta}`;
+                    if (delta <= 30) {
+                        el.className = 'delta ok';
+                    } else if (delta <= 60) {
+                        el.className = 'delta warn';
+                    } else {
+                        el.className = 'delta bad';
+                    }
+                }
             }
 
-            // Dynamically update raw sensor pair readings display
+            // Dynamically update raw sensor pair readings display (e.g. #raw-N, #raw-S, #raw-E, #raw-W)
             let rawEl = document.getElementById(`raw-${id}`);
             if (rawEl) {
                 rawEl.innerText = `${valA} | ${valB}`;
@@ -2309,10 +2328,11 @@
             payload[0] = WEBHID_CMD_RESTART;
             await window.device.sendReport(REPORT_ID, payload);
         }
+    </script>
 
-        // ============================================================================
-        // 2. THREE.JS 3D VIEWPORT INITIALIZATION (viewport3d.js)
-        // ============================================================================
+    <!-- EMBEDDED JAVASCRIPT: 3D VIEWPORT ENGINE (viewport3d.js) -->
+    <script>
+        // THREE.JS 3D VIEWPORT INITIALIZATION (BLACK PUCK ON CAD LIGHT GRID CANVAS)
         window.targetPos = { x: 0, y: 0, z: 0 };
         window.targetRot = { x: 0, y: 0, z: 0 };
 
@@ -2438,10 +2458,10 @@
 
         // Initialize 3D Viewport on script load
         init3DViewport();
+    </script>
 
-        // ============================================================================
-        // 3. USER INTERFACE & BINDINGS LOGIC (ui.js)
-        // ============================================================================
+    <!-- EMBEDDED JAVASCRIPT: STUDIO UI INTERACTOR & LOGIC (ui.js) -->
+    <script>
         // COMPLETE 32 NATIVE 3DCONNEXION HID SHORTCUT CONSTANTS
         const SHORTCUTS = [
             { id: 0, name: "MENU (0)", group: "System" },
@@ -2521,7 +2541,7 @@
             btn.classList.add('active');
             document.getElementById(`view-${tabName}`).classList.add('active');
 
-            // Trigger Chart.js canvas resize and update when switching to the Sensitivities tab
+            // FIX: Trigger Chart.js canvas resize and update when switching to the Sensitivities tab
             if (tabName === 'motion' && typeof curveChart !== 'undefined' && curveChart) {
                 curveChart.resize();
                 curveChart.update('none');
@@ -2635,25 +2655,25 @@
             const oledSleepVal = (isOledOn === 0) ? -1 : safeParseInt(selOledSleep ? selOledSleep.value : '2', 2);
 
             const healthFwEl = document.getElementById('healthFw');
-            const activeFwVer = healthFwEl ? healthFwEl.innerText : "v0.1.0";
+            const activeFwVer = healthFwEl ? healthFwEl.innerText : "v0.1.2";
 
             const profile = {
                 deviceName: "O.R.B.7 SpaceMouse",
                 firmwareVersion: activeFwVer,
-                webStudioVersion: "1.6.3",
+                webStudioVersion: "1.6.5",
                 exportedAt: new Date().toISOString(),
                 settings: {
                     globalSens: safeParseInt(document.getElementById('slSens').value, 100),
                     deadzone: safeParseInt(document.getElementById('slDeadzone').value, 10),
-                    transX_sens: parseFloat(document.getElementById('slSensTX').value) || 0.8,
-                    transY_sens: parseFloat(document.getElementById('slSensTY').value) || 1.0,
-                    pos_transZ_sens: parseFloat(document.getElementById('slSensPTZ').value) || 2.0,
-                    neg_transZ_sens: parseFloat(document.getElementById('slSensNTZ').value) || 1.0,
-                    rotX_sens: parseFloat(document.getElementById('slSensRX').value) || 1.2,
-                    rotY_sens: parseFloat(document.getElementById('slSensRY').value) || 1.2,
-                    rotZ_sens: parseFloat(document.getElementById('slSensRZ').value) || 0.9,
+                    transX_sens: parseFloat(document.getElementById('slSensTX').value) || 0.6,
+                    transY_sens: parseFloat(document.getElementById('slSensTY').value) || 0.6,
+                    pos_transZ_sens: parseFloat(document.getElementById('slSensPTZ').value) || 0.7,
+                    neg_transZ_sens: parseFloat(document.getElementById('slSensNTZ').value) || 0.5,
+                    rotX_sens: parseFloat(document.getElementById('slSensRX').value) || 0.7,
+                    rotY_sens: parseFloat(document.getElementById('slSensRY').value) || 0.7,
+                    rotZ_sens: parseFloat(document.getElementById('slSensRZ').value) || 0.6,
                     gate_trans: safeParseInt(document.getElementById('slGateTrans').value, 6),
-                    gate_neg_transZ: safeParseInt(document.getElementById('slGateNTZ').value, 25),
+                    gate_neg_transZ: safeParseInt(document.getElementById('slGateNTZ').value, 15),
                     gate_rotX: safeParseInt(document.getElementById('slGateRX').value, 5),
                     gate_rotY: safeParseInt(document.getElementById('slGateRY').value, 5),
                     gate_rotZ: safeParseInt(document.getElementById('slGateRZ').value, 5),
@@ -3016,6 +3036,7 @@
                     const range = max - min;
                     
                     // STRICT SANITY RULE: Range >= 80, min < -Deadzone, max > Deadzone
+                    // Prevents denominator underflow/zeroing in C++ FilterAnalogReadOuts (denom = -dz - minVals)
                     const dz = safeParseInt(document.getElementById('slDeadzone').value, 10);
                     const isOk = (range >= 80 && min < -dz && max > dz);
 
@@ -3401,19 +3422,33 @@
             });
         }
 
-        // Hook global updateAlignment to feed data into Wizard Step 1 UI
+        // Hook global updateAlignment to feed data into Wizard Step 1 UI (Dual Validation: Range & Delta)
         const originalUpdateAlignment = window.updateAlignment;
         if (typeof originalUpdateAlignment === 'function') {
             window.updateAlignment = function(id, valA, valB) {
                 // Execute original logic for Debug Studio
                 originalUpdateAlignment(id, valA, valB);
                 
-                // Feed simultaneous logic into Wizard Step 1
+                // Feed simultaneous logic into Wizard Step 1 (Dual Validation: Range & Delta)
                 let delta = Math.abs(valA - valB);
                 let wizEl = document.getElementById(`wiz-delta-${id}`);
                 if (wizEl) {
-                    wizEl.innerText = `Δ ${delta}`;
-                    wizEl.className = (delta <= 100) ? 'delta ok' : 'delta bad';
+                    if (valA > 800 || valB > 800) {
+                        wizEl.innerText = `NO MAG`;
+                        wizEl.className = 'delta bad';
+                    } else if (valA < 250 || valB < 250) {
+                        wizEl.innerText = `LOW/POL`;
+                        wizEl.className = 'delta bad';
+                    } else {
+                        wizEl.innerText = `Δ ${delta}`;
+                        if (delta <= 30) {
+                            wizEl.className = 'delta ok';
+                        } else if (delta <= 60) {
+                            wizEl.className = 'delta warn';
+                        } else {
+                            wizEl.className = 'delta bad';
+                        }
+                    }
                 }
             };
         }
