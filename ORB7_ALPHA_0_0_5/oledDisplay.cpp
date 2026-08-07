@@ -33,7 +33,6 @@ static bool forceFullViewRedraw = true;
 // 0 = Home screens (Axis visualizer)
 // 1 = Main Menu
 // 3 = Sensitivity & Deadzone Submenu
-// 4 = Re-Zero Submenu
 // 5 = OLED Setup Submenu (Sleep Timer / Power)
 // 8 = Debug Submenu list
 // 9 = Real-time Sensor Alignment Screen
@@ -362,7 +361,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
         if (isEditing) {
           isEditing = false;
         } else {
-          if (menuState == 9 || menuState == 10 || menuState == 4 || menuState == 11 || menuState == 12 || menuState == 13) {
+          if (menuState == 9 || menuState == 10 || menuState == 11 || menuState == 12 || menuState == 13) {
             menuState = 8;
           } else {
             menuState = 1; 
@@ -463,32 +462,23 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
         submenuSelect = 0; // Reset cursor on entering submenu
         isEditing = false;
         forceFullViewRedraw = true;
-      } else if (menuState == 4) {
-        drawHeader(F_REZERO, 41);
-        printAt(20, 3, F("DO NOT TOUCH!"));
-        printAt(17, 5, F_CALIBRATING);
-
-        busyZeroing(centerPoints, 1000, false);
-
-        drawHeader(F_REZERO, 41);
-        printAt(32, 4, F("SUCCESSFUL!"));
-        delay(1500);
-
-        menuState = 8;
-        submenuSelect = 0; // Reset cursor on returning to Debug
-        isEditing = false;
-        forceFullViewRedraw = true;
       } else if (menuState == 3 || menuState == 5 || menuState == 11) {
         isEditing = !isEditing;
         forceFullViewRedraw = true;
       } else if (menuState == 8) {
-        if (submenuSelect == 0) menuState = 9;
-        else if (submenuSelect == 1) { menuState = 10; calState = 0; }
-        else if (submenuSelect == 2) menuState = 4;
-        else if (submenuSelect == 3) { menuState = 11; }
-        else if (submenuSelect == 4) menuState = 12;  
-        else if (submenuSelect == 5) menuState = 13;  
-        submenuSelect = 0; // Reset cursor when entering debug child view
+        if (submenuSelect == 0) { menuState = 9; submenuSelect = 0; }
+        else if (submenuSelect == 1) { menuState = 10; calState = 0; submenuSelect = 0; }
+        else if (submenuSelect == 2) { 
+          // DIRECT INSTANT RE-ZERO (With accurate sampling progress messaging & alignment fix)
+          drawHeader(F_REZERO, 41);
+          printAt(20, 4, F_CALIBRATING);
+          busyZeroing(centerPoints, 1000, false);
+          printAt(20, 4, F("RE-ZEROED!    ")); // Aligned X=20 with 4 trailing spaces to overwrite "Calibrating..." completely
+          delay(600);
+        }
+        else if (submenuSelect == 3) { menuState = 11; submenuSelect = 0; }
+        else if (submenuSelect == 4) { menuState = 12; submenuSelect = 0; }
+        else if (submenuSelect == 5) { menuState = 13; submenuSelect = 0; }
         forceFullViewRedraw = true;
       } else if (menuState == 10 && calState == 0) {
         for (uint8_t i = 0; i < 8; i++) {
@@ -606,7 +596,7 @@ static int16_t printSensorLine(char label, int16_t valA, int16_t valB, uint8_t r
   oled.print(delta);
   oled.print(F("]"));
 
-  if (delta > 100) oled.print(F(" !")); 
+  if (delta > 60) oled.print(F(" !")); 
   else oled.print(F(" OK"));
   
   return delta;
@@ -815,22 +805,6 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   }
 
   // ==========================================
-  // STATE 4: RE-ZERO CALIBRATION
-  // ==========================================
-  if (menuState == 4) {
-    if (redraw) {
-      drawHeader(F_REZERO, 41);
-      printAt(14, 2, F_KEEP_REST);
-      printAt(26, 3, F("DO NOT TOUCH!"));
-      printAt(20, 5, F("Hold R: Start"));
-      drawHorizontalLine(6, 0x01);
-      printFooter();
-      forceFullViewRedraw = false;
-    }
-    return;
-  }
-
-  // ==========================================
   // STATE 5: DISPLAY SETTINGS (OLED SETUP)
   // ==========================================
   if (menuState == 5) {
@@ -874,7 +848,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   }
 
   // ==========================================
-  // STATE 9: HALL SENSORS PHYSICAL ALIGNMENT
+  // STATE 9: HALL SENSORS PHYSICAL ALIGNMENT (DUAL VALIDATION: RANGE & DELTA)
   // ==========================================
   if (menuState == 9) {
     if (redraw) {
@@ -889,11 +863,37 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
     int16_t delE = printSensorLine('E', rawReads[2], rawReads[3], 4);
     int16_t delW = printSensorLine('W', rawReads[6], rawReads[7], 5);
 
+    // DUAL VALIDATION: Check if any sensor is out of valid magnetic range (e.g., missing magnets > 800 or too close < 250)
+    bool noMagnetsOrFar = false;
+    bool plateTooLow = false;
+
+    for (uint8_t i = 0; i < 8; i++) {
+      if (rawReads[i] > 800) {
+        noMagnetsOrFar = true;
+        break;
+      }
+      if (rawReads[i] < 250) {
+        plateTooLow = true;
+        break;
+      }
+    }
+
+    int16_t maxDel = delS;
+    if (delN > maxDel) maxDel = delN;
+    if (delE > maxDel) maxDel = delE;
+    if (delW > maxDel) maxDel = delW;
+
     oled.setCursor(0, 7);
-    if (delS <= 100 && delE <= 100 && delN <= 100 && delW <= 100) {
-      oled.print(F("SYSTEM BALANCED!   "));
+    if (noMagnetsOrFar) {
+      oled.print(F("NO MAGNETS/PLATE FAR"));
+    } else if (plateTooLow) {
+      oled.print(F("PLATE LOW/POLARITY !"));
+    } else if (maxDel <= 30) {
+      oled.print(F("PERFECT ALIGNMENT!  "));
+    } else if (maxDel <= 60) {
+      oled.print(F("SYSTEM BALANCED!    "));
     } else {
-      oled.print(F("ADJUST ROT / BOLTS "));
+      oled.print(F("ADJUST ROT / BOLTS  "));
     }
     return;
   }

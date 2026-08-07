@@ -1,0 +1,62 @@
+# Changelog
+
+All notable changes to the SpaceMouse Pro Emulator (O.R.B.7) project will be documented in this file.
+
+## [v0.0.5 / Web Studio v1.6.5] - 2026-08-07 (Consolidated 6DOF Kinematic Baseline, Direct Root MicroGate, Dual Diagnostics & Web Studio v1.6.5)
+
+### Added & Consolidated
+- **Direct Root MicroGate Engine (`kinematics.cpp`, `config.h`, `parameterMenu.h`, `webHID.cpp`, `index.html`):** Integrated a dedicated pre-sensitivity noise gate (`gate_trans`, range 0..50) applied directly to Translation X (Pan Left/Right) and Translation Y (Pan Up/Down) prior to Q7 sensitivity division and curve processing. Intercepts and annihilates raw matrix parasitic bleed (1..15 LSB) caused by TPU spring asymmetries at the physical root before Q7 amplification.
+- **Pure 6DOF Direct Kinematic Engine (`kinematics.cpp`):** Unified 1:1 tactile 6DOF vector space translations utilizing ultra-fast Q7 fixed-point sensitivities, Q8 slope caching (`MODFUNC 3` Squared Tangent), and hard cutoff noise gates. Delivers crisp, zero-latency CAD viewport navigation in SolidWorks, Fusion 360, Inventor, FreeCAD, and Blender.
+- **Full 4-Button Hardware Customization (`SpaceMouseHID.cpp`, `parameterMenu.h`, `index.html`, `js/ui.js`):** Enabled 100% dynamic EEPROM assignment for all 4 physical hardware buttons (Front Right [Pin 5], Front Left [Pin 0/RX], Back Left [Pin 1/TX], Back Right [Pin 7]). Includes 32 native 3DConnexion HID shortcuts and 1-click CAD preset profiles (SolidWorks, Blender, Modifiers, 4-View Camera).
+- **Dual Validation Magnetic Diagnostics (`oledDisplay.cpp`, `webHID.cpp`, `index.html`, `js/webhid.js`):** Integrated resting signal range validation ($450 \sim 650$ LSB) and 3-tier differential delta checks ($\Delta \le 30$ PERFECT, $\le 60$ BALANCED, $> 60$ ALIGNMENT NEEDED) across N/S/E/W Hall Effect sensor pairs. Detects missing/far magnets ($>800$ LSB) or inverted/close magnets ($<250$ LSB) with explicit OLED and Web Studio alerts.
+- **Hardware Software Reboot Command (`webHID.h`, `webHID.cpp`, `ORB7_ALPHA_0_1_2.ino`):** Added remote MCU restart capabilities (`WEBHID_CMD_RESTART` / `0x08`) via AVR Watchdog Timer (`wdt_enable(WDTO_60MS)`), paired with clean boot-time flag clearing (`MCUSR = 0; wdt_disable();`) in `setup()`.
+- **Web Studio v1.6.5 Suite (`index.html`, `css/style.css`, `js/webhid.js`, `js/ui.js`, `js/viewport3d.js`):** Cleaned single-page web configurator featuring a real-time Three.js 3D motion viewport, Chart.js modifier curve plotter, 100 Hz USB telemetry stream, 20-second dynamic calibration wizard, manual limit table, JSON profile import/export, and electric cyan UI styling (`#05ACFF`).
+- **RAM-less SSD1306 OLED UI (`oledDisplay.cpp`):** Direct-write display driver operating without SRAM buffer overhead, featuring real-time 6DOF bar graph visualizer, instant Re-Zero progress messaging (`Calibrating...` -> `RE-ZEROED!`), and configurable auto-sleep timers.
+- **EEPROM Memory Protection & Struct Packing (`parameterMenu.h`, `parameterMenu.cpp`):** Applied `__attribute__((packed))` to `ParamStorage` (37 parameters), aligning C++ EEPROM memory layout 1:1 with JavaScript DataView byte offsets. Includes 8-bit XOR checksum verification and boundary sanitization firewall.
+
+---
+
+## [v0.0.4] - 2026-07-15 (The 3D Studio, WebHID Integration & Memory Optimization Build)
+
+### WebHID Studio & Protocol
+- **EEPROM Calibration Protection (`webHID.cpp`):** Restricted configuration payload copying to `offsetof(ParamStorage, minVals)` (59 bytes), guaranteeing that dynamic calibration arrays remain untouched during browser parameter saves.
+- **Telemetry Stream Synchronization (`ORB7_ALPHA_0_1_2.ino`):** Synchronized telemetry streaming at the end of the primary kinematic pipeline for 0-frame latency.
+- **Full 32-Parameter WebHID Synchronization:** Expanded DataView serialization across all `ParamStorage` EEPROM fields.
+- **Smart "SAVE TO MOUSE" State Machine:** Re-engineered EEPROM save workflow into a top navbar button with dynamic dirty/clean state tracking.
+
+### Flash Memory & OLED
+- **Flash Footprint Reduction (`oledDisplay.cpp`):** Reclaimed ~200 bytes of Flash memory by eliminating redundant boot progress animations and consolidating calibration display helpers (`showCalMsg()`).
+- **Fast 16-Bit Q8 Math (`oledDisplay.cpp`):** Refactored `printQ8Fixed()` to use fast 16-bit bitwise shifting, removing uint32_t division libraries.
+
+### 3D Motion Viewport & Visualizers
+- **Interactive 3D Motion Viewport (Three.js):** Integrated real-time 3D puck renderer with glossy ceramic body, electric cyan accent ring, and perimeter knurling ribs.
+- **Interactive Modifier Curves Visualizer (Chart.js):** Real-time mathematical plotter rendering Dataset 1 ("Squared") and Dataset 3 ("Squared Tangent") curves.
+
+---
+
+## [v0.0.3] - 2026-06-30 (The WebHID & Memory Optimization Build)
+
+### WebHID & Browser Integration
+- **Native 2-Way WebHID Subsystem (`webHID.h` / `webHID.cpp`):** Enabled driverless browser configuration, real-time telemetry streaming, and remote calibration.
+- **Independent Top-Level Collection (TLC):** Restructured USB HID report descriptor to place Report ID 5 (Vendor Defined) in a separate TLC, bypassing OS/browser security blocks.
+- **Unified 64-Byte Payload:** Bundled raw sensor reads, centered deltas, drift offsets, 6DOF velocities, and button states into a single USB packet.
+
+---
+
+## [v0.0.2] - 2026-05-15 (The Stability & Scalability Build)
+
+### System Architecture & Memory Protection
+- **EEPROM Boundary Cleansing:** Automated firewall in `getParametersFromEEPROM()` validating and auto-correcting corrupted parameters.
+- **Compile-Time Assertions (`calibrationChecks.h`):** Integrated compile-time validation for `ADC_OVERSAMPLES`, `ADC_EMA_SHIFT`, `EXCL_RELAX_THRESHOLD`, `COMP_NR`, and `COMP_WAIT`.
+- **Universal Scalable Input Support:** Redesigned button processing to support anywhere from 0 to 32 physical push-buttons natively through the HID descriptor.
+
+---
+
+## [v0.0.1] - 2026-04-01 (The OLED & Performance Build)
+
+### Display & Kinematics
+- **Native SSD1306 OLED Driver (`oledDisplay.cpp`):** Direct-write RAM-less OLED driver eliminating the 1KB SRAM frame buffer.
+- **Fixed-Point Kinematic Engine (`kinematics.cpp`):** Converted 6DOF sensitivity calculations from floats to Q7 (`SENS_TX_Q7`) and Q8 (`SLOPE_A_Q8`, `SLOPE_B_Q8`) fixed-point integer math.
+- **125Hz USB Polling Rate:** Doubled USB update rate to 8ms polling intervals (`HIDUPDATERATE_MS`).
+- **Decoupled Drift Compensation (`calibration.cpp`):** Independent per-sensor thermal drift tracking and adaptive muting.
+- **EEPROM XOR Integrity Checksum:** 8-bit XOR checksum verification protecting persistent parameter storage.

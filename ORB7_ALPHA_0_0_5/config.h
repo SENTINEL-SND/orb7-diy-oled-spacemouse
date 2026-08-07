@@ -1,6 +1,5 @@
 // Config File for << HALL-EFFECT SPACEMOUSE >>
-// Firmware Version: v0.1.0
-
+// Firmware Version: v0.0.5
 #ifndef CONFIG_h
 #define CONFIG_h
 
@@ -27,11 +26,11 @@
 =====================================================
 These parameters control the low-level hardware sampling to eliminate noise without float math.
 
-ADC_OVERSAMPLES: Number of hardware analog samples taken per axis read cycle (1, 2, 4, 8).
-                 Higher values reduce random noise but increase loop time slightly.
-ADC_EMA_SHIFT:   Low-pass Exponential Moving Average (EMA) filter shift factor. 
-                 Uses extremely fast bit-shifting for integer division.
-                 (0 = disabled, 1 = 50%, 2 = 25%, 3 = 12.5% weight for new readings).
+ADC_OVERSAMPLES:     Number of hardware analog samples taken per axis read cycle (1, 2, 4, 8).
+                     Higher values reduce random noise but increase loop time slightly.
+ADC_EMA_SHIFT:       Low-pass Exponential Moving Average (EMA) filter shift factor. 
+                     Uses extremely fast bit-shifting for integer division.
+                     (0 = disabled, 1 = 50%, 2 = 25%, 3 = 12.5% weight for new readings).
 EXCL_RELAX_THRESHOLD: Force threshold (sum of axes) below which exclusive mode unlocks back to NEUTRAL.
 ADC_PRESCALER_PRESET: ADC Clock Prescaler setting for the ATmega32U4 hardware multiplexer.
                       (0x07 = 128 / 125kHz [Arduino Default], 0x06 = 64 / 250kHz [Stable/Fast], 0x05 = 32 / 500kHz [Overclock]).
@@ -39,7 +38,7 @@ ADC_PRESCALER_PRESET: ADC Clock Prescaler setting for the ATmega32U4 hardware mu
 #define ADC_OVERSAMPLES 2
 #define ADC_EMA_SHIFT 2
 #define EXCL_RELAX_THRESHOLD 35
-#define ADC_PRESCALER_PRESET 0x06
+#define ADC_PRESCALER_PRESET 0x05
 
 /* Debugging Instructions
 =========================
@@ -49,7 +48,7 @@ Set STARTDEBUG to boot directly into a specific debug mode, or type the number i
 10: Report raw joystick values on 2.56V ref. (0-1023)
 11: Auto calibrate centers and show deadzones.
  2: Report centered joystick values (-500 to +500).
-20: Semi-automatic min/max calibration over 20 seconds.
+20: Find min/max-values over 20s (move stick).
  3: Report centered values filtered with deadzones (-350 to +350).
 31: Report drift compensation offsets.
  4: Report final velocity (translation/rotation) values (-350 to +350).
@@ -116,18 +115,18 @@ GATE_TRANS: Dedicated micro-gate for Translation X and Y (Pan) to suppress
             keeping intentional panning movements 100% fluid and independent.
             Recommended range: 3 to 10 (Default: 6).
 */
-#define SENS_TX 0.60
-#define SENS_TY 0.60
-#define SENS_PTZ 0.70 // sensitivity for positive translation z (pushing down)
-#define SENS_NTZ 0.50 // sensitivity for negative translation z (pulling up)
-#define GATE_TRANS 6  // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
-#define GATE_NTZ 15   // gate value below which negative z movements will be ignored.
-#define GATE_RX 5     // Value under which rotX values will be forced to zero
-#define GATE_RY 5     // Value under which roty values will be forced to zero
-#define GATE_RZ 5     // Value under which rotz values will be forced to zero
-#define SENS_RX 0.70
-#define SENS_RY 0.70
-#define SENS_RZ 0.60
+#define SENS_TX 0.5
+#define SENS_TY 0.5
+#define SENS_PTZ 0.5 // sensitivity for positive translation z (pushing down)
+#define SENS_NTZ 1 // sensitivity for negative translation z (pulling up)
+#define GATE_TRANS 6 // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
+#define GATE_NTZ 15 // gate value below which negative z movements will be ignored.
+#define GATE_RX 5 // Value under which rotX values will be forced to zero
+#define GATE_RY 5 // Value under which roty values will be forced to zero
+#define GATE_RZ 5 // Value under which rotz values will be forced to zero
+#define SENS_RX 1.2
+#define SENS_RY 1.2
+#define SENS_RZ 0.90
 
 /* Fifth calibration: Modifier Function
 ========================================
@@ -164,7 +163,7 @@ Dynamically tracks and eliminates center point wandering due to thermal expansio
 */
 #define COMP_EN 1     // enable the compensation
 #define COMP_NR 50    // number of points to build the mean-value (Must be 1-500)
-#define COMP_WAIT 100 // [ms] time to wait and monitor before compensating
+#define COMP_WAIT 50 // [ms] time to wait and monitor before compensating
 #define COMP_MDIFF 10 // [incr] maximum range of raw-values to be considered as only drift
 #define COMP_CDIFF 50 // [incr] maximum distance from the center-value to be only drift
 

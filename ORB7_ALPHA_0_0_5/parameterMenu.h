@@ -15,7 +15,7 @@
   // Magic Number enforces data structural alignment.
   // Changing this value intentionally forces a factory reset on the next boot,
   // which is highly recommended when adding or removing parameters in the struct below.
-  #define MAGIC_NUMBER       1234567853L
+  #define MAGIC_NUMBER       1234567856L
   #define BASE_ADDRESS_MAGIC 0
   #define BASE_ADDRESS_PAR   4
 
@@ -37,8 +37,7 @@
   #define SLOPE_B_Q8 ((int16_t)(MOD_B * 256.0f))
 
   // Core configuration structure written directly to the ATmega32U4 EEPROM.
-  // Relies exclusively on fixed-width integer types (int8_t, int16_t) to guarantee memory alignment
-  // and prevent cross-platform padding issues.
+  // Packed attribute eliminates struct padding bytes to guarantee 1:1 memory alignment with JS DataView offsets.
   typedef struct _ParamStorage {
     int16_t deadzone               = DEADZONE;
 
@@ -94,7 +93,7 @@
     // Dynamic calibration limits bounding the analog hardware range to the HID logical output
     int16_t minVals[8]             = {-400, -400, -400, -400, -400, -400, -400, -400};
     int16_t maxVals[8]             = {175, 175, 175, 175, 175, 175, 175, 175};
-  } ParamStorage;
+  } __attribute__((packed)) ParamStorage;
 
 #if ENABLE_SERIAL_DEBUG
   // Descriptor strings and types strictly allocated only when Serial Debugging is active
@@ -116,6 +115,7 @@
   // EEPROM utilities are always compiled as they are required by the OLED interface
   void getParametersFromEEPROM(ParamData& par);
   void putParametersToEEPROM(ParamData& par);
+  void sanitizeParameters(ParamData& par);
 
 #if ENABLE_SERIAL_DEBUG
   int    userInput(double& value);

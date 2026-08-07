@@ -2,7 +2,7 @@
 // It directly bridges the ATmega32U4 EEPROM and sensor streams to modern Web Browsers.
 
 #include <Arduino.h>
-#include <avr/wdt.h> // Watchdog timer support for hardware software reset
+#include <avr/wdt.h> // Watchdog timer support for hardware software reboot
 #include "config.h"
 #include "webHID.h"
 #include "SpaceMouseHID.h"
@@ -40,24 +40,13 @@ void processWebHIDPacket(uint8_t* payload, uint8_t length, ParamData& par) {
 
     case WEBHID_CMD_SET_CONFIG:
       if (length >= 2) {
-        // PREVENT MINVALS CORRUPTION: Copy only user parameters (up to offsetof minVals = 57 bytes)
+        // PREVENT MINVALS CORRUPTION: Copy only user parameters (up to offsetof minVals)
         uint8_t maxParamBytes = offsetof(ParamStorage, minVals);
         uint8_t bytesToCopy = (maxParamBytes > (length - 1)) ? (length - 1) : maxParamBytes;
         memcpy(par.values, &payload[1], bytesToCopy);
         
-        // Execute boundary checks to safeguard against zero-division in kinematics and corrupt curve parameters
-        if (par.values->deadzone < 0 || par.values->deadzone > 200) par.values->deadzone = DEADZONE;
-        if (par.values->globalSens < 10 || par.values->globalSens > 300) par.values->globalSens = 100;
-        if (par.values->modFunc != 0 && par.values->modFunc != 1 && par.values->modFunc != 3) par.values->modFunc = MODFUNC;
-        if (par.values->transX_sensitivity_q7 <= 0) par.values->transX_sensitivity_q7 = SENS_TX_Q7;
-        if (par.values->transY_sensitivity_q7 <= 0) par.values->transY_sensitivity_q7 = SENS_TY_Q7;
-        if (par.values->pos_transZ_sensitivity_q7 <= 0) par.values->pos_transZ_sensitivity_q7 = SENS_PTZ_Q7;
-        if (par.values->neg_transZ_sensitivity_q7 <= 0) par.values->neg_transZ_sensitivity_q7 = SENS_NTZ_Q7;
-        if (par.values->rotX_sensitivity_q7 <= 0) par.values->rotX_sensitivity_q7 = SENS_RX_Q7;
-        if (par.values->rotY_sensitivity_q7 <= 0) par.values->rotY_sensitivity_q7 = SENS_RY_Q7;
-        if (par.values->rotZ_sensitivity_q7 <= 0) par.values->rotZ_sensitivity_q7 = SENS_RZ_Q7;
-        if (par.values->compNoOfPoints <= 0 || par.values->compNoOfPoints > 500) par.values->compNoOfPoints = COMP_NR;
-        if (par.values->gate_trans < 0 || par.values->gate_trans > 100) par.values->gate_trans = GATE_TRANS;
+        // Centralized operational boundary sanitization
+        sanitizeParameters(par);
 
         putParametersToEEPROM(par);   
         sendConfigBack = true;
@@ -88,11 +77,8 @@ void processWebHIDPacket(uint8_t* payload, uint8_t length, ParamData& par) {
         memcpy(par.values->minVals, &payload[1], 16);
         memcpy(par.values->maxVals, &payload[17], 16);
         
-        // Execute boundary sanitization for dynamic limits
-        for (uint8_t i = 0; i < 8; i++) {
-          if (par.values->minVals[i] >= 0 || par.values->minVals[i] < -1023) par.values->minVals[i] = -400;
-          if (par.values->maxVals[i] <= 0 || par.values->maxVals[i] > 1023) par.values->maxVals[i] = 175;
-        }
+        // Centralized operational boundary sanitization
+        sanitizeParameters(par);
 
         putParametersToEEPROM(par);
       }
@@ -123,13 +109,14 @@ void processWebHIDPacket(uint8_t* payload, uint8_t length, ParamData& par) {
 
   if (sendConfigBack) {
     txBuffer[0] = cmd;
-    uint8_t bytesToCopy = (sizeof(ParamStorage) > 59) ? 59 : sizeof(ParamStorage);
+    uint8_t maxParamBytes = offsetof(ParamStorage, minVals);
+    // Clamp to 61 bytes to prevent overwriting the last 2 free bytes of the payload
+    uint8_t bytesToCopy = (maxParamBytes > 61) ? 61 : maxParamBytes;
     memcpy(&txBuffer[1], par.values, bytesToCopy);
 
-    // Inject Dynamic Firmware Release Version into trailing free bytes of buffer (Offsets 60..62)
-    txBuffer[60] = FW_VERSION_MAJOR;
-    txBuffer[61] = FW_VERSION_MINOR;
-    txBuffer[62] = FW_VERSION_PATCH;
+    // Inject Dynamic Firmware Release Version packed into trailing 2 free bytes of buffer (Offsets 62..63)
+    txBuffer[62] = (FW_VERSION_MAJOR << 4) | (FW_VERSION_MINOR & 0x0F);
+    txBuffer[63] = FW_VERSION_PATCH;
 
     SpaceMouseHID.SendReport(5, txBuffer, 64);
   }
@@ -139,7 +126,6 @@ void streamWebHIDRawData(int16_t* rawReads) {
   if (!isStreamingRaw) return;
 
   unsigned long now = millis();
-  // OPTIMIZED: Reduced stream delay from 30ms (33Hz) to 10ms (100Hz) for high-speed dynamic calibration peak capture
   if (now - lastStreamTime < 10) return; 
   lastStreamTime = now;
 

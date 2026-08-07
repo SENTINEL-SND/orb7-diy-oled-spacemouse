@@ -15,34 +15,9 @@ static uint8_t calculateChecksum(const ParamStorage &storage) {
   return checksum;
 }
 
-void getParametersFromEEPROM(ParamData &par) {
-  long magicNumber = 0L;
-  EEPROM.get(BASE_ADDRESS_MAGIC, magicNumber);
-
-  bool checksumValid = false;
-  if (magicNumber == MAGIC_NUMBER) {
-    EEPROM.get(BASE_ADDRESS_PAR, *par.values);
-
-    // Retrieve stored 8-bit XOR checksum from sequential address directly succeeding the payload
-    uint8_t storedChecksum = 0;
-    int checksumAddress = BASE_ADDRESS_PAR + sizeof(ParamStorage);
-    EEPROM.get(checksumAddress, storedChecksum);
-
-    // Compare stored with dynamically computed checksum
-    if (storedChecksum == calculateChecksum(*par.values)) {
-      checksumValid = true;
-    }
-  }
-
-  // Fallback to factory defaults if the memory block fails integrity checks
-  if (!checksumValid) {
-    putParametersToEEPROM(par);
-  }
-
-  // --- EEPROM BOUNDARY CLEANSING ---
-  // Enforces strict operational boundaries against corrupt or manually manipulated EEPROM data.
-  // Prevents division-by-zero, array out-of-bounds, and mathematical asymptote explosions.
-
+/// @brief Enforces strict operational boundaries against corrupt or manually manipulated EEPROM data.
+/// Prevents division-by-zero, array out-of-bounds, and mathematical asymptote explosions.
+void sanitizeParameters(ParamData &par) {
   if (par.values->deadzone < 0 || par.values->deadzone > 200) par.values->deadzone = DEADZONE;
   if (par.values->globalSens < 10 || par.values->globalSens > 300) par.values->globalSens = 100;
   if (par.values->slope_at_zero_q8 < 26 || par.values->slope_at_zero_q8 > 768) par.values->slope_at_zero_q8 = SLOPE_A_Q8;
@@ -81,6 +56,34 @@ void getParametersFromEEPROM(ParamData &par) {
     if (par.values->minVals[i] >= 0 || par.values->minVals[i] < -1023) par.values->minVals[i] = -400;
     if (par.values->maxVals[i] <= 0 || par.values->maxVals[i] > 1023) par.values->maxVals[i] = 175;
   }
+}
+
+void getParametersFromEEPROM(ParamData &par) {
+  long magicNumber = 0L;
+  EEPROM.get(BASE_ADDRESS_MAGIC, magicNumber);
+
+  bool checksumValid = false;
+  if (magicNumber == MAGIC_NUMBER) {
+    EEPROM.get(BASE_ADDRESS_PAR, *par.values);
+
+    // Retrieve stored 8-bit XOR checksum from sequential address directly succeeding the payload
+    uint8_t storedChecksum = 0;
+    int checksumAddress = BASE_ADDRESS_PAR + sizeof(ParamStorage);
+    EEPROM.get(checksumAddress, storedChecksum);
+
+    // Compare stored with dynamically computed checksum
+    if (storedChecksum == calculateChecksum(*par.values)) {
+      checksumValid = true;
+    }
+  }
+
+  // Fallback to factory defaults if the memory block fails integrity checks
+  if (!checksumValid) {
+    putParametersToEEPROM(par);
+  }
+
+  // Enforce operational boundary sanitization
+  sanitizeParameters(par);
 }
 
 void putParametersToEEPROM(ParamData &par) {

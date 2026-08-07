@@ -236,16 +236,22 @@ bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag){
     }
   }
 
+#if ENABLE_SERIAL_DEBUG
   int16_t deadZone[8];
   int16_t maxDeadZone = 0;
+#endif
 
   for (uint8_t i = 0; i < 8; i++){
     centerPoints[i] = mean[i] / numIterations;
-    deadZone[i] = maxValue[i] - minValue[i];
-    if (deadZone[i] > maxDeadZone){maxDeadZone = deadZone[i];}
+    int16_t dz = maxValue[i] - minValue[i];
+
+#if ENABLE_SERIAL_DEBUG
+    deadZone[i] = dz;
+    if (dz > maxDeadZone){ maxDeadZone = dz; }
+#endif
 
     // Identify mechanical instability or interference during calibration procedure
-    if (deadZone[i] > DEADZONEWARNING){ noWarningsOccured = false; }
+    if (dz > DEADZONEWARNING){ noWarningsOccured = false; }
     if (centerPoints[i] < CENTERPOINTWARNINGMIN || centerPoints[i] > CENTERPOINTWARNINGMAX){ noWarningsOccured = false; }
   }
 

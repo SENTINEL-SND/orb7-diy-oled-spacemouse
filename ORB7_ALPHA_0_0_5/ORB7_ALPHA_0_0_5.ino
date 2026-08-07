@@ -1,6 +1,6 @@
 /*
  * SPACE MOUSE PRO EMULATOR (6DOF DIY) - MAIN INO ENTRY FILE
- * Firmware Version: ALPHA 0.1.0
+ * Firmware Version: ALPHA 0.0.5
  * Architecture: ATmega32U4 (Arduino Pro Micro, 5V, 16 MHz)
  */
 
@@ -36,7 +36,7 @@
 
 // Fallback safety to ensure the ADC runs fast enough to maintain ultra-low loop latency
 #ifndef ADC_PRESCALER_PRESET
-  #define ADC_PRESCALER_PRESET 0x05
+  #define ADC_PRESCALER_PRESET 0x06
 #endif
 
 void setup();
@@ -96,11 +96,11 @@ ParamData par = {.values = &parStorage,
                      {PARAM_TYPE_INT, "COMP_MDIFF", &parStorage.compMinMaxDiff},          // 30
                      {PARAM_TYPE_INT, "COMP_CDIFF", &parStorage.compCenterDiff},          // 31
                      {PARAM_TYPE_INT, "GLB_SENS", &parStorage.globalSens},                 // 32
-                     {PARAM_TYPE_BOOL, "OLED_SLEEP", &parStorage.oledSleepTimer},         // 33 (Fixed int8_t type mapping)
-                     {PARAM_TYPE_BOOL, "KEYL_SHORT", &parStorage.keyL_shortcut},          // 34 (Fixed int8_t type mapping)
-                     {PARAM_TYPE_BOOL, "KEYR_SHORT", &parStorage.keyR_shortcut},          // 35 (Fixed int8_t type mapping)
-                     {PARAM_TYPE_BOOL, "KEY2_SHORT", &parStorage.key2_shortcut},          // 36 (Fixed int8_t type mapping)
-                     {PARAM_TYPE_BOOL, "KEY1_SHORT", &parStorage.key1_shortcut}           // 37 (Fixed int8_t type mapping)
+                     {PARAM_TYPE_BOOL, "OLED_SLEEP", &parStorage.oledSleepTimer},         // 33
+                     {PARAM_TYPE_BOOL, "KEYL_SHORT", &parStorage.keyL_shortcut},          // 34
+                     {PARAM_TYPE_BOOL, "KEYR_SHORT", &parStorage.keyR_shortcut},          // 35
+                     {PARAM_TYPE_BOOL, "KEY2_SHORT", &parStorage.key2_shortcut},          // 36
+                     {PARAM_TYPE_BOOL, "KEY1_SHORT", &parStorage.key1_shortcut}           // 37
                  }};
 #else
 ParamData par = {.values = &parStorage};
