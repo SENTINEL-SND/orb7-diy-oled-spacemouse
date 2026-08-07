@@ -104,35 +104,40 @@ Manage all internal EEPROM parameters directly from Google Chrome, Edge, or Brav
 * **💾 JSON Profile Management:** Save complete configuration profiles (`.json`) locally on PC and restore them into the Web Studio in 1 click.
 * **🌐 Monolithic HTML Deployment:** Hosted as a single, standalone HTML file (`O.R.B.7 Web Studio v1.6.5.html`) that can be run locally by double-clicking.
 
+<br>
+
+### 🔵 1. Dashboard & 3D Motion Studio
+*Live 3D puck visualization, 6DOF velocity bars, system telemetry health, and 4-button CAD shortcuts studio.*
+
 <p align="center">
-  <img src="images/Web-Studio-Dashboard.jpeg" alt="O.R.B.7 Web Studio Dashboard" width="900">
-  <br>
-  <em><b>Dashboard & 3D Motion Studio:</b> Live 3D puck visualization, 6DOF velocity bars, system telemetry health, and 4-button CAD shortcuts studio.</em>
+  <img src="images/Web-Studio-Dashboard.jpeg" alt="Web Studio Dashboard" width="900">
 </p>
 
 <br>
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center" width="50%">
-        <img src="images/Web-Studio-Sensitivities.jpeg" alt="Sensitivities & Curves" width="100%"><br>
-        <em><b>Sensitivities & Modifier Curves:</b> Q7 per-axis tuning, axis inversions, and Chart.js real-time Q8 curve plotter.</em>
-      </td>
-      <td align="center" width="50%">
-        <img src="images/Web-Studio-Gates-Drift.jpeg" alt="Gates & Drift" width="100%"><br>
-        <em><b>Gates & Drift:</b> MicroGate control, noise thresholds, thermal anti-drift engine, and exclusive mode tuning.</em>
-      </td>
-    </tr>
-  </table>
-</div>
+### 🟣 2. Sensitivities & Modifier Curves
+*Q7 per-axis tuning, axis inversions, and Chart.js real-time Q8 curve plotter.*
+
+<p align="center">
+  <img src="images/Web-Studio-Sensitivities.jpeg" alt="Web Studio Sensitivities" width="900">
+</p>
 
 <br>
 
+### 🟡 3. Gates & Drift
+*MicroGate control, noise thresholds, thermal anti-drift engine, and exclusive mode tuning.*
+
 <p align="center">
-  <img src="images/Web-Studio-Debug.jpeg" alt="Debug Studio & Diagnostics" width="900">
-  <br>
-  <em><b>Debug Studio & Calibration Wizard:</b> Sensor pair alignment deltas (North, South, East, West), 20s dynamic limits wizard, and manual fine-tuning reference table.</em>
+  <img src="images/Web-Studio-Gates-Drift.jpeg" alt="Web Studio Gates & Drift" width="900">
+</p>
+
+<br>
+
+### 🟢 4. Debug Studio & Calibration Wizard
+*Sensor pair alignment, 20s dynamic limits wizard, and manual fine-tuning reference table.*
+
+<p align="center">
+  <img src="images/Web-Studio-Debug.jpeg" alt="Web Studio Debug" width="900">
 </p>
 
 ---
