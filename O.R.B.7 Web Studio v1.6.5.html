@@ -5,34 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>O.R.B.7 - SpaceMouse Studio v1.6.5 (FW v0.1.2)</title>
     
-    <!-- Google Fonts: Orbitron -->
+    <!-- Google Fonts: Orbitron, Inter, JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     
     <!-- Three.js CDN for 3D Motion Visualizer -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Chart.js CDN for Interactive Curve Plotting -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- EMBEDDED CSS (style.css) -->
     <style>
         :root {
-            --bg-base: #0a0b10;
-            --bg-panel: #141722;
-            --bg-panel-alt: #1c2030;
-            --primary: #05ACFF;     /* Electric Baby Blue / Neon Ice */
-            --secondary: #ff007f;   /* Neon Magenta */
-            --warning: #ffb700;
+            --bg-base: #121417;     /* Grafite Escuro Mate */
+            --bg-panel: #1c1f26;    /* Cinza Carvão Suave */
+            --bg-panel-alt: #242832;
+            --primary: #07aaf5;     /* Azul CAD Vibrante (#07aaf5) */
+            --secondary: #6e7681;   /* Cinza Neutro */
+            --warning: #d29922;     /* Amarelo Alerta (Delta Warnings) */
+            --success: #07f582;     /* Verde Vibrante (#07f582) */
             --danger: #ff3333;
             --text-main: #ffffff;
-            --text-dim: #7a869a;
-            --border: #262b3d;
-            --font-mono: 'Consolas', 'Courier New', monospace;
+            --text-dim: #6e7681;
+            --border: #2d323e;      /* Linhas Finitas Monocromáticas */
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-main);
             background-color: var(--bg-base);
             color: var(--text-main);
             margin: 0;
@@ -50,14 +51,14 @@
             align-items: center;
             width: 100%;
             max-width: 1280px;
-            padding: 20px;
+            padding: 24px;
             box-sizing: border-box;
             border-bottom: 1px solid var(--border);
         }
         .brand {
             display: flex;
             align-items: center;
-            gap: 25px; /* Space between logo and tabs */
+            gap: 28px; /* Space between logo and tabs */
         }
         .brand-title {
             display: flex;
@@ -66,12 +67,11 @@
         }
         .brand-title h1 {
             margin: 0;
-            font-family: 'Orbitron', sans-serif; /* Orbitron Font Applied */
+            font-family: 'Orbitron', sans-serif; /* Orbitron Font Maintained */
             font-weight: 900;
             font-size: 22px;
             line-height: 1;
             color: var(--primary);
-            text-shadow: 0 0 10px rgba(5, 172, 255, 0.35);
             letter-spacing: 2px;
             white-space: nowrap;
         }
@@ -82,22 +82,22 @@
             color: var(--secondary);
             text-align: justify;
             text-align-last: justify;
-            margin-top: 3px;
+            margin-top: 4px;
             opacity: 0.9;
         }
 
         .nav-actions {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
         }
 
         /* TAB NAVIGATION */
         .tabs {
             display: flex;
-            gap: 4px;
-            background-color: #0d0e14;
-            padding: 4px;
+            gap: 6px;
+            background-color: #0d0f14;
+            padding: 5px;
             border-radius: 6px;
             border: 1px solid var(--border);
         }
@@ -105,55 +105,53 @@
             background: transparent;
             color: var(--text-dim);
             border: none;
-            padding: 6px 12px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 6px;
             cursor: pointer;
-            text-transform: uppercase;
             transition: all 0.2s;
             white-space: nowrap;
         }
         .tab-btn.active {
             background-color: var(--primary);
-            color: var(--bg-base);
-            box-shadow: 0 0 10px rgba(5, 172, 255, 0.35);
+            color: var(--text-main);
+            font-weight: 600;
         }
 
         /* BUTTONS */
         .btn-connect {
-            background-color: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            padding: 6px 14px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
+            background-color: var(--primary);
+            color: #ffffff !important;
+            border: 1px solid var(--primary);
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
-            text-transform: uppercase;
             transition: all 0.2s;
             white-space: nowrap;
         }
         .btn-connect:hover {
-            background-color: var(--primary);
-            color: var(--bg-base);
+            background-color: #0693d2;
+            border-color: #0693d2;
+            color: #ffffff !important;
         }
         .btn-action {
             background-color: var(--primary);
-            color: #000;
-            border: none;
-            padding: 6px 14px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
+            color: #fff;
+            border: 1px solid var(--primary);
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
-            text-transform: uppercase;
             white-space: nowrap;
         }
         .btn-action:hover:not(:disabled) { 
-            background-color: #0496e6; 
-            box-shadow: 0 0 10px rgba(5, 172, 255, 0.4);
+            background-color: #0693d2; 
+            border-color: #0693d2;
         }
         .btn-action:disabled {
             background-color: #1c2030;
@@ -161,33 +159,49 @@
             border: 1px solid var(--border);
             cursor: not-allowed;
             opacity: 0.6;
-            box-shadow: none;
         }
+
+        /* OUTLINE & DISCREET BUTTON VARIANTS */
         .btn-outline {
-            background-color: var(--bg-panel-alt);
+            background-color: transparent;
             color: var(--text-main);
             border: 1px solid var(--border);
+            border-radius: 6px;
         }
         .btn-outline:hover:not(:disabled) {
-            background-color: #262b3d;
+            background-color: #2d323e;
             border-color: var(--primary);
             color: var(--primary);
-            box-shadow: 0 0 8px rgba(5, 172, 255, 0.25);
         }
+        .btn-outline-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(255, 51, 51, 0.35);
+            border-radius: 6px;
+        }
+        .btn-outline-danger:hover:not(:disabled) {
+            background-color: rgba(255, 51, 51, 0.15);
+            border-color: var(--danger);
+            color: #fff;
+        }
+
         .btn-small {
-            padding: 4px 10px; 
+            padding: 6px 12px; 
             font-size: 11px;
+            border-radius: 6px;
         }
-        .btn-danger { background-color: var(--danger); color: #fff; }
-        .btn-danger:hover { background-color: #cc0000; }
-        .btn-warning { background-color: var(--warning); color: #000; }
+        .btn-danger { background-color: var(--danger); border-color: var(--danger); color: #fff; }
+        .btn-danger:hover { background-color: #cc0000; border-color: #cc0000; }
+        .btn-warning { background-color: var(--warning); border-color: var(--warning); color: #000; }
+        .btn-success { background-color: var(--success); border-color: var(--success); color: #000; }
+        .btn-success:hover { background-color: #06d26f; border-color: #06d26f; }
 
         /* VIEW CONTAINERS */
         .view-content {
             width: 100%;
             max-width: 1280px;
-            padding: 20px;
-            padding-bottom: 85px; /* Added space so persistent footer never obscures content */
+            padding: 24px;
+            padding-bottom: 95px; /* Added space so persistent footer never obscures content */
             box-sizing: border-box;
             display: none;
             opacity: 0.3;
@@ -203,79 +217,70 @@
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(580px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
         .grid-3 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
 
         /* PANELS */
         .panel {
             background-color: var(--bg-panel);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 6px;
+            padding: 24px;
             position: relative;
-            margin-bottom: 20px;
-        }
-        .panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            margin-bottom: 24px;
         }
         .panel h2 {
             margin-top: 0;
             font-size: 15px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-weight: 600;
+            color: var(--text-main);
             border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-            margin-bottom: 18px;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
         }
 
         /* DEVICE HEALTH GRID & CARDS */
         .health-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
+            gap: 14px;
         }
         .health-card {
-            background-color: #090a0f;
+            background-color: #0d0f14;
             border: 1px solid var(--border);
-            padding: 12px;
+            padding: 16px;
             border-radius: 6px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
         .health-label {
             font-size: 11px;
             color: var(--text-dim);
-            text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 500;
         }
         .health-value {
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 600;
             color: var(--text-main);
             font-family: var(--font-mono);
         }
         .health-badge {
             font-size: 11px;
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
             display: inline-block;
             width: fit-content;
             font-family: var(--font-mono);
         }
         .health-badge.ok {
-            background-color: var(--primary);
+            background-color: var(--success);
             color: #000;
         }
         .health-badge.warn {
@@ -289,13 +294,13 @@
 
         /* CONTROL GROUPS */
         .control-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             display: flex;
             flex-direction: column;
         }
         .control-group label {
-            margin-bottom: 6px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 500;
             color: var(--text-dim);
             font-size: 13px;
         }
@@ -304,66 +309,69 @@
             accent-color: var(--primary);
         }
         .control-group select {
-            background-color: #090a0f;
+            background-color: #0d0f14;
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 4px;
+            padding: 10px 12px;
+            border-radius: 6px;
             font-size: 13px;
+            font-family: var(--font-main);
         }
-        .val-display { float: right; color: var(--primary); font-family: var(--font-mono); }
+        .val-display { float: right; color: var(--primary); font-family: var(--font-mono); font-weight: 600; }
 
         /* TOGGLE SWITCHES */
         .switch-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #1a1e2d;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
         }
         .switch-row label {
             font-size: 13px;
-            font-weight: bold;
+            font-weight: 500;
             color: var(--text-dim);
         }
         .toggle-btn {
             background-color: #222;
             color: #fff;
             border: 1px solid var(--border);
-            padding: 6px 16px;
-            border-radius: 4px;
-            font-weight: bold;
+            padding: 6px 18px;
+            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
             font-size: 12px;
+            font-family: var(--font-mono);
             transition: all 0.2s;
         }
         .toggle-btn.active {
             background-color: var(--primary);
-            color: #000;
+            border-color: var(--primary);
+            color: #fff;
         }
 
         /* 3D CANVAS VIEWPORT */
         #canvas3d-container {
             width: 100%;
-            height: 280px;
-            background-color: #f0f2f5;
+            height: 290px;
+            background-color: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 6px;
             position: relative;
             overflow: hidden;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
 
         /* CHART CONTAINER */
         .chart-container {
             position: relative; 
             width: 100%; 
-            height: 260px; 
-            margin-top: 15px; 
-            background-color: #090a0f; 
+            height: 270px; 
+            margin-top: 18px; 
+            background-color: #0d0f14; 
             border: 1px solid var(--border); 
             border-radius: 6px; 
-            padding: 10px; 
+            padding: 14px; 
             box-sizing: border-box;
         }
 
@@ -371,11 +379,11 @@
         .axis-row {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .axis-label {
-            width: 40px;
-            font-weight: bold;
+            width: 44px;
+            font-weight: 600;
             color: var(--primary);
             font-family: var(--font-mono);
             font-size: 13px;
@@ -385,17 +393,18 @@
             text-align: right;
             font-family: var(--font-mono);
             color: #fff;
-            margin-left: 10px;
+            margin-left: 12px;
             font-size: 13px;
         }
         .bi-bar-container {
             flex: 1;
             display: flex;
-            background-color: #090a0f;
+            background-color: #0d0f14;
             border: 1px solid var(--border);
             height: 18px;
-            border-radius: 3px;
+            border-radius: 6px;
             position: relative;
+            overflow: hidden;
         }
         .bi-bar-center {
             position: absolute;
@@ -424,23 +433,32 @@
         .align-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 16px;
         }
         .align-card {
-            background-color: #090a0f;
+            background-color: #0d0f14;
             border: 1px solid var(--border);
-            padding: 10px;
+            padding: 14px;
             border-radius: 6px;
             text-align: center;
         }
-        .align-card h3 { margin: 0 0 8px 0; color: var(--primary); font-size: 12px; }
-        .sensor-vals { font-family: var(--font-mono); font-size: 14px; margin-bottom: 6px; }
+        .align-card h3 { 
+            margin: 0 0 10px 0; 
+            color: var(--primary); 
+            font-size: 12px; 
+            font-weight: 600;
+            font-family: var(--font-main);
+        }
+        .sensor-vals { font-family: var(--font-mono); font-size: 14px; margin-bottom: 8px; }
         .delta {
-            font-size: 13px; font-weight: bold;
-            padding: 2px 8px; border-radius: 4px; display: inline-block;
+            font-size: 13px; 
+            font-weight: 600;
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            display: inline-block;
             font-family: var(--font-mono);
         }
-        .delta.ok { color: #000; background-color: var(--primary); }
+        .delta.ok { color: #000; background-color: var(--success); }
         .delta.warn { color: #000; background-color: var(--warning); }
         .delta.bad { color: #fff; background-color: var(--danger); }
 
@@ -452,21 +470,21 @@
             font-size: 12px;
         }
         th, td {
-            padding: 8px;
+            padding: 10px 12px;
             text-align: right;
             border-bottom: 1px solid var(--border);
         }
-        th { color: var(--text-dim); text-align: right; }
-        th:first-child, td:first-child { text-align: left; font-weight: bold; color: var(--primary); }
+        th { color: var(--text-dim); text-align: right; font-weight: 500; }
+        th:first-child, td:first-child { text-align: left; font-weight: 600; color: var(--primary); }
 
         /* MANUAL LIMITS INPUT STYLING */
         .limit-input {
-            background-color: #090a0f;
+            background-color: #0d0f14;
             color: var(--text-main);
             border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 4px 6px;
-            width: 60px;
+            border-radius: 6px;
+            padding: 6px 8px;
+            width: 64px;
             font-family: var(--font-mono);
             text-align: right;
             font-size: 12px;
@@ -480,13 +498,13 @@
         /* STATUS BOXES */
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+            gap: 12px;
             text-align: center;
         }
         .stat-box {
-            background-color: #090a0f;
-            padding: 10px;
+            background-color: #0d0f14;
+            padding: 14px;
             border-radius: 6px;
             border: 1px solid var(--border);
             display: flex;
@@ -494,48 +512,47 @@
             align-items: center;
             justify-content: center;
         }
-        .stat-value { font-size: 18px; font-weight: bold; color: var(--primary); margin-top: 4px; font-family: var(--font-mono); }
+        .stat-value { font-size: 18px; font-weight: 600; color: var(--primary); margin-top: 6px; font-family: var(--font-mono); }
         .btn-ind {
             display: inline-block;
             width: 16px; height: 16px;
             border-radius: 50%;
             background-color: #222;
-            margin-top: 6px;
+            margin-top: 8px;
             border: 1px solid var(--border);
             transition: all 0.2s;
         }
         .btn-ind.active { 
-            background-color: var(--secondary); 
-            box-shadow: 0 0 10px var(--secondary); 
-            border-color: var(--secondary); 
+            background-color: var(--success); 
+            border-color: var(--success); 
         }
 
         .tool-box {
             display: flex;
-            gap: 15px;
+            gap: 18px;
             align-items: center;
             justify-content: space-between;
-            background-color: #090a0f;
-            padding: 12px 15px;
+            background-color: #0d0f14;
+            padding: 16px 18px;
             border-radius: 6px;
             border: 1px solid var(--border);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         /* PROGRESS BAR */
         .wizard-progress {
             width: 100%;
-            background-color: #090a0f;
+            background-color: #0d0f14;
             border: 1px solid var(--border);
             height: 16px;
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
-            margin-top: 10px;
+            margin-top: 12px;
         }
         .wizard-fill {
             height: 100%;
             width: 0%;
-            background-color: var(--warning);
+            background-color: var(--success);
             transition: width 0.2s linear;
         }
 
@@ -544,39 +561,40 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
+            padding-bottom: 12px;
         }
         .btn-preset-bar {
             display: flex;
             align-items: center;
+            gap: 8px;
         }
         .preset-select {
-            padding: 4px 8px; 
+            padding: 6px 10px; 
             font-size: 12px; 
-            border-radius: 4px; 
-            background: #090a0f; 
+            border-radius: 6px; 
+            background: #0d0f14; 
             color: var(--primary); 
             border: 1px solid var(--border);
-            margin-right: 6px;
+            font-family: var(--font-main);
         }
 
         .btn-studio-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
+            gap: 18px;
+            margin-top: 14px;
         }
 
         .btn-card {
-            background-color: #090a0f;
+            background-color: #0d0f14;
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 14px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
-            transition: all 0.2s ease-in-out;
+            transition: border-color 0.2s;
             position: relative;
             overflow: hidden;
         }
@@ -591,40 +609,37 @@
         }
 
         .btn-card.active {
-            border-color: var(--secondary);
-            box-shadow: 0 0 12px rgba(255, 0, 127, 0.35);
-            transform: translateY(-2px);
+            border-color: var(--primary);
         }
 
         .btn-card.active::before {
-            background-color: var(--secondary);
+            background-color: var(--primary);
         }
 
         .btn-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #1a1e2d;
-            padding-bottom: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
         }
 
         .btn-card-title {
             font-size: 13px;
-            font-weight: bold;
+            font-weight: 600;
             color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .btn-badge {
             font-size: 10px;
-            font-weight: bold;
+            font-weight: 600;
             font-family: var(--font-mono);
             background-color: #1c2030;
             color: var(--text-dim);
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
             border: 1px solid var(--border);
         }
 
@@ -633,8 +648,8 @@
             justify-content: space-between;
             align-items: center;
             background-color: #141722;
-            padding: 6px 10px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
             border: 1px solid var(--border);
         }
 
@@ -642,12 +657,13 @@
             background-color: #141722;
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 4px;
+            padding: 10px;
+            border-radius: 6px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 500;
             width: 100%;
             cursor: pointer;
+            font-family: var(--font-main);
             transition: border-color 0.2s;
         }
 
@@ -658,39 +674,39 @@
 
         /* REUSABLE GUIDE BOXES */
         .guide-box {
-            background-color: #090a0f;
+            background-color: #0d0f14;
             border: 1px solid var(--border);
             border-left: 3px solid var(--primary);
-            padding: 12px;
-            border-radius: 4px;
-            margin-top: 15px;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 18px;
         }
         .guide-box.guide-secondary { border-left-color: var(--secondary); }
-        .guide-box.guide-warning { border-left-color: var(--warning); }
+        .guide-box.guide-warning { border-left-color: var(--success); }
 
         .guide-box-title {
-            font-weight: bold;
+            font-weight: 600;
             font-size: 12px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             color: var(--primary);
         }
         .guide-box.guide-secondary .guide-box-title { color: var(--secondary); }
-        .guide-box.guide-warning .guide-box-title { color: var(--warning); }
+        .guide-box.guide-warning .guide-box-title { color: var(--success); }
 
         .guide-box-text {
             color: var(--text-dim);
             font-size: 12px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .guide-box-text .highlight {
             color: var(--text-main);
-            font-weight: bold;
+            font-weight: 600;
         }
         .guide-box-text .subtext {
             font-size: 11px;
             font-style: italic;
             opacity: 0.8;
-            margin-top: 4px;
+            margin-top: 6px;
             display: block;
         }
 
@@ -712,18 +728,17 @@
         .modal-window {
             background-color: var(--bg-panel);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             width: 90%;
             max-width: 650px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
         .modal-header {
-            background-color: #0d0e14;
-            padding: 15px 20px;
+            background-color: #0d0f14;
+            padding: 18px 24px;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
@@ -732,12 +747,10 @@
 
         .modal-header h2 {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
+            font-family: var(--font-main);
+            font-weight: 600;
             font-size: 18px;
             color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .btn-close-modal {
@@ -755,7 +768,7 @@
         }
 
         .modal-body {
-            padding: 25px;
+            padding: 28px;
             min-height: 280px;
         }
 
@@ -769,8 +782,9 @@
 
         .wiz-step h3 {
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-size: 16px;
+            font-weight: 600;
             color: var(--text-main);
         }
 
@@ -780,8 +794,8 @@
         }
 
         .modal-footer {
-            background-color: #0d0e14;
-            padding: 15px 20px;
+            background-color: #0d0f14;
+            padding: 18px 24px;
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
@@ -802,7 +816,6 @@
 
         .wiz-dot.active {
             background-color: var(--primary);
-            box-shadow: 0 0 8px var(--primary);
         }
 
         /* ==================================================== */
@@ -817,12 +830,11 @@
             max-width: 1280px !important;
             margin: 0 !important;
             z-index: 900 !important;
-            border-radius: 8px 8px 0 0 !important;
-            box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.8) !important;
-            background-color: #0d0e14 !important;
+            border-radius: 6px 6px 0 0 !important;
+            background-color: #0d0f14 !important;
             border: 1px solid var(--border) !important;
             border-bottom: none !important;
-            padding: 12px 20px !important;
+            padding: 14px 24px !important;
             box-sizing: border-box !important;
         }
 
@@ -831,9 +843,8 @@
         }
 
         footer a:hover {
-            color: var(--secondary) !important;
-            border-bottom-color: var(--secondary) !important;
-            text-shadow: 0 0 8px rgba(255, 0, 127, 0.5);
+            color: var(--primary) !important;
+            border-bottom-color: var(--primary) !important;
         }
     </style>
 </head>
@@ -855,7 +866,7 @@
         </div>
         <div class="nav-actions">
             <!-- SETUP WIZARD TRIGGER -->
-            <button id="btnRunWizard" class="btn-action btn-warning" title="Run Guided Setup Wizard">Setup Wizard</button>
+            <button id="btnRunWizard" class="btn-action btn-success" title="Run Guided Setup Wizard">Setup Wizard</button>
             <!-- HIDDEN FILE INPUT FOR JSON PROFILE IMPORT -->
             <input type="file" id="fileImportProfile" accept=".json" style="display: none;">
             <button id="btnExportProfile" class="btn-action btn-outline" title="Export current settings as a JSON file">Export JSON</button>
@@ -913,7 +924,7 @@
                         <div class="guide-box-title">💡 HARDWARE DIAGNOSTICS GUIDE</div>
                         <div class="guide-box-text">
                             <span class="highlight">• EEPROM Checksum:</span> Validates struct data integrity using an 8-bit XOR checksum. Prevents booting with corrupted parameters.<br>
-                            <span class="highlight">• Magnetic Balance:</span> Measures differential voltage between opposing N/S/E/W Hall Effect sensor pairs. Validates resting signal range (450~650 LSB) and differential balance. Green (<strong style="color: var(--primary);">PERFECT</strong>) confirms optimal physical magnet centering and plate height.<br>
+                            <span class="highlight">• Magnetic Balance:</span> Measures differential voltage between opposing N/S/E/W Hall Effect sensor pairs. Validates resting signal range (450~650 LSB) and differential balance. Green (<strong style="color: var(--success);">PERFECT</strong>) confirms optimal physical magnet centering and plate height.<br>
                             <span class="highlight">• Sampling Frequency:</span> Displays live USB WebHID streaming refresh rate (Target: 100 Hz).
                         </div>
                     </div>
@@ -963,13 +974,13 @@
                         <div class="guide-box-text">
                             <span class="highlight">• Global Sensitivity:</span> Master multiplier for all 6 degrees of freedom.<br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (%):</strong> Moves camera faster across all 6 axes with less hand effort.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (%):</strong> Slows down all 6 axes for heavy, precise CAD manipulation.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease (%):</strong> Slows down all 6 axes for heavy, precise CAD manipulation.<br>
                             <span class="highlight">• Deadzone Filter:</span> Initial rest deadband around central TPU spring position.<br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase:</strong> Eliminates rest jitter if springs do not relax to exact 0. Requires more initial push.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease:</strong> Provides instantaneous ultra-light response, but may drift if springs relax imperfectly.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease:</strong> Provides instantaneous ultra-light response, but may drift if springs relax imperfectly.<br>
                             <span class="highlight">• Exclusive Mode:</span><br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">ON:</strong> Locks output to Translation OR Rotation strictly (prevents accidental tilting while panning).<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">OFF:</strong> Allows full simultaneous 6DOF fluid motion (Pan + Rotate together).
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">OFF:</strong> Allows full simultaneous 6DOF fluid motion (Pan + Rotate together).
                         </div>
                     </div>
                 </div>
@@ -1125,7 +1136,7 @@
                         <div class="guide-box-title">💡 SENSITIVITY ADJUSTMENT GUIDE (Q7 DIVIDERS)</div>
                         <div class="guide-box-text">
                             In the C++ fixed-point engine, sensitivity parameters act as mathematical dividers.<br>
-                            <span class="highlight">• ▲ Increase Value (e.g., 0.6 → 2.5):</span> Decreases sensitivity. Axis moves <strong style="color: var(--warning);">SLOWER</strong> and requires larger physical displacement.<br>
+                            <span class="highlight">• ▲ Increase Value (e.g., 0.6 → 2.5):</span> Decreases sensitivity. Axis moves <strong style="color: var(--success);">SLOWER</strong> and requires larger physical displacement.<br>
                             <span class="highlight">• ▼ Decrease Value (e.g., 2.0 → 0.5):</span> Increases sensitivity. Axis moves <strong style="color: var(--primary);">FASTER</strong> with light hand effort.<br>
                             <span class="subtext">(Use asymmetric Z settings to balance stiff TPU push-down vs light pull-up forces)</span>
                         </div>
@@ -1196,10 +1207,10 @@
                         <div class="guide-box-text">
                             <span class="highlight">• Parameter A (Slope at Zero / Exponent 'a'):</span><br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 1.15 → 2.5):</strong> Flattens central response curve. Expands precision zone for millimeter micro-adjustments.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 1.15 → 0.5):</strong> Makes initial movement immediate, sharp, and aggressive.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease (e.g., 1.15 → 0.5):</strong> Makes initial movement immediate, sharp, and aggressive.<br>
                             <span class="highlight">• Parameter B (Slope at End / Factor 'b' - Mode 3):</span><br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 1.35 → 1.55):</strong> Exponentially accelerates camera velocity near full deflection for rapid panning.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 1.35 → 1.05):</strong> Makes end-of-travel acceleration smooth and linear.
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease (e.g., 1.35 → 1.05):</strong> Makes end-of-travel acceleration smooth and linear.
                         </div>
                     </div>
                 </div>
@@ -1280,10 +1291,10 @@
                         <div class="guide-box-text">
                             <span class="highlight">• COMP_NR (Sample Accumulation Points):</span><br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 50 → 200):</strong> Larger averaging window. Prevents brief hand pauses from triggering false drift recalibration, but takes longer to lock new zero.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 50 → 10):</strong> Locks new thermal zero point rapidly, but risks mistaking steady hand holding for thermal drift.<br>
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease (e.g., 50 → 10):</strong> Locks new thermal zero point rapidly, but risks mistaking steady hand holding for thermal drift.<br>
                             <span class="highlight">• COMP_WAIT (Monitoring Wait Time):</span><br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 100ms → 500ms):</strong> Requires longer continuous rest before starting drift tracking.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 100ms → 20ms):</strong> Recalibrates zero almost instantly after releasing knob.
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease (e.g., 100ms → 20ms):</strong> Recalibrates zero almost instantly after releasing knob.
                         </div>
                     </div>
                 </div>
@@ -1305,7 +1316,7 @@
                         <div class="guide-box-text">
                             <span class="highlight">• Switch Hysteresis Threshold:</span> Force barrier required to break mid-motion dominance lock between Translation and Rotation.<br>
                             &nbsp;&nbsp;– <strong style="color: var(--primary);">▲ Increase (e.g., 60 → 200):</strong> Requires significantly more intentional force to switch modes mid-motion. Prevents mode flickering for heavy hands.<br>
-                            &nbsp;&nbsp;– <strong style="color: var(--warning);">▼ Decrease (e.g., 60 → 15):</strong> Makes switching dominance between Translation and Rotation effortless with subtle hand pressure changes.
+                            &nbsp;&nbsp;– <strong style="color: var(--success);">▼ Decrease (e.g., 60 → 15):</strong> Makes switching dominance between Translation and Rotation effortless with subtle hand pressure changes.
                         </div>
                     </div>
                 </div>
@@ -1343,7 +1354,7 @@
                     <h2 style="margin: 0; border: none; padding: 0;">Telemetry Stream Control</h2>
                     <span style="color: var(--text-dim); font-size: 13px;">Enable high-speed telemetry streaming (100 Hz) to monitor internal sensors.</span>
                 </div>
-                <button id="btnStream" class="btn-action btn-danger">Start Stream</button>
+                <button id="btnStream" class="btn-action btn-outline btn-outline-danger">Start Stream</button>
             </div>
         </div>
 
@@ -1418,7 +1429,7 @@
                         <strong style="display:block; font-size: 14px;">Re-Zero Calibration</strong>
                         <span style="color: var(--text-dim); font-size: 12px;">Recalibrates rest coordinates. Keep knob untouched.</span>
                     </div>
-                    <button id="btnRezero" class="btn-action btn-warning">Re-Zero</button>
+                    <button id="btnRezero" class="btn-action btn-outline">Re-Zero</button>
                 </div>
 
                 <div class="tool-box">
@@ -1426,7 +1437,7 @@
                         <strong style="display:block; font-size: 14px;">Restart Mouse</strong>
                         <span style="color: var(--text-dim); font-size: 12px;">Triggers hardware software reset via Watchdog.</span>
                     </div>
-                    <button id="btnRestart" class="btn-action btn-danger">Restart Mouse</button>
+                    <button id="btnRestart" class="btn-action btn-outline btn-outline-danger">Restart Mouse</button>
                 </div>
 
                 <div class="tool-box">
@@ -1434,7 +1445,7 @@
                         <strong style="display:block; font-size: 14px;">Factory Reset</strong>
                         <span style="color: var(--text-dim); font-size: 12px;">Restores default EEPROM settings immediately.</span>
                     </div>
-                    <button id="btnReset" class="btn-action btn-danger">Reset EEPROM</button>
+                    <button id="btnReset" class="btn-action btn-outline btn-outline-danger">Reset EEPROM</button>
                 </div>
             </div>
 
@@ -1457,7 +1468,7 @@
                     <strong style="display:block; font-size: 14px;">20-Second Limits Test</strong>
                     <span style="color: var(--text-dim); font-size: 12px;">Move the knob to all extreme physical boundaries for 20 seconds.</span>
                 </div>
-                <button id="btnStartCalWizard" class="btn-action btn-warning">Start 20s Test</button>
+                <button id="btnStartCalWizard" class="btn-action btn-success">Start 20s Test</button>
             </div>
             <div class="wizard-progress"><div class="wizard-fill" id="wizardFill"></div></div>
             <div id="wizardStatus" style="font-family: var(--font-mono); font-size: 13px; margin-top: 8px; color: var(--text-dim);">Status: Idle</div>
@@ -1513,7 +1524,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- GUIDED CALIBRATION WIZARD MODAL (OVERLAY)  -->
+    <!-- GUIDED SETUP WIZARD MODAL (OVERLAY)  -->
     <!-- ========================================== -->
     <div id="setupWizardModal" class="modal-overlay" style="display: none;">
         <div class="modal-window">
@@ -1551,7 +1562,7 @@
                     </div>
                     <div class="guide-box">
                         <div class="guide-box-text">
-                            Adjust physical magnet height/screws until all indicators turn <strong style="color: var(--primary);">GREEN (Δ ≤ 30, range 450~650 LSB)</strong>. Yellow (Δ ≤ 60) is acceptable, while Red indicates missing magnets, incorrect plate height, or alignment error.
+                            Adjust physical magnet height/screws until all indicators turn <strong style="color: var(--success);">GREEN (Δ ≤ 30, range 450~650 LSB)</strong>. Yellow (Δ ≤ 60) is acceptable, while Red indicates missing magnets, incorrect plate height, or alignment error.
                         </div>
                     </div>
                 </div>
@@ -1564,7 +1575,7 @@
                         The system will now calculate the neutral center coordinates of the TPU springs.
                     </p>
                     <div style="text-align: center; margin: 25px 0;">
-                        <button id="wizBtnRezero" class="btn-action btn-warning" style="font-size: 15px; padding: 12px 24px;">Calibrate Neutral Center</button>
+                        <button id="wizBtnRezero" class="btn-action btn-success" style="font-size: 15px; padding: 12px 24px;">Calibrate Neutral Center</button>
                     </div>
                     <p id="wizStep2Msg" style="text-align: center; font-weight: bold; color: var(--primary); height: 20px;"></p>
                 </div>
@@ -1577,7 +1588,7 @@
                         When you click start, push, pull, tilt, and twist the knob to all its physical limits for 20 seconds.
                     </p>
                     <div style="text-align: center; margin: 20px 0;">
-                        <button id="wizBtnStartLimits" class="btn-action btn-warning" style="font-size: 15px; padding: 12px 24px;">Start 20s Boundaries Test</button>
+                        <button id="wizBtnStartLimits" class="btn-action btn-success" style="font-size: 15px; padding: 12px 24px;">Start 20s Boundaries Test</button>
                     </div>
                     <div class="wizard-progress"><div class="wizard-fill" id="wizLimitsFill"></div></div>
                     <p id="wizStep3Msg" style="text-align: center; font-family: var(--font-mono); font-size: 13px; margin-top: 10px; color: var(--text-dim);">Ready to test</p>
@@ -1648,8 +1659,9 @@
         </div>
     </footer>
 
-    <!-- EMBEDDED JAVASCRIPT: WEBHID ENGINE (webhid.js) -->
+    <!-- INLINE JAVASCRIPT LOGIC -->
     <script>
+        /* === webhid.js === */
         // WEBHID COMMUNICATION & TELEMETRY PROTOCOL ENGINE
         // COMMAND DEFINITIONS
         const WEBHID_CMD_GET_CONFIG        = 0x01;
@@ -1667,18 +1679,13 @@
         window.isStreaming = false;
         window.currentConfigData = new Uint8Array(64);
         window.packetsReceived = 0;
+        window.lastSpaceMouseActivity = 0; // Timestamp tracking SpaceMouse activity
 
         // CALIBRATION WIZARD REAL-TIME TRACKING VARIABLES
         window.isWizardActive = false;
         window.wizardMin = [1023, 1023, 1023, 1023, 1023, 1023, 1023, 1023];
         window.wizardMax = [-1023, -1023, -1023, -1023, -1023, -1023, -1023, -1023];
         window.hasNewCalibration = false;
-
-        // SAFE PARSER HELPER PRESERVING ZERO VALUES
-        function safeParseInt(val, fallback) {
-            const parsed = parseInt(val, 10);
-            return isNaN(parsed) ? fallback : parsed;
-        }
 
         // GLOBAL WEBHID USB DISCONNECT LISTENER (HANDLES UNPLUG & HARDWARE REBOOTS)
         if (navigator.hid) {
@@ -2039,6 +2046,12 @@
                 }
             }
 
+            // Track SpaceMouse activity timestamp to conditionally block synthetic SO scroll events
+            let isMoving = vels.some(v => Math.abs(v) > 8);
+            if (isMoving) {
+                window.lastSpaceMouseActivity = Date.now();
+            }
+
             // Update 3D Viewport Target Positions/Rotations
             if (window.targetPos && window.targetRot) {
                 window.targetPos.x = (vels[0] / 350.0) * 3.0;    // TX -> X
@@ -2328,11 +2341,16 @@
             payload[0] = WEBHID_CMD_RESTART;
             await window.device.sendReport(REPORT_ID, payload);
         }
-    </script>
 
-    <!-- EMBEDDED JAVASCRIPT: 3D VIEWPORT ENGINE (viewport3d.js) -->
-    <script>
-        // THREE.JS 3D VIEWPORT INITIALIZATION (BLACK PUCK ON CAD LIGHT GRID CANVAS)
+        // CONDITIONALLY BLOCK PAGE SCROLL FROM SPACEMOUSE SYNTHETIC WHEEL EVENTS
+        window.addEventListener('wheel', (event) => {
+            if (window.lastSpaceMouseActivity && (Date.now() - window.lastSpaceMouseActivity < 250)) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        /* === viewport3d.js === */
+        // THREE.JS 3D VIEWPORT INITIALIZATION (CAD SLATE GRAY PUCK INTEGRATED WITH PANEL)
         window.targetPos = { x: 0, y: 0, z: 0 };
         window.targetRot = { x: 0, y: 0, z: 0 };
 
@@ -2343,14 +2361,14 @@
             if (!container) return;
 
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf0f2f5); // CAD Light Grey / Off-White Background
+            scene.background = new THREE.Color(0x1c1f26); // Cor integrada ao painel (#1c1f26)
 
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
             camera.position.set(0, 11, 16);
             camera.lookAt(0, 0, 0);
 
-            // Add CAD 3D Grid Helper on X-Z Plane with Electric Cyan/Blue Center Line
-            const grid = new THREE.GridHelper(26, 26, 0x05ACFF, 0xc5cbd3);
+            // Add CAD 3D Grid Helper on X-Z Plane with discreet gray tones (#6e7681 e #2d323e)
+            const grid = new THREE.GridHelper(26, 26, 0x6e7681, 0x2d323e);
             grid.position.y = -0.6;
             scene.add(grid);
 
@@ -2358,28 +2376,28 @@
             renderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(renderer.domElement);
 
-            // Create Ceramic Black SpaceMouse Puck Geometry
+            // Create SpaceMouse Puck Geometry
             const puckGroup = new THREE.Group();
 
-            // Satin/Matte Ceramic Black Body Material
-            const blackMat = new THREE.MeshPhongMaterial({
-                color: 0x18181c,
-                specular: 0x555555,
-                shininess: 50
+            // CAD Slate Gray Body Material (Harmonized contrast against dark background)
+            const bodyMat = new THREE.MeshPhongMaterial({
+                color: 0x3e4554,
+                specular: 0x777777,
+                shininess: 40
             });
 
             // 1. Base ring
             const baseGeo = new THREE.CylinderGeometry(4.0, 4.3, 1.2, 32);
-            const baseMesh = new THREE.Mesh(baseGeo, blackMat);
+            const baseMesh = new THREE.Mesh(baseGeo, bodyMat);
 
-            // 2. Main Black Knob Body
+            // 2. Main Knob Body
             const capGeo = new THREE.CylinderGeometry(3.6, 3.8, 2.8, 32);
-            const capMesh = new THREE.Mesh(capGeo, blackMat);
+            const capMesh = new THREE.Mesh(capGeo, bodyMat);
             capMesh.position.y = 1.8;
 
-            // 3. Waist Accent Ring (Electric Cyan/Blue contrast line)
+            // 3. Waist Accent Ring (CAD Blue contrast line #07aaf5)
             const ringGeo = new THREE.TorusGeometry(3.7, 0.08, 16, 32);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x05ACFF });
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x07aaf5 });
             const ringMesh = new THREE.Mesh(ringGeo, ringMat);
             ringMesh.rotation.x = Math.PI / 2;
             ringMesh.position.y = 0.4;
@@ -2387,16 +2405,16 @@
             // 4. Lateral Rotation Markings
             const markerGroup = new THREE.Group();
 
-            // Main Front Indicator Stripe (Electric Cyan/Blue vertical line)
+            // Main Front Indicator Stripe (CAD Blue vertical line #07aaf5)
             const frontNotchGeo = new THREE.BoxGeometry(0.35, 2.7, 0.2);
-            const frontNotchMat = new THREE.MeshBasicMaterial({ color: 0x05ACFF });
+            const frontNotchMat = new THREE.MeshBasicMaterial({ color: 0x07aaf5 });
             const frontNotch = new THREE.Mesh(frontNotchGeo, frontNotchMat);
             frontNotch.position.set(0, 1.8, 3.65);
             markerGroup.add(frontNotch);
 
             // 8 Side Ribs/Markings around perimeter for clear 360-degree rotation visibility
             const ribGeo = new THREE.BoxGeometry(0.12, 2.2, 0.15);
-            const ribMat = new THREE.MeshPhongMaterial({ color: 0x3d4354, specular: 0x888888, shininess: 30 });
+            const ribMat = new THREE.MeshPhongMaterial({ color: 0x242832, specular: 0x555555, shininess: 30 });
             for (let i = 0; i < 8; i++) {
                 const angle = (i / 8) * Math.PI * 2;
                 const rib = new THREE.Mesh(ribGeo, ribMat);
@@ -2415,7 +2433,7 @@
             scene.add(puckGroup);
             puckMesh = puckGroup;
 
-            // Balanced lighting for dark object against CAD light grid
+            // Balanced lighting for dark object against CAD dark grid
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
             scene.add(ambientLight);
 
@@ -2423,7 +2441,7 @@
             dirLight.position.set(12, 20, 10);
             scene.add(dirLight);
 
-            const sideLight = new THREE.DirectionalLight(0x05ACFF, 0.5);
+            const sideLight = new THREE.DirectionalLight(0x07aaf5, 0.5);
             sideLight.position.set(-12, -10, -10);
             scene.add(sideLight);
 
@@ -2458,10 +2476,8 @@
 
         // Initialize 3D Viewport on script load
         init3DViewport();
-    </script>
 
-    <!-- EMBEDDED JAVASCRIPT: STUDIO UI INTERACTOR & LOGIC (ui.js) -->
-    <script>
+        /* === ui.js === */
         // COMPLETE 32 NATIVE 3DCONNEXION HID SHORTCUT CONSTANTS
         const SHORTCUTS = [
             { id: 0, name: "MENU (0)", group: "System" },
@@ -2481,7 +2497,7 @@
             { id: 14, name: "BUTTON 3 (14)", group: "Numbers" },
             { id: 15, name: "BUTTON 4 (15)", group: "Numbers" },
             { id: 16, name: "BUTTON 5 (16)", group: "Numbers" },
-            { id: 17, name: "BUTTON 6 (17)", group: "Numbers" },
+            { id: 17, name: "BUTTON 7 (17)", group: "Numbers" },
             { id: 18, name: "BUTTON 7 (18)", group: "Numbers" },
             { id: 19, name: "BUTTON 8 (19)", group: "Numbers" },
             { id: 20, name: "BUTTON 9 (20)", group: "Numbers" },
@@ -2508,6 +2524,12 @@
 
         // GLOBAL FLAG PREVENTING DIRTY TRIGGERS ON FETCH/LOAD
         window.isImportingOrFetching = false;
+
+        // SAFE PARSER HELPER PRESERVING ZERO VALUES
+        function safeParseInt(val, fallback) {
+            const parsed = parseInt(val, 10);
+            return isNaN(parsed) ? fallback : parsed;
+        }
 
         // STATE TRACKING FOR SAVE BUTTON (GREY / ACTIVE)
         function markConfigDirty() {
@@ -2908,8 +2930,8 @@
                         {
                             label: '1: "Squared" function y(x) = (|x|/350)^a · sign(x)',
                             data: initialData.yF,
-                            borderColor: '#05ACFF',      // Electric Cyan/Blue (#05ACFF)
-                            backgroundColor: '#05ACFF',  // Electric Cyan/Blue (#05ACFF)
+                            borderColor: '#07aaf5',      // Azul CAD Vibrante (#07aaf5)
+                            backgroundColor: '#07aaf5',  // Azul CAD Vibrante (#07aaf5)
                             borderWidth: 2,
                             pointRadius: 0,
                             fill: false,
@@ -2918,8 +2940,8 @@
                         {
                             label: '3: "Squared tangent" function y(x) = tan(b · |x/350|^a · sign(x)) / tan(b)',
                             data: initialData.yG,
-                            borderColor: '#ff007f',
-                            backgroundColor: '#ff007f',
+                            borderColor: '#07f582',      // Verde Vibrante (#07f55a)
+                            backgroundColor: '#07f582',  // Verde Vibrante (#07f55a)
                             borderWidth: 2,
                             pointRadius: 0,
                             fill: false,
@@ -2935,19 +2957,19 @@
                         legend: {
                             display: true,
                             position: 'top',
-                            labels: { color: '#ffffff', font: { size: 10, family: 'Segoe UI' } }
+                            labels: { color: '#ffffff', font: { size: 10, family: 'Inter, sans-serif' } }
                         }
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'Input x', color: '#7a869a' },
-                            grid: { color: '#262b3d' },
-                            ticks: { color: '#7a869a', font: { size: 9 } }
+                            title: { display: true, text: 'Input x', color: '#6e7681' },
+                            grid: { color: '#2d323e' },
+                            ticks: { color: '#6e7681', font: { size: 9, family: 'JetBrains Mono, monospace' } }
                         },
                         y: {
-                            title: { display: true, text: 'Function output', color: '#7a869a' },
-                            grid: { color: '#262b3d' },
-                            ticks: { color: '#7a869a', font: { size: 9 } },
+                            title: { display: true, text: 'Function output', color: '#6e7681' },
+                            grid: { color: '#2d323e' },
+                            ticks: { color: '#6e7681', font: { size: 9, family: 'JetBrains Mono, monospace' } },
                             min: 0,
                             max: 1.0
                         }
@@ -3001,7 +3023,7 @@
                         <td>${name}</td>
                         <td id="raw-${i}">0</td>
                         <td id="cent-${i}">0</td>
-                        <td style="color:var(--warning)" id="off-${i}">0</td>
+                        <td style="color:var(--success)" id="off-${i}">0</td>
                     </tr>
                 `;
             });
@@ -3019,7 +3041,7 @@
                         <td>${name}</td>
                         <td><input type="number" class="limit-input" id="limit-min-${i}" value="-400" step="1"></td>
                         <td><input type="number" class="limit-input" id="limit-max-${i}" value="175" step="1"></td>
-                        <td id="limit-range-${i}" style="color:var(--warning)">575</td>
+                        <td id="limit-range-${i}" style="color:var(--success)">575</td>
                         <td><span id="limit-status-${i}" class="delta ok">OK</span></td>
                     </tr>
                 `;
