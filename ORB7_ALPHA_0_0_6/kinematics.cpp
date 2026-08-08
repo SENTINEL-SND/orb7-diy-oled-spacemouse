@@ -233,6 +233,8 @@ __attribute__((noinline)) static void processAxis(int16_t &vel, int16_t sens_q7,
       vel = 0;
     } else {
       vel = modifierFunction(divideBySensitivity(vel, sens_q7), par);
+      // Post-Gate: Suppress fractional curved mathematical noise to restore classic absolute silence
+      if (abs(vel) < 5) vel = 0;
     }
   }
 }
@@ -334,12 +336,21 @@ void exclusiveMode(int16_t *velocity, int16_t hysteresis){
     }
   }
 
-  // Mute non-dominant data
+  // Mute non-dominant data and suppress cross-coupling bleed during NEUTRAL startup phase
   if (mode == 2) { 
     velocity[TRANSX] = 0;
     velocity[TRANSY] = 0;
     velocity[TRANSZ] = 0;
   } else if (mode == 1) { 
+    velocity[ROTX] = 0;
+    velocity[ROTY] = 0;
+    velocity[ROTZ] = 0;
+  } else if (mode == 0) {
+    // Re-establishes the rock-solid startup behavior of older firmwares by ensuring
+    // no micro-movements leak to the USB host before the physical gesture explicitly locks in.
+    velocity[TRANSX] = 0;
+    velocity[TRANSY] = 0;
+    velocity[TRANSZ] = 0;
     velocity[ROTX] = 0;
     velocity[ROTY] = 0;
     velocity[ROTZ] = 0;

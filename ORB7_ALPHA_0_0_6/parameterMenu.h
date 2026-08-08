@@ -15,7 +15,7 @@
   // Magic Number enforces data structural alignment.
   // Changing this value intentionally forces a factory reset on the next boot,
   // which is highly recommended when adding or removing parameters in the struct below.
-  #define MAGIC_NUMBER       1234567856L
+  #define MAGIC_NUMBER       1234567857L
   #define BASE_ADDRESS_MAGIC 0
   #define BASE_ADDRESS_PAR   4
 

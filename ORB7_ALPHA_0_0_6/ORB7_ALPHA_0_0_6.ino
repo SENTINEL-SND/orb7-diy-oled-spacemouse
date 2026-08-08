@@ -1,6 +1,6 @@
 /*
  * SPACE MOUSE PRO EMULATOR (6DOF DIY) - MAIN INO ENTRY FILE
- * Firmware Version: ALPHA 0.0.5
+ * Firmware Version: ALPHA 0.0.6
  * Architecture: ATmega32U4 (Arduino Pro Micro, 5V, 16 MHz)
  */
 

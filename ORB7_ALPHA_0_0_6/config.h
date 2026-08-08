@@ -1,5 +1,5 @@
 // Config File for << HALL-EFFECT SPACEMOUSE >>
-// Firmware Version: v0.0.5
+// Firmware Version: v0.0.6
 #ifndef CONFIG_h
 #define CONFIG_h
 
@@ -115,12 +115,12 @@ GATE_TRANS: Dedicated micro-gate for Translation X and Y (Pan) to suppress
             keeping intentional panning movements 100% fluid and independent.
             Recommended range: 3 to 10 (Default: 6).
 */
-#define SENS_TX 0.5
-#define SENS_TY 0.5
-#define SENS_PTZ 0.5 // sensitivity for positive translation z (pushing down)
+#define SENS_TX 0.8
+#define SENS_TY 1
+#define SENS_PTZ 2 // sensitivity for positive translation z (pushing down)
 #define SENS_NTZ 1 // sensitivity for negative translation z (pulling up)
 #define GATE_TRANS 6 // Micro-gate filtering X/Y translation matrix bleed (3 to 10)
-#define GATE_NTZ 15 // gate value below which negative z movements will be ignored.
+#define GATE_NTZ 25 // gate value below which negative z movements will be ignored.
 #define GATE_RX 5 // Value under which rotX values will be forced to zero
 #define GATE_RY 5 // Value under which roty values will be forced to zero
 #define GATE_RZ 5 // Value under which rotz values will be forced to zero
@@ -173,14 +173,14 @@ Only permits translation OR rotation at a given time.
 Now features 'Neutral Unlocking' which seamlessly transitions back to both allowed when the knob is released.
 */
 #define EXCLUSIVE 1
-#define EXCL_HYST 60 // Hysteresis barrier to switch modes mid-motion
+#define EXCL_HYST 50 // Hysteresis barrier to switch modes mid-motion
 
 /* Key Support (ORB7 Physical Redesign Layout)
 ==============================================
 Define hardware buttons attached to the SpaceMouse.
-Pin 5  : Front Right (Key R)
-Pin 0  : Front Left  (Key L) -> Arduino RX0
-Pin 1  : Back Left   (Key 2) -> Arduino TX1
+Pin 0  : Front Right (Key R)
+Pin 1  : Front Left  (Key L)
+Pin 5  : Back Left   (Key 2)
 Pin 7  : Back Right  (Key 1)
 */
 #define NUMKEYS 4
