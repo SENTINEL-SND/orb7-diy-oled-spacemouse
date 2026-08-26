@@ -38,6 +38,7 @@ All notable changes to the SpaceMouse Pro Emulator (O.R.B.7) project will be doc
 
 ### Added
 - **Unified user deadzone:** Added a 0..100% comfort control that proportionally raises the six axis-specific base gates in the existing post-matrix layer. Values outside the threshold are continuously rescaled from zero to avoid an activation jump, while sensitivity and MOD curve mathematics remain unchanged.
+- **OLED Status Overview (`oledDisplay.cpp`):** Added State 2, opened by holding the Left button from the axis visualizer. The compact vertical layout keeps the yellow `STATUS` header, shows Sensitivity, Deadzone, Mode, and Exclusive state in the blue area, and separates the final setting from the navigation footer.
 
 ### Changed
 - **EEPROM layout revision:** Added the persistent deadzone level immediately before calibration limits and advanced the EEPROM magic number. The first boot on this build restores safe defaults; dynamic limits must then be recalibrated.
