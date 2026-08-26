@@ -104,7 +104,7 @@ A supported Chromium-based browser is enough.
 | :---: | :---: |
 | ![Dashboard](images/Web-Studio-Dashboard.jpeg)<br>*Live 3D puck visualization, 6DOF output, telemetry health & 4-button studio.* | ![Sensitivities](images/Web-Studio-Sensitivities.jpeg)<br>*Per-axis tuning, axis inversions, unified deadzone & real-time response-curve visualization.* |
 | **Hardware Test & Device Health** | **Setup Wizard & Calibration** |
-| ![Hardware Test](images/Web-Studio-Gates-Drift.jpeg)<br>*Guided Connection, Sensors, 6DOF Movement, Buttons, Safe Commands & final diagnostic reporting.* | ![Setup Wizard](images/Web-Studio-Debug.jpeg)<br>*Guided sensor alignment, Re-Zero, Dynamic Limits, axis configuration & EEPROM persistence.* |
+| ![Hardware Test](images/Web-Studio-Gates-Drift.jpeg)<br>*Gates, including the Translation Base Gates, Rotation Base Gates and Exclusive Mode Tuning* | ![Setup Wizard](images/Web-Studio-Debug.jpeg)<br>*Guided sensor alignment, Re-Zero, Dynamic Limits, axis configuration & EEPROM persistence.* |
 
 - **Interactive 3D Viewport:** A Three.js-powered representation of the controller follows live translation and rotation output in real time.
 - **Modifier Curve Visualizer:** Chart.js shows how the configured response curves affect motion before those values reach the CAD application.
