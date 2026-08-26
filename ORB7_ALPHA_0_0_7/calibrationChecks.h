@@ -35,12 +35,6 @@ constexpr bool _isValueInArray(const int *arr, int size, int idx, int value) {
 
 // Static assertions for user config sanity & zero-division prevention in ADC filtering
 static_assert(ADC_OVERSAMPLES >= 1, "ADC_OVERSAMPLES in config.h must be at least 1");
-static_assert(ADC_EMA_SHIFT <= 8, "ADC_EMA_SHIFT in config.h must be between 0 and 8");
 static_assert(EXCL_RELAX_THRESHOLD > 0, "EXCL_RELAX_THRESHOLD in config.h must be greater than 0");
-
-// Static assertions for drift compensation parameter boundaries.
-// Prevents int16_t wrap-around and infinite sampling accumulation loops.
-static_assert(COMP_NR > 0 && COMP_NR <= 500, "COMP_NR in config.h must be between 1 and 500");
-static_assert(COMP_WAIT >= 10, "COMP_WAIT in config.h must be at least 10ms");
 
 #endif // CALIBRATION_CHECKS_h

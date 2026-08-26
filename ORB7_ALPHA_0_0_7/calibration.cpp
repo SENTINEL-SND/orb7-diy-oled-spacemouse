@@ -3,9 +3,8 @@
 #include "kinematics.h"
 #include "config.h"
 
-// A dead zone above the following value will trigger a mechanical warning during zeroing.
-// Set to 25 to absorb normal ADC peak-to-peak thermal noise over 1000 oversampled iterations.
-#define DEADZONEWARNING 25
+// A peak-to-peak span above this value triggers a mechanical warning during zeroing.
+#define ZEROING_NOISE_WARNING 25
 
 // Sanity boundaries defining the expected hardware midpoint response.
 // Values outside this range indicate severe magnetic misalignment, unpowered sensors, or disconnected hardware.
@@ -89,30 +88,6 @@ void debugOutput5(int16_t* centered, int16_t* velocity) {
       if (i < 5) Serial.print("\t");
     }
     Serial.println(); 
-  }
-}
-
-void debugOutputOffsets(int16_t* offset) {
-  if (isDebugOutputDue()) {
-    for (uint8_t i = 0; i < 8; i++) {
-      Serial.print(offset[i]);
-      if (i < 7) {
-        Serial.print("\t");
-      }
-    }
-    Serial.println();
-  }
-}
-
-void debugDriftPlotter(int16_t* raw, int16_t* centered, int16_t* offset, int16_t axis) {
-  if (axis < 0 || axis >= 8) return; // Boundary check preventing out-of-bounds array reads
-  if (isDebugOutputDue()) {
-    Serial.print(raw[axis]);
-    Serial.print("\t");
-    Serial.print(centered[axis]);
-    Serial.print("\t");
-    Serial.print(offset[axis]);
-    Serial.println();
   }
 }
 
@@ -237,129 +212,34 @@ bool busyZeroing(int16_t *centerPoints, uint16_t numIterations, bool debugFlag){
   }
 
 #if ENABLE_SERIAL_DEBUG
-  int16_t deadZone[8];
-  int16_t maxDeadZone = 0;
+  int16_t noiseSpan[8];
 #endif
 
   for (uint8_t i = 0; i < 8; i++){
     centerPoints[i] = mean[i] / numIterations;
-    int16_t dz = maxValue[i] - minValue[i];
+    int16_t span = maxValue[i] - minValue[i];
 
 #if ENABLE_SERIAL_DEBUG
-    deadZone[i] = dz;
-    if (dz > maxDeadZone){ maxDeadZone = dz; }
+    noiseSpan[i] = span;
 #endif
 
     // Identify mechanical instability or interference during calibration procedure
-    if (dz > DEADZONEWARNING){ noWarningsOccured = false; }
+    if (span > ZEROING_NOISE_WARNING){ noWarningsOccured = false; }
     if (centerPoints[i] < CENTERPOINTWARNINGMIN || centerPoints[i] > CENTERPOINTWARNINGMAX){ noWarningsOccured = false; }
   }
 
 #if ENABLE_SERIAL_DEBUG
   if (debugFlag){
-    Serial.println(F("##  Min - Mean- Max -> Dead Zone"));
+    Serial.println(F("##  Min - Mean - Max -> Noise Span"));
     for (uint8_t i = 0; i < 8; i++){
       Serial.print(axisNames[i]); Serial.print(" "); Serial.print(minValue[i]); Serial.print(" - ");
-      Serial.print(centerPoints[i]); Serial.print(" - "); Serial.print(maxValue[i]); Serial.print(" -> "); Serial.print(deadZone[i]); Serial.print(" ");
-      if (deadZone[i] > DEADZONEWARNING){ Serial.print(F(" Moved axis?")); }
+      Serial.print(centerPoints[i]); Serial.print(" - "); Serial.print(maxValue[i]); Serial.print(" -> "); Serial.print(noiseSpan[i]); Serial.print(" ");
+      if (noiseSpan[i] > ZEROING_NOISE_WARNING){ Serial.print(F(" Moved axis?")); }
       if (centerPoints[i] < CENTERPOINTWARNINGMIN || centerPoints[i] > CENTERPOINTWARNINGMAX){ Serial.print(F(" Axis not centered?")); }
       Serial.println("");
     }
     Serial.println(F("Using mean as zero position."));
-    Serial.print(F("Suggestion for config.h: ")); Serial.print(F("#define DEADZONE ")); Serial.println(maxDeadZone);
   }
 #endif
   return noWarningsOccured;
-}
-
-// Highly decoupled drift compensation algorithm. Evaluates and compensates sensors entirely independently.
-// Prevents global drift suppression lockups if only one sensor is actively moving.
-void compensateDrifts(int16_t *raw, int16_t *center, int16_t *offset, ParamData& par) {
-  static int16_t consolidatedOffset[8] = {0};
-  static int32_t cmpMean[8] = {0};
-  static int16_t cmpMin[8] = {1023, 1023, 1023, 1023, 1023, 1023, 1023, 1023};
-  static int16_t cmpMax[8] = {0};
-  static int16_t cmpNo[8] = {0};
-  static unsigned long cmpStart[8] = {0};
-  static int16_t lastCenter[8] = {0};
-  static bool isFirstRun = true;
-
-  unsigned long now = millis();
-
-  // Detect external recalibration (e.g., Re-Zero OLED action or startup center update)
-  bool centerChanged = false;
-  for (uint8_t i = 0; i < 8; i++) {
-    if (center[i] != lastCenter[i]) {
-      centerChanged = true;
-      lastCenter[i] = center[i];
-    }
-  }
-
-  // Reset internal tracking mechanisms if the baseline reference is physically displaced
-  if (isFirstRun || centerChanged) {
-    for (uint8_t i = 0; i < 8; i++) {
-      cmpStart[i] = now;
-      cmpMin[i] = 1023;
-      cmpMax[i] = 0;
-      cmpMean[i] = 0;
-      cmpNo[i] = 0;
-      consolidatedOffset[i] = 0;
-      offset[i] = 0;
-      lastCenter[i] = center[i];
-    }
-    isFirstRun = false;
-    if (centerChanged) return;
-  }
-
-  // Strictly clamp validPts to range [1, 500] to prevent int16_t counter overflow & infinite accumulation loops.
-  int16_t validPts = constrain(par.values->compNoOfPoints, 1, 500);
-
-  // Independent axis resolution iteration
-  for (uint8_t i = 0; i < 8; i++) {
-    int16_t r = raw[i];
-
-    // Maintain running window boundary limits per sensor axis
-    if (r < cmpMin[i]) cmpMin[i] = r;
-    if (r > cmpMax[i]) cmpMax[i] = r;
-
-    // Check individual stability bounds
-    bool stable = true;
-    if (abs(r - center[i]) > par.values->compCenterDiff) stable = false;
-    if ((cmpMax[i] - cmpMin[i]) > par.values->compMinMaxDiff) stable = false;
-
-    if (!stable) {
-      // Axis is actively moving: fall back to the last stable consolidated offset instantly
-      offset[i] = consolidatedOffset[i];
-
-      // Reset tracking status for this independent axis
-      cmpMin[i] = 1023;
-      cmpMax[i] = 0;
-      cmpMean[i] = 0;
-      cmpNo[i] = 0;
-      cmpStart[i] = now;
-      continue;
-    }
-
-    // Adaptive Muting: Axis is stable (drifting). Zero out output reading dynamically during sampling.
-    offset[i] = center[i] - r;
-
-    // Accumulate points if the minimum monitoring window duration is met
-    if (now - cmpStart[i] >= (unsigned long)par.values->compWaitTime) {
-      cmpMean[i] += r;
-      cmpNo[i]++;
-
-      // Latch and consolidate a new valid drift offset once the sample buffer is full
-      if (cmpNo[i] >= validPts) {
-        consolidatedOffset[i] = center[i] - (int16_t)(cmpMean[i] / validPts);
-        offset[i] = consolidatedOffset[i];
-
-        // Reset buffer variables to start next window tracking cycle
-        cmpMin[i] = 1023;
-        cmpMax[i] = 0;
-        cmpMean[i] = 0;
-        cmpNo[i] = 0;
-        cmpStart[i] = now;
-      }
-    }
-  }
 }

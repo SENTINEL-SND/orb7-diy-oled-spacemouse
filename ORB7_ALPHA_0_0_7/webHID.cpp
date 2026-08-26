@@ -9,8 +9,6 @@
 #include "calibration.h"
 
 // Import global variables directly from main loop (zero Flash cost)
-extern int16_t centered[8];
-extern int16_t offsets[8];
 extern int16_t velocity[6];
 extern int16_t centerPoints[8];
 
@@ -133,19 +131,18 @@ void streamWebHIDRawData(int16_t* rawReads) {
   uint8_t txBuffer[64] = {0};
   txBuffer[0] = WEBHID_CMD_STREAM_RAW;
 
-  // Calculate true physical unmapped centered deltas for web telemetry & calibration wizard
+  // Calculate physical unmapped deltas from the fixed center for telemetry and calibration
   int16_t physicalCentered[8];
   for (uint8_t i = 0; i < 8; i++) {
-    physicalCentered[i] = rawReads[i] - centerPoints[i] + offsets[i];
+    physicalCentered[i] = rawReads[i] - centerPoints[i];
   }
   
   memcpy(&txBuffer[1], rawReads, 16);          // Bytes 1-16: rawReads
-  memcpy(&txBuffer[17], physicalCentered, 16); // Bytes 17-32: physical centered deltas (Raw - Center + Offset)
-  memcpy(&txBuffer[33], offsets, 16);          // Bytes 33-48: offsets
-  memcpy(&txBuffer[49], velocity, 12);         // Bytes 49-60: velocity (6DOF)
+  memcpy(&txBuffer[17], physicalCentered, 16); // Bytes 17-32: physical centered deltas (Raw - Center)
+  memcpy(&txBuffer[33], velocity, 12);         // Bytes 33-44: velocity (6DOF)
   
 #if NUMKEYS > 0
-  // Byte 61: Pack digital states for all 4 physical hardware buttons into a single 8-bit bitmask
+  // Byte 45: Pack digital states for all 4 physical hardware buttons into a single 8-bit bitmask
   // Bit 0 = Key R (Front Right / keys[0])
   // Bit 1 = Key L (Front Left  / keys[1])
   // Bit 2 = Key 2 (Back Left   / keys[2])
@@ -156,7 +153,7 @@ void streamWebHIDRawData(int16_t* rawReads) {
       keysBitmask |= (1 << i);
     }
   }
-  txBuffer[61] = keysBitmask;
+  txBuffer[45] = keysBitmask;
 #endif
 
   SpaceMouseHID.SendReport(5, txBuffer, 64);

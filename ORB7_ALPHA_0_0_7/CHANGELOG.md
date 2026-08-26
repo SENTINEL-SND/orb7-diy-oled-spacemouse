@@ -2,6 +2,46 @@
 
 All notable changes to the SpaceMouse Pro Emulator (O.R.B.7) project will be documented in this file.
 
+## [Web Studio v1.8.0] - 2026-08-26 (Hardware Test & WebHID Reliability)
+
+### Added
+- **Guided Hardware Test (`ORB7_Studio`):** Added staged Connection, Sensors, 6DOF Movement, Buttons, Safe Commands, and Final Report validation with JSON export.
+- **Hardware Test state reporting:** Added explicit command-test tracking, separate automatic telemetry tracking, retry/continue handling, and preservation of the original Stream state.
+
+### Removed
+- **Dynamic Drift Compensation controls and state:** Removed the legacy adaptive-center/drift workflow from the Studio surface. Sensor diagnostics now describe deviation from the fixed center acquired during zeroing.
+- **Legacy EMA and sensor-noise filter controls:** Removed compatibility for the firmware's former stateful EMA, sensor-level deadzone, and redundant fixed noise filters, which no longer exist in firmware `v0.0.7`.
+- **Separate legacy gate stages:** Removed the old direct-root translation microgate and post-curve gate model from the Studio configuration surface. Noise suppression is now represented by the unified global deadzone and six independent post-matrix base gates.
+
+### Changed
+- **WebHID timeout handling:** Added bounded send waits for Stream, configuration, calibration, SET_CONFIG, Factory Reset, and Restart commands. Unknown device state now requires reconnection instead of being treated as confirmed.
+- **Synchronization safeguards:** Late or unsolicited configuration/calibration responses are ignored; uncertain data synchronization blocks new Hardware Tests until reconnection.
+- **Hardware Test cancellation:** Cancellation now waits for pending commands, prevents concurrent Stream restoration, preserves completed reports after disconnect, and keeps controls locked until restoration finishes.
+- **Stream and Re-Zero reporting:** Stream results require the explicit Stream test; Re-Zero responses are reported as observed but not attributable because the protocol has no request ID.
+- **Capture and interaction reliability:** Sensor recapture clears stale values, missing telemetry is reported as `NO DATA`/`NO TELEMETRY`, button results are finalized against the latest state, movement retries lock Continue during capture, and command waits pause while the tab is hidden.
+- **Studio version:** Updated the Web Studio version metadata and exported profile/report version to `1.8.0`.
+
+### Fixed
+- **Connection and firmware state cleanup:** Firmware version and uncertainty flags are cleared on disconnect and restored after a new configuration read.
+- **Hardware Test controls:** Corrected sensor-capture reset state, Stream restoration failures, report finalization concurrency, and stale command/telemetry flags in exported metrics.
+
+### Protocol Limitations
+- The existing protocol has no request identifier or dedicated Stream-stop acknowledgment. A received Re-Zero response cannot be attributed to a specific request, and a timed-out command can only be considered safe after reconnection.
+
+## [v0.0.7] - 2026-08-25 (Deterministic Sensor Pipeline)
+
+### Removed
+- **Dynamic drift compensation:** Removed adaptive center tracking and its persistent parameters. Sensor deltas now use the fixed center acquired during zeroing.
+- **Integer EMA filter:** Removed the stateful exponential moving average from ADC acquisition. The firmware now forwards the configured arithmetic oversampling average directly to the fixed-center pipeline.
+- **Redundant noise filters:** Removed the sensor-level deadzone and fixed post-curve gate. Noise suppression is now a single post-matrix layer with one configurable gate for each of the six output axes.
+- **Removal rationale:** Although the filters introduced in `v0.0.6` partially addressed problems inherited from legacy configurations, the mouse had become unnecessarily complex, with too many processing layers. Reducing the filter stack exposed thermal drift as a common denominator that, in this implementation, created more problems than it solved. Removing thermal drift compensation and refactoring the pipeline eliminated layers of complexity that had accumulated while pursuing maximum precision. The removal of dynamic drift compensation, the integer EMA filter, and the redundant noise filters therefore simplified the code and delivered better overall mouse performance.
+
+### Added
+- **Unified user deadzone:** Added a 0..100% comfort control that proportionally raises the six axis-specific base gates in the existing post-matrix layer. Values outside the threshold are continuously rescaled from zero to avoid an activation jump, while sensitivity and MOD curve mathematics remain unchanged.
+
+### Changed
+- **EEPROM layout revision:** Added the persistent deadzone level immediately before calibration limits and advanced the EEPROM magic number. The first boot on this build restores safe defaults; dynamic limits must then be recalibrated.
+
 ## [v0.0.6 / Web Studio v1.6.5] - 2026-08-07 (The Absolute Silence, Precision & OLED Layout Patch)
 
 ### Fixed & Consolidated

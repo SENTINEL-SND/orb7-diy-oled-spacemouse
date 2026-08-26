@@ -4,8 +4,8 @@
 
 #define FW_VERSION_MAJOR 0
 #define FW_VERSION_MINOR 0
-#define FW_VERSION_PATCH 6
+#define FW_VERSION_PATCH 7
 
-#define FW_RELEASE "ALPHA 0.0.6"
+#define FW_RELEASE "ALPHA 0.0.7"
 
 #endif // RELEASE_H

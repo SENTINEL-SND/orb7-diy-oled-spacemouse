@@ -15,16 +15,8 @@
   #define ADC_OVERSAMPLES 2
 #endif
 
-#ifndef ADC_EMA_SHIFT
-  #define ADC_EMA_SHIFT 2
-#endif
-
 #ifndef EXCL_RELAX_THRESHOLD
   #define EXCL_RELAX_THRESHOLD 35
-#endif
-
-#ifndef GATE_TRANS
-  #define GATE_TRANS 6
 #endif
 
 // Do not change this! Standard baseline bound to match the HID logical scale. Use independent sensitivity multipliers instead.
@@ -107,22 +99,10 @@ int modifierFunction(int x, ParamData& par) {
   return (int)(y * sign_x);
 }
 
-/// @brief Reads analog hardware using configured integer Exponential Moving Average (EMA) and hardware Oversampling.
+/// @brief Reads analog hardware using the configured arithmetic oversampling average.
 void readAllFromJoystick(int16_t *rawReads){
   static const uint8_t pinList[8] = PINLIST;
   static const uint8_t invertList[8] = INVERTLIST;
-  
-  static int16_t filterState[8];
-  static bool isFirstRun = true;
-
-  // Seed the filter states with the raw readings on first startup. 
-  // Prevents the system from slowly "climbing" to the target value due to EMA inertia.
-  if (isFirstRun) {
-    for (uint8_t i = 0; i < 8; i++) {
-      filterState[i] = analogRead(pinList[i]);
-    }
-    isFirstRun = false;
-  }
 
   // Runtime safety guard against division-by-zero if ADC_OVERSAMPLES is defined as 0
   const uint8_t safeOversamples = (ADC_OVERSAMPLES < 1) ? 1 : ADC_OVERSAMPLES;
@@ -133,53 +113,35 @@ void readAllFromJoystick(int16_t *rawReads){
       sum += analogRead(pinList[i]);
     }
 
-    uint16_t averagedRead = sum / safeOversamples; 
-
-    // Apply non-stuck integer Exponential Moving Average (EMA) filtering.
-    // Extremely efficient: Replaces standard floats by using right bit-shifts for fractioning.
-    int16_t diff = (int16_t)averagedRead - filterState[i];
-    int16_t step = (ADC_EMA_SHIFT > 0) ? (diff >> ADC_EMA_SHIFT) : diff;
-    
-    // Prevent the integer math from getting "stuck" when the difference is smaller than the shift divisor
-    if (step == 0 && diff != 0) {
-      step = (diff > 0) ? 1 : -1;
-    }
-    filterState[i] += step;
+    uint16_t averagedRead = sum / safeOversamples;
 
     if (invertList[i] == 1) {
-      rawReads[i] = 1023 - filterState[i]; // Hardware polarity inversion
+      rawReads[i] = 1023 - averagedRead; // Hardware polarity inversion
     } else {
-      rawReads[i] = filterState[i];
+      rawReads[i] = averagedRead;
     }
   }
 }
 
-/// @brief Takes centered values, enforces deadzones, and scales inputs dynamically based on user calibration limits.
-void FilterAnalogReadOuts(int16_t* centered, ParamData& par){
-  // Sanitize deadzone parameter against negative values which would corrupt bounding logic
-  int16_t dz = (par.values->deadzone < 0) ? 0 : par.values->deadzone;
-
+/// @brief Scales centered sensor values using individual calibration limits without applying a sensor deadzone.
+void NormalizeAnalogReadOuts(int16_t* centered, ParamData& par){
   for(uint8_t i = 0; i < 8; i++){
     int16_t val = centered[i];
-    if (val < dz && val > -dz){
-      centered[i] = 0; // Filtered by deadzone, enforce absolute hardware zero
+    if (val < 0) {
+      int32_t denom = -(int32_t)par.values->minVals[i];
+      if (denom > 0) {
+        int16_t clamped_val = constrain(val, (int16_t)par.values->minVals[i], (int16_t)0);
+        centered[i] = mapToSensitivity((int32_t)(clamped_val - par.values->minVals[i]), denom, -TOTALSENSITIVITY);
+      } else {
+        centered[i] = 0;
+      }
     } else {
-      if (val < 0) { 
-        int32_t denom = (int32_t)(-dz - par.values->minVals[i]);
-        if (denom > 0) {
-          int16_t clamped_val = constrain(val, (int16_t)par.values->minVals[i], (int16_t)-dz);
-          centered[i] = mapToSensitivity((int32_t)(clamped_val - par.values->minVals[i]), denom, -TOTALSENSITIVITY);
-        } else {
-          centered[i] = 0;
-        }
-      } else { 
-        int32_t denom = (int32_t)(par.values->maxVals[i] - dz);
-        if (denom > 0) {
-          int16_t clamped_val = constrain(val, dz, (int16_t)par.values->maxVals[i]);
-          centered[i] = mapToSensitivity((int32_t)(clamped_val - dz), denom, 0);
-        } else {
-          centered[i] = 0;
-        }
+      int32_t denom = (int32_t)par.values->maxVals[i];
+      if (denom > 0) {
+        int16_t clamped_val = constrain(val, (int16_t)0, (int16_t)par.values->maxVals[i]);
+        centered[i] = mapToSensitivity(clamped_val, denom, 0);
+      } else {
+        centered[i] = 0;
       }
     }
   }
@@ -225,18 +187,30 @@ void _calculateKinematicSensors(int16_t* centered, int16_t* velocity, bool prio_
   #endif
 }
 
-/// @brief Inline kinematic processor for scaling, mapping, and gating 6DOF signals
-__attribute__((noinline)) static void processAxis(int16_t &vel, int16_t sens_q7, int16_t gate, ParamData& par) {
-  if (vel != 0) {
-    // Intercept raw matrix parasitic bleed at the physical root BEFORE Q7 sensitivity amplification
-    if (abs(vel) < gate) {
-      vel = 0;
-    } else {
-      vel = modifierFunction(divideBySensitivity(vel, sens_q7), par);
-      // Post-Gate: Suppress fractional curved mathematical noise to restore classic absolute silence
-      if (abs(vel) < 5) vel = 0;
-    }
+/// @brief Applies the unified continuous deadzone and then forwards the axis to sensitivity and curve processing.
+__attribute__((noinline)) static void processAxis(int16_t &vel, int16_t sens_q7, int16_t baseGate, ParamData& par) {
+  if (vel == 0) return;
+
+  // User Deadzone 0..100% proportionally raises each axis-specific hardware gate.
+  // With the default 200% maximum boost, level 100 produces a 3x base threshold.
+  int32_t safeBaseGate = constrain((int32_t)baseGate, 0L, 100L);
+  int32_t safeDeadzone = constrain((int32_t)par.values->deadzoneLevel, 0L, (long)DEADZONE_MAX);
+  int32_t gateScale = 100L + (safeDeadzone * DEADZONE_BOOST_AT_MAX) / DEADZONE_MAX;
+  int32_t effectiveGate = (safeBaseGate * gateScale) / 100L;
+  effectiveGate = constrain(effectiveGate, 0L, (long)(TOTALSENSITIVITY - 1));
+
+  int32_t magnitude = (vel < 0) ? -(int32_t)vel : (int32_t)vel;
+  if (magnitude <= effectiveGate) {
+    vel = 0;
+    return;
   }
+
+  // Remove the threshold and rescale the remainder so motion starts continuously at zero
+  // while preserving the original full-scale point at +/-TOTALSENSITIVITY.
+  int32_t adjusted = ((magnitude - effectiveGate) * TOTALSENSITIVITY) /
+                     (TOTALSENSITIVITY - effectiveGate);
+  vel = (int16_t)((vel < 0) ? -adjusted : adjusted);
+  vel = modifierFunction(divideBySensitivity(vel, sens_q7), par);
 }
 
 /// @brief Evaluates all 6DOF matrices, applies hardware polarity inversions, executes noise gates, and scales sensitivities.
@@ -252,14 +226,14 @@ void calculateKinematic(int16_t* centered, int16_t* velocity, ParamData& par){
   if(par.values->invRY){velocity[ROTY]   = -velocity[ROTY];}
   if(par.values->invRZ){velocity[ROTZ]   = -velocity[ROTZ];}
 
-  // Apply scales and dedicated translation micro-gates using dynamic EEPROM par.values->gate_trans
-  processAxis(velocity[TRANSX], par.values->transX_sensitivity_q7, par.values->gate_trans, par);
-  processAxis(velocity[TRANSY], par.values->transY_sensitivity_q7, par.values->gate_trans, par);
+  // Apply exactly one unified continuous deadzone per final 6DOF axis before sensitivity and curve processing
+  processAxis(velocity[TRANSX], par.values->transX_sensitivity_q7, par.values->gate_transX, par);
+  processAxis(velocity[TRANSY], par.values->transY_sensitivity_q7, par.values->gate_transY, par);
 
   // Translation Z handles asymmetrical sensitivities (push vs pull resistance)
   if (velocity[TRANSZ] != 0) {
     int16_t z_sens = (velocity[TRANSZ] < 0) ? par.values->neg_transZ_sensitivity_q7 : par.values->pos_transZ_sensitivity_q7;
-    processAxis(velocity[TRANSZ], z_sens, par.values->gate_neg_transZ, par);
+    processAxis(velocity[TRANSZ], z_sens, par.values->gate_transZ, par);
   }
 
   // Rotational axis processing

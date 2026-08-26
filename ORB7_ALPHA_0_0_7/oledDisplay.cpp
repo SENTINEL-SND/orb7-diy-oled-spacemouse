@@ -32,13 +32,13 @@ static bool forceFullViewRedraw = true;
 // UI State machine tracker:
 // 0 = Home screens (Axis visualizer)
 // 1 = Main Menu
-// 3 = Sensitivity & Deadzone Submenu
+// 2 = Status Overview
+// 3 = Sensitivity & Curve Submenu
 // 5 = OLED Setup Submenu (Sleep Timer / Power)
 // 8 = Debug Submenu list
 // 9 = Real-time Sensor Alignment Screen
 // 10 = Interactive Limits Calibration Screen (Cal. Limits)
 // 11 = Exclusive Mode Configurations Screen (Exclusive)
-// 12 = Live Drift Offsets Monitoring Screen (Drift Offsets)
 // 13 = Factory Reset Confirmation Screen (Factory Reset)
 // 14 = Axis Direction & Inversion Submenu (Direction)
 static uint8_t menuState = 0;
@@ -63,7 +63,6 @@ static unsigned long lastActivityTime = 0;
 // Pointers to global variables declared in the main .ino file, required for UI data display
 extern int16_t centerPoints[8];
 extern int16_t rawReads[8];
-extern int16_t offsets[8];
 extern ParamData par;
 
 // --- REUSABLE PROGMEM STRINGS TO SAVE FLASH MEMORY ---
@@ -95,11 +94,10 @@ const char debug_str0[] PROGMEM = " 1. Align Sensors";
 const char debug_str1[] PROGMEM = " 2. Cal. Limits";
 const char debug_str2[] PROGMEM = " 3. Re-Zero";
 const char debug_str3[] PROGMEM = " 4. Exclusive";
-const char debug_str4[] PROGMEM = " 5. Drift Offsets";
-const char debug_str5[] PROGMEM = " 6. Factory Reset";
+const char debug_str4[] PROGMEM = " 5. Factory Reset";
 
-const char* const debug_strings[6] PROGMEM = {
-  debug_str0, debug_str1, debug_str2, debug_str3, debug_str4, debug_str5
+const char* const debug_strings[5] PROGMEM = {
+  debug_str0, debug_str1, debug_str2, debug_str3, debug_str4
 };
 
 static const char dir_labels[8][7] PROGMEM = {
@@ -345,18 +343,28 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
     } else if (!leftHoldTriggered && (now - leftPressStart >= 1000)) {
       leftHoldTriggered = true;
 
-      if (menuState == 1) {
+      if (menuState == 0) {
+        menuState = 2;
+        cursorIndex = 0;
+        submenuSelect = 0;
+        isEditing = false;
+        forceFullViewRedraw = true;
+      } else if (menuState == 1) {
         putParametersToEEPROM(par);
         menuState = 0;
         cursorIndex = 0;
         submenuSelect = 0; // Reset cursor on returning home
         isEditing = false;
         forceFullViewRedraw = true;
+      } else if (menuState == 2) {
+        menuState = 0;
+        submenuSelect = 0;
+        forceFullViewRedraw = true;
       } else if (menuState >= 3) {
         if (isEditing) {
           isEditing = false;
         } else {
-          if (menuState == 9 || menuState == 10 || menuState == 11 || menuState == 12 || menuState == 13) {
+          if (menuState == 9 || menuState == 10 || menuState == 11 || menuState == 13) {
             menuState = 8;
           } else {
             menuState = 1; 
@@ -378,7 +386,8 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
             if (submenuSelect == 0) {
               if (par.values->globalSens > 10) par.values->globalSens -= 10;
             } else if (submenuSelect == 1) {
-              if (par.values->deadzone > 0) par.values->deadzone--;
+              if (par.values->deadzoneLevel >= 5) par.values->deadzoneLevel -= 5;
+              else par.values->deadzoneLevel = 0;
             } else if (submenuSelect == 2) {
               par.values->slope_at_zero_q8 -= 13;
               if (par.values->slope_at_zero_q8 < 26) par.values->slope_at_zero_q8 = 26;
@@ -407,7 +416,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
             forceFullViewRedraw = true;
           }
         } else if (menuState == 8) {
-          if (submenuSelect == 0) submenuSelect = 5;
+          if (submenuSelect == 0) submenuSelect = 4;
           else submenuSelect--;
           forceFullViewRedraw = true;
         } else if (menuState == 10 && calState == 0) {
@@ -427,7 +436,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
             else submenuSelect--;
             forceFullViewRedraw = true;
           }
-        } else if (menuState == 12 || menuState == 13) {
+        } else if (menuState == 13) {
           menuState = 8;
           submenuSelect = 0;
           forceFullViewRedraw = true;
@@ -456,6 +465,12 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
         submenuSelect = 0; // Reset cursor on opening options
         isEditing = false;
         forceFullViewRedraw = true;
+      } else if (menuState == 2) {
+        menuState = 1;
+        cursorIndex = 0;
+        submenuSelect = 0;
+        isEditing = false;
+        forceFullViewRedraw = true;
       } else if (menuState == 1) {
         menuState = pgm_read_byte(&destStates[cursorIndex]);
         submenuSelect = 0; // Reset cursor on entering submenu
@@ -476,8 +491,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
           delay(800);
         }
         else if (submenuSelect == 3) { menuState = 11; submenuSelect = 0; }
-        else if (submenuSelect == 4) { menuState = 12; submenuSelect = 0; }
-        else if (submenuSelect == 5) { menuState = 13; submenuSelect = 0; }
+        else if (submenuSelect == 4) { menuState = 13; submenuSelect = 0; }
         forceFullViewRedraw = true;
       } else if (menuState == 10 && calState == 0) {
         for (uint8_t i = 0; i < 8; i++) {
@@ -521,7 +535,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
             if (submenuSelect == 0) {
               if (par.values->globalSens < 300) par.values->globalSens += 10;
             } else if (submenuSelect == 1) {
-              if (par.values->deadzone < 200) par.values->deadzone++;
+              if (par.values->deadzoneLevel <= DEADZONE_MAX - 5) par.values->deadzoneLevel += 5;
             } else if (submenuSelect == 2) {
               par.values->slope_at_zero_q8 += 13;
               if (par.values->slope_at_zero_q8 > 768) par.values->slope_at_zero_q8 = 768; 
@@ -551,7 +565,7 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
           }
         } else if (menuState == 8) {
           submenuSelect++;
-          if (submenuSelect > 5) submenuSelect = 0;
+          if (submenuSelect > 4) submenuSelect = 0;
           forceFullViewRedraw = true;
         } else if (menuState == 11) {
           if (isEditing) {
@@ -564,10 +578,6 @@ void processMenuInput(uint8_t* keyState, ParamData& par) {
             submenuSelect = !submenuSelect;
             forceFullViewRedraw = true;
           }
-        } else if (menuState == 12) {
-          par.values->compEnabled = !par.values->compEnabled;
-          putParametersToEEPROM(par);
-          forceFullViewRedraw = true;
         } else if (menuState == 14) {
           submenuSelect++;
           if (submenuSelect > 7) submenuSelect = 0;
@@ -692,7 +702,8 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   if (!oledPowerState) return;
 
   static int16_t lastSensValue = 0xFFFF;
-  static int16_t lastDeadValue = 0xFFFF;
+  static int16_t lastDeadzoneLevel = -1;
+  static int16_t lastHystValue = 0xFFFF;
   static uint8_t lastCursorIndex = 0xFF;
   static int16_t lastSlopeA = -1;
   static int16_t lastSlopeB = -1;
@@ -713,7 +724,8 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
 
   if (redraw) {
     lastSensValue = 0xFFFF;
-    lastDeadValue = 0xFFFF;
+    lastDeadzoneLevel = -1;
+    lastHystValue = 0xFFFF;
     lastCursorIndex = 0xFF;
     lastSlopeA = -1;
     lastSlopeB = -1;
@@ -749,10 +761,44 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   }
 
   // ==========================================
-  // STATE 3: SENSITIVITY & DEADZONE SUBMENU
+  // STATE 2: STATUS OVERVIEW
+  // ==========================================
+  if (menuState == 2) {
+    if (redraw) {
+      drawHeader(F("STATUS"), 46);
+
+      printAt(4, 2, F("SENSITIVITY"));
+      oled.setCursor(98, 2);
+      printPaddedVal(par.values->globalSens);
+      oled.print('%');
+
+      printAt(4, 3, F("DEADZONE"));
+      oled.setCursor(98, 3);
+      printPaddedVal(par.values->deadzoneLevel);
+      oled.print('%');
+
+      printAt(4, 4, F("MODE"));
+      oled.setCursor(110, 4);
+      if (par.values->modFunc == 3) oled.print(F("A/B"));
+      else if (par.values->modFunc == 1) oled.print(F("SQR"));
+      else oled.print(F("LIN"));
+
+      printAt(4, 5, F("EXCLUSIVE"));
+      oled.setCursor(110, 5);
+      oled.print(par.values->exclusiveMode ? F(" ON") : F("OFF"));
+
+      drawHorizontalLine(6, 0x40);
+      printAt(4, 7, F("HL: AXIS  HR: MENU"));
+      forceFullViewRedraw = false;
+    }
+    return;
+  }
+
+  // ==========================================
+  // STATE 3: SENSITIVITY & CURVE SUBMENU
   // ==========================================
   if (menuState == 3) {
-    if (redraw || par.values->globalSens != lastSensValue || par.values->deadzone != lastDeadValue || par.values->slope_at_zero_q8 != lastSlopeA || par.values->slope_at_end_q8 != lastSlopeB || par.values->modFunc != lastModFunc || submenuSelect != lastSubmenuSelect || isEditing != lastIsEditing) {
+    if (redraw || par.values->globalSens != lastSensValue || par.values->deadzoneLevel != lastDeadzoneLevel || par.values->slope_at_zero_q8 != lastSlopeA || par.values->slope_at_end_q8 != lastSlopeB || par.values->modFunc != lastModFunc || submenuSelect != lastSubmenuSelect || isEditing != lastIsEditing) {
       if (redraw) {
         drawHeader(F("SENSITIVITY"), 31);
         printFooter();
@@ -768,8 +814,9 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
 
       printMenuLabel(3, 1, F("Deadzone: "));
       oled.setInvertMode(submenuSelect == 1 && isEditing);
-      oled.print(par.values->deadzone);
-      printSpaces(3);
+      oled.print(par.values->deadzoneLevel);
+      oled.print('%');
+      printSpaces(2);
       oled.setInvertMode(false);
 
       printMenuLabel(4, 2, F("Curve A: "));
@@ -792,7 +839,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       oled.setInvertMode(false);
 
       lastSensValue = par.values->globalSens;
-      lastDeadValue = par.values->deadzone;
+      lastDeadzoneLevel = par.values->deadzoneLevel;
       lastSlopeA = par.values->slope_at_zero_q8;
       lastSlopeB = par.values->slope_at_end_q8;
       lastModFunc = par.values->modFunc;
@@ -839,7 +886,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       forceFullViewRedraw = false;
     }
     if (submenuSelect != lastSubmenuSelect || redraw) {
-      drawMenuList(debug_strings, 6, submenuSelect);
+      drawMenuList(debug_strings, 5, submenuSelect);
       lastSubmenuSelect = submenuSelect;
     }
     return;
@@ -913,7 +960,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
     } else if (calState == 1) {
       unsigned long elapsed = now - calStartTime;
       for (uint8_t i = 0; i < 8; i++) {
-        int16_t curVal = rawReads[i] - centerPoints[i] + offsets[i];
+        int16_t curVal = rawReads[i] - centerPoints[i];
         if (curVal < calMin[i]) calMin[i] = curVal;
         if (curVal > calMax[i]) calMax[i] = curVal;
       }
@@ -945,11 +992,9 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
         }
       } else {
         bool sanityPass = true;
-        int16_t dz = (par.values->deadzone < 0) ? 0 : par.values->deadzone;
-
         for (uint8_t i = 0; i < 8; i++) {
           int16_t range = calMax[i] - calMin[i];
-          if (range < 80 || calMin[i] >= -dz || calMax[i] <= dz) {
+          if (range < 80 || calMin[i] >= 0 || calMax[i] <= 0) {
             sanityPass = false;
             break;
           }
@@ -1000,7 +1045,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
   // STATE 11: EXCLUSIVE MODE CONFIGURATION SCREEN
   // ==========================================
   if (menuState == 11) {
-    if (redraw || par.values->exclusiveMode != lastPowerState || par.values->exclusiveHysteresis != lastDeadValue || submenuSelect != lastSubmenuSelect || isEditing != lastIsEditing) {
+    if (redraw || par.values->exclusiveMode != lastPowerState || par.values->exclusiveHysteresis != lastHystValue || submenuSelect != lastSubmenuSelect || isEditing != lastIsEditing) {
       if (redraw) {
         drawHeader(F("EXCLUSIVE"), 34);
         printFooter();
@@ -1019,31 +1064,9 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
       printSpaces(3);
 
       lastPowerState = par.values->exclusiveMode;
-      lastDeadValue = par.values->exclusiveHysteresis;
+      lastHystValue = par.values->exclusiveHysteresis;
       lastSubmenuSelect = submenuSelect;
       lastIsEditing = isEditing;
-    }
-    return;
-  }
-
-  // ==========================================
-  // STATE 12: DRIFT COMPENSATION TOGGLE SCREEN (SIMPLIFIED)
-  // ==========================================
-  if (menuState == 12) {
-    if (redraw || par.values->compEnabled != lastPowerState) {
-      if (redraw) {
-        drawHeader(F("DRIFT COMP"), 28);
-        printAt(0, 7, (const __FlashStringHelper*)msg_toggle_footer);
-        forceFullViewRedraw = false;
-      }
-      oled.setCursor(28, 3);
-      oled.print(F("STATE: "));
-      oled.setInvertMode(true);
-      oled.print(par.values->compEnabled ? F(" ON  ") : F(" OFF "));
-      oled.setInvertMode(false);
-      printSpaces(2);
-
-      lastPowerState = par.values->compEnabled;
     }
     return;
   }
@@ -1099,7 +1122,7 @@ void updateOledDisplay(int16_t* velocity, uint8_t* keyState, ParamData& par) {
     }
 
     drawHorizontalLine(6, 0x40);
-    printAt(10, 7, F("HOLD [R] : OPTIONS"));
+    printAt(4, 7, F("HL: STATUS HR: MENU"));
 
     for (uint8_t i = 0; i < 3; i++) {
       lastTransBarLen[i] = 127;

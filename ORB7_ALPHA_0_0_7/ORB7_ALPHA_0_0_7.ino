@@ -1,6 +1,6 @@
 /*
  * SPACE MOUSE PRO EMULATOR (6DOF DIY) - MAIN INO ENTRY FILE
- * Firmware Version: ALPHA 0.0.6
+ * Firmware Version: ALPHA 0.0.7
  * Architecture: ATmega32U4 (Arduino Pro Micro, 5V, 16 MHz)
  */
 
@@ -49,7 +49,6 @@ void setAnalogReferenceVoltage(int dbg);
 int16_t rawReads[8];
 int16_t centered[8];
 int16_t centerPoints[8];
-int16_t offsets[8];
 
 // Resulting calculated velocities mapping directly to the HID protocol expected bounds (-350 to +350)
 int16_t velocity[6];
@@ -58,22 +57,22 @@ int16_t velocity[6];
 ParamStorage parStorage;
 
 // Conditional Struct Initialization:
-// Trims sizeof(ParamData) from 542 bytes down to 2 bytes when serial debugging is disabled,
-// reclaiming massive amounts of Flash memory for the OLED graphics routines.
+// Trims ParamData to its pointer-only form when serial debugging is disabled,
+// reclaiming substantial SRAM and Flash for the OLED graphics routines.
 #if ENABLE_SERIAL_DEBUG
 ParamData par = {.values = &parStorage,
                  .description = {
                      {PARAM_TYPE_BOOL, "", NULL},                                         // param 0 (unused)
-                     {PARAM_TYPE_INT, "DEADZONE", &parStorage.deadzone},                  // 1
+                     {PARAM_TYPE_INT, "GATE_TX", &parStorage.gate_transX},                // 1
                      {PARAM_TYPE_INT, "SENS_TX", &parStorage.transX_sensitivity_q7},       // 2
                      {PARAM_TYPE_INT, "SENS_TY", &parStorage.transY_sensitivity_q7},       // 3
                      {PARAM_TYPE_INT, "SENS_PTZ", &parStorage.pos_transZ_sensitivity_q7},  // 4
                      {PARAM_TYPE_INT, "SENS_NTZ", &parStorage.neg_transZ_sensitivity_q7},  // 5
-                     {PARAM_TYPE_INT, "GATE_NTZ", &parStorage.gate_neg_transZ},           // 6
+                     {PARAM_TYPE_INT, "GATE_TZ", &parStorage.gate_transZ},                // 6
                      {PARAM_TYPE_INT, "GATE_RX", &parStorage.gate_rotX},                  // 7
                      {PARAM_TYPE_INT, "GATE_RY", &parStorage.gate_rotY},                  // 8
                      {PARAM_TYPE_INT, "GATE_RZ", &parStorage.gate_rotZ},                  // 9
-                     {PARAM_TYPE_INT, "GATE_TR", &parStorage.gate_trans},                 // 10
+                     {PARAM_TYPE_INT, "GATE_TY", &parStorage.gate_transY},                // 10
                      {PARAM_TYPE_INT, "SENS_RX", &parStorage.rotX_sensitivity_q7},         // 11
                      {PARAM_TYPE_INT, "SENS_RY", &parStorage.rotY_sensitivity_q7},         // 12
                      {PARAM_TYPE_INT, "SENS_RZ", &parStorage.rotZ_sensitivity_q7},         // 13
@@ -90,18 +89,14 @@ ParamData par = {.values = &parStorage,
                      {PARAM_TYPE_BOOL, "SWITCHYZ", &parStorage.switchYZ},                 // 24
                      {PARAM_TYPE_BOOL, "EXCLUSIVE", &parStorage.exclusiveMode},           // 25
                      {PARAM_TYPE_INT, "EXCL_HYST", &parStorage.exclusiveHysteresis},      // 26
-                     {PARAM_TYPE_BOOL, "COMP_EN", &parStorage.compEnabled},               // 27
-                     {PARAM_TYPE_INT, "COMP_NR", &parStorage.compNoOfPoints},             // 28
-                     {PARAM_TYPE_INT, "COMP_WAIT", &parStorage.compWaitTime},             // 29
-                     {PARAM_TYPE_INT, "COMP_MDIFF", &parStorage.compMinMaxDiff},          // 30
-                     {PARAM_TYPE_INT, "COMP_CDIFF", &parStorage.compCenterDiff},          // 31
-                     {PARAM_TYPE_INT, "GLB_SENS", &parStorage.globalSens},                 // 32
-                     {PARAM_TYPE_BOOL, "OLED_SLEEP", &parStorage.oledSleepTimer},         // 33
-                     {PARAM_TYPE_BOOL, "KEYL_SHORT", &parStorage.keyL_shortcut},          // 34
-                     {PARAM_TYPE_BOOL, "KEYR_SHORT", &parStorage.keyR_shortcut},          // 35
-                     {PARAM_TYPE_BOOL, "KEY2_SHORT", &parStorage.key2_shortcut},          // 36
-                     {PARAM_TYPE_BOOL, "KEY1_SHORT", &parStorage.key1_shortcut}           // 37
-                 }};
+                     {PARAM_TYPE_INT, "GLB_SENS", &parStorage.globalSens},                 // 27
+                     {PARAM_TYPE_BOOL, "OLED_SLEEP", &parStorage.oledSleepTimer},         // 28
+                     {PARAM_TYPE_BOOL, "KEYL_SHORT", &parStorage.keyL_shortcut},          // 29
+                     {PARAM_TYPE_BOOL, "KEYR_SHORT", &parStorage.keyR_shortcut},          // 30
+                     {PARAM_TYPE_BOOL, "KEY2_SHORT", &parStorage.key2_shortcut},          // 31
+                     {PARAM_TYPE_BOOL, "KEY1_SHORT", &parStorage.key1_shortcut},          // 32
+                     {PARAM_TYPE_INT, "DEADZONE", &parStorage.deadzoneLevel}               // 33
+                  }};
 #else
 ParamData par = {.values = &parStorage};
 #endif
@@ -177,10 +172,6 @@ void setup() {
   }
 #endif
 
-  // Ensure thermal drift baseline is clean before allowing operational tracking
-  for (uint8_t i = 0; i < 8; i++) {
-    offsets[i] = 0;
-  }
 }
 
 /**
@@ -227,10 +218,9 @@ void loop() {
       Serial.println(F(" 10 raw sensors ADC values used range, max. 0..1023"));
 #endif
       Serial.println(F("  2 centered values -500..+500"));
-      Serial.println(F(" 11 auto calibrate centers, show deadzones"));
+      Serial.println(F(" 11 auto calibrate centers, show noise spans"));
       Serial.println(F(" 20 find min/max-values over 20s (move stick)"));
-      Serial.println(F("  3 centered values w.deadzones -350..+350"));
-      Serial.println(F(" 31 drift compensation offsets"));
+      Serial.println(F("  3 normalized sensor values -350..+350"));
       Serial.println(F("  4 velocity- (trans-/rot-)values -350..+350"));
       Serial.println(F("  5 centered- & velocity-values, (3) and (4)"));
       Serial.println(F("  6 velocity after kill-keys and keys"));
@@ -259,7 +249,7 @@ void loop() {
   }
 #endif // ENABLE_SERIAL_DEBUG
 
-  // --- 1. CORE PIPELINE: Sample hardware ADCs employing oversampling and EMA smoothing
+  // --- 1. CORE PIPELINE: Sample hardware ADCs using a small oversampling average
   readAllFromJoystick(rawReads);
 
   // --- 2. Evaluate physical hardware button debounce logic
@@ -284,34 +274,9 @@ void loop() {
   }
 #endif // ENABLE_SERIAL_DEBUG
 
-  // --- 3. Evaluate environmental drift compensation logic independently per axis
-  if (par.values->compEnabled == 1) {
-#if ENABLE_SERIAL_DEBUG
-    if (debug != 20) { 
-      compensateDrifts(rawReads, centerPoints, offsets, par);
-    } else {
-      for (uint8_t i = 0; i < 8; i++) {
-        offsets[i] = 0;
-      }
-    }
-#else
-    compensateDrifts(rawReads, centerPoints, offsets, par);
-#endif
-  } else {
-    for (uint8_t i = 0; i < 8; i++) {
-      offsets[i] = 0;
-    }
-  }
-
-#if ENABLE_SERIAL_DEBUG
-  if (debug == 31) {
-    debugOutput2(offsets);
-  }
-#endif
-
-  // --- 4. Offset Subtraction: Normalize data removing mechanical center bounds and drift calculations
+  // --- 3. Normalize data against the fixed center acquired during zeroing
   for (uint8_t i = 0; i < 8; i++) {
-    centered[i] = rawReads[i] - centerPoints[i] + offsets[i];
+    centered[i] = rawReads[i] - centerPoints[i];
   }
 
 #if ENABLE_SERIAL_DEBUG
@@ -326,8 +291,8 @@ void loop() {
   }
 #endif
 
-  // --- 5. Apply physical noise filtering (Deadzones) and scale data dynamically to symmetrical arrays
-  FilterAnalogReadOuts(centered, par);
+  // --- 4. Normalize individual sensor ranges without applying a sensor-level deadzone
+  NormalizeAnalogReadOuts(centered, par);
 
 #if ENABLE_SERIAL_DEBUG
   if (debug == 3) {
@@ -335,10 +300,10 @@ void loop() {
   }
 #endif
 
-  // --- 6. Formulate 6DOF vector space translations handling logic gates and mapping curve multipliers
+  // --- 5. Formulate 6DOF vector space translations handling logic gates and mapping curve multipliers
   calculateKinematic(centered, velocity, par);
 
-  // --- 7. Resolve discrete key combinations triggering OLED interactions
+  // --- 6. Resolve discrete key combinations triggering OLED interactions
 #if NUMKEYS > 0
   evalKeys(keyVals, keyOut, keyState);
   
@@ -384,7 +349,7 @@ void loop() {
     switchXY(velocity);
   }
 
-  // --- 8. Resolve translation OR rotation dominance muting mechanisms
+  // --- 7. Resolve translation OR rotation dominance muting mechanisms
   if (par.values->exclusiveMode == 1) {
     exclusiveMode(velocity, par.values->exclusiveHysteresis);
   }
@@ -398,7 +363,7 @@ void loop() {
   }
 #endif
 
-  // --- 9. KINEMATIC SUPPRESSION AND KEY BLOCK DURING OLED NAVIGATION ---
+  // --- 8. KINEMATIC SUPPRESSION AND KEY BLOCK DURING OLED NAVIGATION ---
   // Overrides the HID payload buffers with zeroes if the user is actively scrolling through OLED parameters.
   // Ensures settings manipulation doesn't violently whip the 3D viewport canvas on the host PC.
   if (isOledMenuOpen()) {

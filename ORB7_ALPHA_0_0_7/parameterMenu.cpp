@@ -18,7 +18,7 @@ static uint8_t calculateChecksum(const ParamStorage &storage) {
 /// @brief Enforces strict operational boundaries against corrupt or manually manipulated EEPROM data.
 /// Prevents division-by-zero, array out-of-bounds, and mathematical asymptote explosions.
 void sanitizeParameters(ParamData &par) {
-  if (par.values->deadzone < 0 || par.values->deadzone > 200) par.values->deadzone = DEADZONE;
+  if (par.values->gate_transX < 0 || par.values->gate_transX > 100) par.values->gate_transX = GATE_TX;
   if (par.values->globalSens < 10 || par.values->globalSens > 300) par.values->globalSens = 100;
   if (par.values->slope_at_zero_q8 < 26 || par.values->slope_at_zero_q8 > 768) par.values->slope_at_zero_q8 = SLOPE_A_Q8;
   if (par.values->slope_at_end_q8 < 26 || par.values->slope_at_end_q8 > 402) par.values->slope_at_end_q8 = SLOPE_B_Q8;
@@ -31,7 +31,12 @@ void sanitizeParameters(ParamData &par) {
   if (par.values->key2_shortcut < 0 || par.values->key2_shortcut >= 32) par.values->key2_shortcut = 13; // SM_2
   if (par.values->key1_shortcut < 0 || par.values->key1_shortcut >= 32) par.values->key1_shortcut = 12; // SM_1
 
-  if (par.values->gate_trans < 0 || par.values->gate_trans > 100) par.values->gate_trans = GATE_TRANS;
+  if (par.values->gate_transY < 0 || par.values->gate_transY > 100) par.values->gate_transY = GATE_TY;
+  if (par.values->gate_transZ < 0 || par.values->gate_transZ > 100) par.values->gate_transZ = GATE_TZ;
+  if (par.values->gate_rotX < 0 || par.values->gate_rotX > 100) par.values->gate_rotX = GATE_RX;
+  if (par.values->gate_rotY < 0 || par.values->gate_rotY > 100) par.values->gate_rotY = GATE_RY;
+  if (par.values->gate_rotZ < 0 || par.values->gate_rotZ > 100) par.values->gate_rotZ = GATE_RZ;
+  if (par.values->deadzoneLevel < 0 || par.values->deadzoneLevel > DEADZONE_MAX) par.values->deadzoneLevel = DEADZONE_DEFAULT;
 
   // Sanitize modifier curve function selection against corrupt values
   if (par.values->modFunc != 0 && par.values->modFunc != 1 && par.values->modFunc != 3) par.values->modFunc = MODFUNC;
@@ -44,12 +49,6 @@ void sanitizeParameters(ParamData &par) {
   if (par.values->rotX_sensitivity_q7 <= 0) par.values->rotX_sensitivity_q7 = SENS_RX_Q7;
   if (par.values->rotY_sensitivity_q7 <= 0) par.values->rotY_sensitivity_q7 = SENS_RY_Q7;
   if (par.values->rotZ_sensitivity_q7 <= 0) par.values->rotZ_sensitivity_q7 = SENS_RZ_Q7;
-
-  // Sanitize Drift parameters preventing infinite loops in accumulation tracking
-  if (par.values->compNoOfPoints <= 0 || par.values->compNoOfPoints > 500) par.values->compNoOfPoints = COMP_NR;
-  if (par.values->compWaitTime < 10 || par.values->compWaitTime > 5000) par.values->compWaitTime = COMP_WAIT;
-  if (par.values->compMinMaxDiff <= 0 || par.values->compMinMaxDiff > 100) par.values->compMinMaxDiff = COMP_MDIFF;
-  if (par.values->compCenterDiff <= 0 || par.values->compCenterDiff > 200) par.values->compCenterDiff = COMP_CDIFF;
 
   // Sanitize dynamic Calibration limits against inverted or impossible polarities
   for (uint8_t i = 0; i < 8; i++) {

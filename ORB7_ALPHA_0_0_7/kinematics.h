@@ -12,14 +12,14 @@
 /// @return Processed output velocity mapped symmetrically
 int modifierFunction(int x, ParamData& par);
 
-/// @brief Samples hardware ADC pins utilizing integer EMA filtering and oversampling.
+/// @brief Samples hardware ADC pins using a small arithmetic oversampling average.
 /// @param rawReads Pointer to output array for the 8 sensor readings
 void readAllFromJoystick(int16_t *rawReads);
 
-/// @brief Enforces mechanical deadzones and maps dynamic min/max calibration bounds.
+/// @brief Maps centered sensor deltas through their individual min/max calibration bounds.
 /// @param centered Array of 8 normalized sensor center deltas
 /// @param par Global parameters containing the boundary definitions
-void FilterAnalogReadOuts(int16_t* centered, ParamData& par);
+void NormalizeAnalogReadOuts(int16_t* centered, ParamData& par);
 
 /// @brief Processes the 6DOF matrix multiplication, axes inversions, and sensitivity scaling.
 /// @param centered Normalized sensor data array

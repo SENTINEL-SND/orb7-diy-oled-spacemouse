@@ -7,15 +7,15 @@
   #include <Arduino.h> // Required for int16_t, int8_t and standard types
   #include "config.h"
 
-  // Defines the absolute number of persistent parameters managed by the EEPROM (37 individual parameters)
-  #define NUM_PARAMS         37   
+  // Defines the absolute number of persistent parameters managed by the EEPROM (33 individual parameters)
+  #define NUM_PARAMS         33
 
   #define MAX_PARAM_NAME_LEN 10   // maximum length of any parameter name for the Serial CLI
 
   // Magic Number enforces data structural alignment.
   // Changing this value intentionally forces a factory reset on the next boot,
   // which is highly recommended when adding or removing parameters in the struct below.
-  #define MAGIC_NUMBER       1234567857L
+  #define MAGIC_NUMBER       1234567859L
   #define BASE_ADDRESS_MAGIC 0
   #define BASE_ADDRESS_PAR   4
 
@@ -39,18 +39,18 @@
   // Core configuration structure written directly to the ATmega32U4 EEPROM.
   // Packed attribute eliminates struct padding bytes to guarantee 1:1 memory alignment with JS DataView offsets.
   typedef struct _ParamStorage {
-    int16_t deadzone               = DEADZONE;
+    int16_t gate_transX            = GATE_TX;
 
     // Float sensitivity variables replaced by Q7 fixed-point 16-bit integers
     int16_t transX_sensitivity_q7     = SENS_TX_Q7;
     int16_t transY_sensitivity_q7     = SENS_TY_Q7;
     int16_t pos_transZ_sensitivity_q7 = SENS_PTZ_Q7;
     int16_t neg_transZ_sensitivity_q7 = SENS_NTZ_Q7;
-    int16_t gate_neg_transZ           = GATE_NTZ; 
+    int16_t gate_transZ               = GATE_TZ;
     int16_t gate_rotX                 = GATE_RX;
     int16_t gate_rotY                 = GATE_RY;
     int16_t gate_rotZ                 = GATE_RZ;
-    int16_t gate_trans                = GATE_TRANS; // MicroGate for Pan X/Y!
+    int16_t gate_transY               = GATE_TY;
 
     int16_t rotX_sensitivity_q7       = SENS_RX_Q7;
     int16_t rotY_sensitivity_q7       = SENS_RY_Q7;
@@ -72,12 +72,6 @@
     int8_t  exclusiveMode          = EXCLUSIVE;
     int16_t exclusiveHysteresis    = EXCL_HYST;
 
-    int8_t  compEnabled            = COMP_EN;
-    int16_t compNoOfPoints         = COMP_NR;
-    int16_t compWaitTime           = COMP_WAIT;
-    int16_t compMinMaxDiff         = COMP_MDIFF;
-    int16_t compCenterDiff         = COMP_CDIFF;
-    
     // Global Sensitivity initialized at 100%
     int16_t globalSens             = 100; 
 
@@ -89,6 +83,9 @@
     int8_t  keyR_shortcut          = 1;  // Front Right (Key R / keys[0]) - Default: SM_FIT (Fit = 1)
     int8_t  key2_shortcut          = 13; // Back Left   (Key 2 / keys[2]) - Default: SM_2 (Button 2 = 13)
     int8_t  key1_shortcut          = 12; // Back Right  (Key 1 / keys[3]) - Default: SM_1 (Button 1 = 12)
+
+    // User comfort deadzone: 0 keeps the per-axis base gates, 100 applies maximum proportional boost
+    int16_t deadzoneLevel          = DEADZONE_DEFAULT;
 
     // Dynamic calibration limits bounding the analog hardware range to the HID logical output
     int16_t minVals[8]             = {-400, -400, -400, -400, -400, -400, -400, -400};
